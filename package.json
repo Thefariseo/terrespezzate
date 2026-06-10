@@ -1,12 +1,18 @@
 {
-  "name": "le-terre-spezzate",
-  "version": "1.2.0",
+  "name": "le-terre-spezzate-ascension",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
-    "dev": "node build.mjs && npx vite dist --host 0.0.0.0",
-    "test": "node scripts/mock-smoke.mjs"
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   },
   "devDependencies": {}
 }
