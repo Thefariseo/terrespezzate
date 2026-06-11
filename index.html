@@ -164,8 +164,21 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 #action-panel{
   margin-top:1rem;border:1px solid var(--edge);background:var(--panel);
   padding:1.1rem 1.3rem;min-height:170px;
+  border-left:3px solid var(--edge);
+  transition:border-color .4s,background .4s;
 }
+#action-panel[data-type="grace"]{border-left-color:var(--grace);background:rgba(255,216,122,.04)}
+#action-panel[data-type="enemy"]{border-left-color:#9c3a32;background:rgba(156,58,50,.04)}
+#action-panel[data-type="elite"]{border-left-color:#c08f5a;background:rgba(192,143,90,.04)}
+#action-panel[data-type="boss"]{border-left-color:#d4756b;background:rgba(212,117,107,.06)}
+#action-panel[data-type="shop"]{border-left-color:#4a8a5a;background:rgba(74,138,90,.04)}
+#action-panel[data-type="treasure"]{border-left-color:var(--gold-bright);background:rgba(236,200,87,.04)}
+#action-panel[data-type="event"]{border-left-color:#8060c0;background:rgba(128,96,192,.04)}
 #action-panel h2{color:var(--gold);font-size:1rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem}
+#action-panel[data-type="boss"] h2{color:#d4756b}
+#action-panel[data-type="grace"] h2{color:var(--grace)}
+#action-panel[data-type="shop"] h2{color:#7ac08a}
+#action-panel[data-type="event"] h2{color:#a080e0}
 #action-text{color:var(--parchment);margin-bottom:.8rem;min-height:2.4em}
 #action-buttons{display:flex;flex-wrap:wrap;gap:.6rem}
 .die{
@@ -227,6 +240,43 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 .shop-item .d{font-size:.85rem;color:var(--faded)}
 .shop-item .nm{color:var(--parchment)}
 .price{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:.85rem;white-space:nowrap}
+
+/* ---------- grazia overlay ---------- */
+.grace-stats-row{
+  display:flex;flex-wrap:wrap;gap:.6rem 1.2rem;
+  background:#161008;border:1px solid #2c2415;padding:.6em .9em;
+  font-size:.85rem;color:var(--faded);margin-bottom:.8em;
+}
+.grace-stats-row strong{color:var(--parchment)}
+.grace-tecnica-hint{font-size:.82rem;margin-bottom:.6em;padding:.3em .5em;background:rgba(0,0,0,.3);border-left:2px solid currentColor}
+
+/* ---------- ardore / tecnica ---------- */
+#ardore-wrap{
+  display:flex;align-items:center;gap:.5rem;margin:.5em 0 .3em;
+  opacity:.85;transition:opacity .3s;
+}
+#ardore-wrap.ready{opacity:1}
+#ardore-label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#b09060;min-width:3.5rem}
+#ardore-bar{flex:1;height:6px;background:#1a1510;border:1px solid #2c2415;border-radius:3px;overflow:hidden}
+#ardore-fill{height:100%;width:0%;background:linear-gradient(90deg,#b05020,#f06030,#ffb060);transition:width .35s;border-radius:3px}
+#ardore-wrap.ready #ardore-fill{background:linear-gradient(90deg,#ff8020,#ffb030,#ffe860);box-shadow:0 0 8px #ff9030}
+#ardore-pct{font-size:.72rem;color:#b09060;min-width:2.6rem;text-align:right}
+#tecnica-row{margin-top:0}
+#cb-tecnica{background:linear-gradient(135deg,#2a1a0a,#1a100a);border:1px solid #5c3a1a;color:#c09060;letter-spacing:.08em;font-size:.9rem;transition:all .3s}
+#cb-tecnica:not(:disabled){border-color:#c07830;color:#ffb860;box-shadow:0 0 12px rgba(200,120,40,.4);animation:ardore-pulse 1.4s ease-in-out infinite}
+@keyframes ardore-pulse{0%,100%{box-shadow:0 0 8px rgba(200,120,40,.3)}50%{box-shadow:0 0 18px rgba(255,160,60,.6)}}
+
+/* ---------- cutscene ---------- */
+#ov-cutscene{background:rgba(0,0,0,.96);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+#cutscene-inner{display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:460px;width:100%}
+#cutscene-canvas{width:160px;height:160px;image-rendering:pixelated;image-rendering:crisp-edges;border:1px solid #2c2415;background:#000}
+#cutscene-text{
+  font-family:'Crimson Text',Georgia,serif;font-size:1.08rem;line-height:1.7;
+  color:#c8b88a;text-align:center;min-height:4.5em;
+  text-shadow:0 0 12px rgba(200,160,80,.2);
+}
+#cutscene-dots{font-size:1.4rem;color:#5c4c2c;letter-spacing:.4em;animation:dotpulse 1.4s ease-in-out infinite}
+@keyframes dotpulse{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* ---------- topbar evoluta ---------- */
 .topbar{align-items:center}
@@ -378,6 +428,7 @@ kbd{
 .class-card .cls-desc{font-size:.84rem;color:var(--faded);line-height:1.35}
 .class-card .cls-stats{font-size:.75rem;color:#7e6f4d;font-family:'Cinzel',serif;letter-spacing:.04em}
 .class-card .cls-stats b{color:var(--gold)}
+.class-card .cls-tecnica{font-size:.8rem;margin-top:.3rem;border-top:1px solid #2c2415;padding-top:.3rem;line-height:1.4}
 .title-actions{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:.3rem}
 
 /* ---------- impostazioni ---------- */
@@ -419,7 +470,7 @@ kbd{
     <button id="btn-start" class="primary" style="font-size:1rem;padding:.8em 2.4em">Inizia il viaggio</button>
   </div>
   <p id="title-stats" style="font-size:.82rem;color:#6b5c3c;min-height:1.2em"></p>
-  <p style="font-size:.8rem;color:#5b4f38">Tastiera: Spazio per agire · A/P/F/S in combattimento · ? per le regole</p>
+  <p style="font-size:.8rem;color:#5b4f38">Tastiera: Spazio per agire · A/P/F/S/T in combattimento · ? per le regole</p>
 </section>
 
 <!-- ============ GIOCO ============ -->
@@ -466,6 +517,7 @@ kbd{
         <div class="statline"><span>Fiaschette <span style="font-size:.78em;color:#6b5c3c" id="flask-heal-hint"></span></span><span class="v" id="flask-num"></span></div>
         <div id="flask-pips" aria-hidden="true"></div>
         <div class="rune-row"><span class="rune-glyph">⟐</span><span class="v" id="rune-num">0</span><span style="font-size:.8rem;color:var(--faded)">rune</span></div>
+        <div id="tecnica-stat" style="font-size:.78rem;color:#7e6f4d;margin:.35em 0 0;font-style:italic"></div>
         <div style="margin-top:.7em"><button id="btn-flask-out" style="width:100%">Bevi fiaschetta <kbd>F</kbd></button></div>
       </div>
       <div class="card">
@@ -492,7 +544,8 @@ kbd{
       <div class="help-card"><b>Morte e rune</b><span class="ic">☠</span>Alla morte perdi le rune: restano dove sei caduto, recuperale passando di lì. Risorgi all'ultima grazia. I nemici (boss esclusi) ricompaiono a ogni morte o riposo.</div>
       <div class="help-card"><b>Crescita</b><span class="ic">❋</span>Alle grazie spendi rune per Vigore (+10 PV) o Forza (+1 ATK). Dal mercante: fiaschette, affilature e talismani. Le fiaschette curano il 40% della vitalità massima.</div>
     </div>
-    <div class="help-card" style="margin-bottom:.4em"><b>Tastiera</b>Spazio/Invio: azione principale · In combattimento: <kbd style="margin-left:0">A</kbd> attacca, <kbd style="margin-left:0">P</kbd> para, <kbd style="margin-left:0">F</kbd> fiaschetta, <kbd style="margin-left:0">S</kbd> fuggi</div>
+    <div class="help-card" style="margin-bottom:.4em"><b>Tastiera</b>Spazio/Invio: azione principale · In combattimento: <kbd style="margin-left:0">A</kbd> attacca, <kbd style="margin-left:0">P</kbd> para, <kbd style="margin-left:0">F</kbd> fiaschetta, <kbd style="margin-left:0">S</kbd> fuggi, <kbd style="margin-left:0">T</kbd> tecnica</div>
+    <div class="help-card" style="margin-bottom:.4em"><b>Ardore &amp; Tecnica</b>La barra Ardore si carica attaccando (+12), parando (+22 successo, +6 fallimento) e subendo danni (+10). A 100% sblocchi la tecnica speciale della tua classe, una mossa unica e potente.</div>
     <div class="btnrow"><button id="help-close">Chiudi</button></div>
   </div>
 </div>
@@ -540,14 +593,35 @@ kbd{
     </div>
     <div id="combat-log"></div>
     <div id="charge-warning">⚠ Colpo devastante in arrivo — para!</div>
+    <div id="ardore-wrap">
+      <div id="ardore-label">Ardore</div>
+      <div id="ardore-bar"><div id="ardore-fill"></div></div>
+      <div id="ardore-pct">0%</div>
+    </div>
     <div class="btnrow">
       <button id="cb-attack">Attacca <kbd>A</kbd></button>
       <button id="cb-parry">Para <kbd>P</kbd></button>
       <button id="cb-flask">Fiaschetta <kbd>F</kbd></button>
       <button id="cb-flee">Fuggi <kbd>S</kbd></button>
     </div>
+    <div class="btnrow" id="tecnica-row">
+      <button id="cb-tecnica" disabled><span id="tecnica-label">Tecnica</span> <kbd>T</kbd></button>
+    </div>
     <div id="cb-turn"></div>
     <div id="cb-nowplaying" style="text-align:center;font-size:.72rem;color:#6b5c3c;letter-spacing:.12em;margin-top:.25em;font-style:italic"></div>
+  </div>
+</div>
+
+<!-- ============ CUTSCENE ============ -->
+<div class="overlay" id="ov-cutscene">
+  <div id="cutscene-inner">
+    <canvas id="cutscene-canvas" width="200" height="200" aria-hidden="true"></canvas>
+    <div id="cutscene-text"></div>
+    <div id="cutscene-dots">· · ·</div>
+    <div class="btnrow" id="cutscene-btns">
+      <button id="cutscene-skip">Salta <kbd>Esc</kbd></button>
+      <button id="cutscene-fight" style="display:none">Combatti <kbd>Invio</kbd></button>
+    </div>
   </div>
 </div>
 
@@ -555,9 +629,9 @@ kbd{
 <div class="overlay" id="ov-grace">
   <div class="modal">
     <h2 style="color:var(--grace)">❋ Sito di Grazia</h2>
-    <p class="sub">Il calore della grazia ti ristora. Vitalità e fiaschette ripristinate.</p>
+    <p class="sub" id="grace-flavor">Il calore della grazia ti ristora. Vitalità e fiaschette ripristinate.</p>
     <div id="grace-levelup"></div>
-    <div class="btnrow"><button id="grace-leave">Riprendi il cammino</button></div>
+    <div class="btnrow"><button id="grace-leave">Riprendi il cammino <kbd>Invio</kbd></button></div>
   </div>
 </div>
 
@@ -578,7 +652,9 @@ kbd{
     <p id="death-text">Sei morto</p>
     <p class="center" id="death-sub"></p>
     <div class="runstats" id="death-stats"></div>
-    <div class="btnrow"><button id="death-respawn">Risorgi alla grazia</button></div>
+    <div class="btnrow">
+      <button id="death-respawn">❋ Risorgi alla grazia</button>
+    </div>
   </div>
 </div>
 
@@ -598,26 +674,22 @@ kbd{
 const REGIONS = ["Sepolcreto dei Primi", "Palude del Vespro", "Altopiano Cinereo", "Cittadella del Crepuscolo"];
 
 const ENEMIES = [
-  // regione 0
-  [{n:"Soldato Errante",hp:11,atk:2,r:[25,40]},{n:"Segugio di Tomba",hp:9,atk:3,r:[25,40]}],
-  // regione 1
-  [{n:"Spettro di Fango",hp:16,atk:3,r:[45,70]},{n:"Strega di Palude",hp:14,atk:4,r:[45,70]}],
-  // regione 2
-  [{n:"Cavaliere di Brace",hp:22,atk:5,r:[75,110]},{n:"Arciere di Cenere",hp:19,atk:6,r:[75,110]}],
-  // regione 3
-  [{n:"Guardia Crepuscolare",hp:28,atk:7,r:[120,170]},{n:"Accolito del Vuoto",hp:25,atk:8,r:[120,170]}],
+  [{n:"Soldato Errante",hp:13,atk:2,r:[28,45]},{n:"Segugio di Tomba",hp:11,atk:3,r:[28,45]}],
+  [{n:"Spettro di Fango",hp:19,atk:4,r:[55,80]},{n:"Strega di Palude",hp:17,atk:4,r:[55,80]}],
+  [{n:"Cavaliere di Brace",hp:27,atk:5,r:[90,130]},{n:"Arciere di Cenere",hp:24,atk:6,r:[90,130]}],
+  [{n:"Guardia Crepuscolare",hp:34,atk:7,r:[140,190]},{n:"Accolito del Vuoto",hp:30,atk:8,r:[140,190]}],
 ];
 const ELITES = [
-  {n:"Campione Caduto",hp:20,atk:3,r:[90,120]},
-  {n:"Divoratore della Melma",hp:28,atk:5,r:[150,190]},
-  {n:"Golem di Scorie",hp:38,atk:7,r:[220,280]},
-  {n:"Araldo della Fine",hp:50,atk:9,r:[320,400]},
+  {n:"Campione Caduto",hp:24,atk:3,r:[110,140]},
+  {n:"Divoratore della Melma",hp:33,atk:5,r:[170,210]},
+  {n:"Golem di Scorie",hp:44,atk:7,r:[250,310]},
+  {n:"Araldo della Fine",hp:58,atk:9,r:[360,440]},
 ];
 const BOSSES = [
-  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:34,atk:4,r:[160,160]},
-  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:50,atk:6,r:[300,300]},
-  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:68,atk:8,r:[480,480]},
-  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:95,atk:10,r:[1000,1000]},
+  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:42,atk:4,r:[180,180]},
+  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:58,atk:6,r:[320,320]},
+  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:76,atk:8,r:[520,520]},
+  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:110,atk:10,r:[1100,1100]},
 ];
 
 // tipi casella per regione (9 caselle): grazia, nemico, evento, nemico, tesoro, mercante, élite, evento, boss
@@ -629,27 +701,58 @@ const CLASSES = {
   vagabondo: {
     nm:"Vagabondo", name:"Senza Fiamma",
     desc:"Equilibrato. Spada e scudo, nessuna debolezza.",
-    hp:30, atk:3, flasks:3, runes:0,
-    items:[], glyph:"⚔",
+    hp:36, atk:3, flasks:3, runes:0,
+    items:[], glyph:"⚔", tecnica:"lama_spezzata",
   },
   cavaliere: {
     nm:"Cavaliere Decaduto", name:"Cavaliere",
     desc:"Robusto e corazzato: più vitalità, ma parte senza rune.",
-    hp:42, atk:3, flasks:3, runes:0,
-    items:["Corazza incrinata"], glyph:"♞",
+    hp:50, atk:3, flasks:3, runes:0,
+    items:["Corazza incrinata"], glyph:"♞", tecnica:"barriera_ferro",
   },
   asceta: {
     nm:"Asceta Cinereo", name:"Asceta",
     desc:"Aggressivo e fragile: colpisce duro, ma regge poco.",
-    hp:24, atk:5, flasks:2, runes:30,
-    items:["Voto del digiuno"], glyph:"☥",
+    hp:28, atk:5, flasks:2, runes:40,
+    items:["Voto del digiuno"], glyph:"☥", tecnica:"divorare_cenere",
   },
   mendico: {
     nm:"Mendico", name:"Mendico",
     desc:"Sfida pura: debole e disarmato, ma con quattro fiaschette.",
-    hp:28, atk:2, flasks:4, runes:0,
-    items:["Ciotola scheggiata"], glyph:"⚱",
+    hp:34, atk:2, flasks:4, runes:0,
+    items:["Ciotola scheggiata"], glyph:"⚱", tecnica:"colpo_basso",
   },
+};
+
+/* ===================== TECNICA SPECIALE (Ardore) ===================== */
+const BOSS_CUTSCENES = [
+  { color:"#9a9fa8", panels:[
+    "La nebbia si solidifica. Nel cuore del Sepolcreto qualcosa si rialza — qualcosa che non avrebbe mai dovuto esistere ancora.",
+    "La Sentinella Spezzata fluttua davanti a te, frammenti di armatura sospesi nel vuoto come costellazioni morte. La sua volontà non riconosce la morte.",
+    "I suoi occhi si accendono di un bagliore senza vita. Un custode senza memoria, un guardiano senza scopo. Sa solo che tu non devi passare.",
+  ]},
+  { color:"#4a9a5a", panels:[
+    "L'acqua della palude non riflette la luna. Riflette qualcosa di più antico — qualcosa che ha aspettato nell'oscurità da prima dei primi.",
+    "La Madre della Palude emerge lentamente. Mille anni di silenzio. Il suo corpo è la palude stessa: fango, radici, e qualcosa che pulsa come un cuore antico.",
+    "Il suo respiro è marcio come l'aria ferma. La sua corona è tessuta di ossa dimenticate. Non ti combatte per sopravvivere. Ti combatte per abitudine.",
+  ]},
+  { color:"#c86030", panels:[
+    "L'Altopiano brucia ancora. Brucia da quando non è rimasto nessuno abbastanza vivo da spegnere il fuoco.",
+    "Il Cavaliere della Cenere si volta. Il suo stendardo è braci. Il suo onore è fumo. Ma la lama — la lama è ancora incandescente come il giorno del giuramento.",
+    "Non può fermarsi. Il giuramento gli impedisce di morire del tutto. Continuerà a combattere finché le braci non si spegneranno... o finché non lo fermi tu.",
+  ]},
+  { color:"#8040c0", panels:[
+    "Oltre la Cittadella, dove il cielo e la pietra smettono di distinguersi, qualcosa ti aspetta. Ha aspettato a lungo.",
+    "Il Sovrano Senza Nome non ha un nome perché il suo nome è stato strappato dal mondo stesso. Chi lo pronunciava scompariva. Le pietre che lo ricordavano si sgretolano.",
+    "Apre gli occhi. Sono vuoti come le terre che ha spezzato. Ma dentro quel vuoto — dentro quel vuoto c'è ancora qualcosa che vuole.",
+  ]},
+];
+
+const TECNICAS = {
+  lama_spezzata:  { nm:"Lama Spezzata",   icon:"⚡", col:"#ffe040", desc:"Danno raddoppiato. Stordisce il nemico, saltando il suo prossimo attacco." },
+  barriera_ferro: { nm:"Barriera di Ferro",icon:"🛡", col:"#80c0ff", desc:"Blocca il prossimo colpo nemico. Contrattacca con forza doppia." },
+  divorare_cenere:{ nm:"Divorare la Cenere",icon:"🔥",col:"#ff8040", desc:"Tre colpi rapidi. Ogni colpo che va a segno ti cura di metà del danno." },
+  colpo_basso:    { nm:"Colpo Basso",     icon:"🗡", col:"#c080ff", desc:"Danno base, o triplicato se il nemico sta caricando un colpo devastante." },
 };
 let chosenClass = "vagabondo";
 
@@ -672,6 +775,7 @@ function newGame(cls){
     runes:C.runes, level:1, checkpoint:0,
     items:[...C.items], canMove:true, deaths:0,
     rolls:0, runesEarned:C.runes, startedAt:Date.now(),
+    ardore:0,
   };
   tiles[0].cleared = true; // grazia iniziale già accesa
   combat = null;
@@ -851,6 +955,12 @@ function renderStats(){
     ? player.items.map(i=>`<li>${i}</li>`).join("")
     : `<li style="opacity:.5">Solo stracci e una spada smussata.</li>`;
   $("btn-flask-out").disabled = player.flasks<=0 || player.hp>=player.maxhp || !!combat;
+  const tecEl = $("tecnica-stat");
+  if(tecEl){
+    const C = CLASSES[player.cls||"vagabondo"];
+    const tec = C ? TECNICAS[C.tecnica] : null;
+    tecEl.innerHTML = tec ? `<span style="color:${tec.col}">${tec.icon}</span> ${tec.nm}` : "";
+  }
   renderProgress();
   saveGame();
 }
@@ -882,9 +992,11 @@ function drawPortrait(){
 }
 function renderAll(){ buildBoard(); renderBoard(); renderStats(); }
 
-function setAction(title, text, buttons){
+function setAction(title, text, buttons, type){
   $("action-title").textContent = title;
   $("action-text").innerHTML = text;
+  const panel = $("action-panel");
+  panel.dataset.type = type||"";
   const box = $("action-buttons");
   box.innerHTML = "";
   (buttons||[]).forEach(([label,fn,disabled], i)=>{
@@ -1005,7 +1117,7 @@ function openTreasure(tile, roll){
   sfx("rune");
   log(`Apri uno scrigno dimenticato: ${amount} rune.`,"gold");
   renderBoard(); renderStats();
-  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. Tra le ossa trovi uno scrigno: <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]]);
+  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. Tra le ossa trovi uno scrigno: <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
 }
 
 function runEvent(tile, roll){
@@ -1031,7 +1143,7 @@ function runEvent(tile, roll){
     text = `Un'imboscata! Un nemico sbuca dalle rovine.`;
     log("Evento: imboscata!","bad");
     renderBoard(); renderStats();
-    setAction("? Evento", text, []);
+    setAction("? Evento", text, [], "enemy");
     setTimeout(()=>startCombat(pickEnemy(tile.region), tile, false), 600);
     return;
   } else if(ev===5){
@@ -1051,8 +1163,8 @@ function runEvent(tile, roll){
           if(r2>=4){ player.runes += stake*2; log(`Scommessa (${r2}): vinci ${stake*2} rune!`,"gold"); toast(`⟐ +${stake} rune`,"gold"); sfx("level"); }
           else { log(`Scommessa (${r2}): perdi ${stake} rune.`,"bad"); sfx("hurt"); }
           renderStats();
-          setAction("? Statua del Caso","La statua tace di nuovo. Tira il dado.",[["Tira il dado",rollMove]]);
-        }],["Rifiuta",()=>setAction("? Evento","Volti le spalle alla sorte. Tira il dado.",[["Tira il dado",rollMove]])]]);
+          setAction("? Statua del Caso","La statua tace di nuovo. Tira il dado.",[["Tira il dado",rollMove]],"event");
+        }],["Rifiuta",()=>setAction("? Evento","Volti le spalle alla sorte. Tira il dado.",[["Tira il dado",rollMove]],"event")]],"event");
       renderBoard(); renderStats();
       return;
     }
@@ -1062,8 +1174,8 @@ function runEvent(tile, roll){
   } else if(ev===7){
     // fonte: scegli cura o fiaschetta
     setAction("? Fonte Spezzata", `Una fonte ribolle di luce fioca. Bevi per <strong>curarti del tutto</strong>, oppure raccogline l'essenza per <strong>ricaricare le fiaschette</strong>.`,
-      [["Bevi (cura totale)",()=>{ player.hp=player.maxhp; log("Bevi alla fonte: vitalità ripristinata.","good"); sfx("grace"); renderStats(); setAction("? Fonte","L'acqua si placa. Tira il dado.",[["Tira il dado",rollMove]]); }],
-       ["Raccogli (fiaschette)",()=>{ player.flasks=player.maxflasks; log("Ricarichi tutte le fiaschette alla fonte.","good"); sfx("flask"); renderStats(); setAction("? Fonte","L'acqua si placa. Tira il dado.",[["Tira il dado",rollMove]]); }]]);
+      [["Bevi (cura totale)",()=>{ player.hp=player.maxhp; log("Bevi alla fonte: vitalità ripristinata.","good"); sfx("grace"); renderStats(); setAction("? Fonte","L'acqua si placa. Tira il dado.",[["Tira il dado",rollMove]],"event"); }],
+       ["Raccogli (fiaschette)",()=>{ player.flasks=player.maxflasks; log("Ricarichi tutte le fiaschette alla fonte.","good"); sfx("flask"); renderStats(); setAction("? Fonte","L'acqua si placa. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],"event");
     renderBoard(); renderStats();
     return;
   } else if(ev===8){
@@ -1086,7 +1198,7 @@ function runEvent(tile, roll){
     }
   }
   renderBoard(); renderStats();
-  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${text}`, [["Tira il dado",rollMove]]);
+  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${text}`, [["Tira il dado",rollMove]], "event");
 }
 
 /* ===================== GRAZIA ===================== */
@@ -1094,6 +1206,12 @@ function respawnEnemies(){
   tiles.forEach(t=>{ if((t.type==="enemy"||t.type==="elite") && t.cleared) t.cleared=false; });
   log("I nemici delle terre si ridestano.","bad");
 }
+const GRACE_FLAVOR = [
+  "Le ossa del Sepolcreto si quietano per un istante. La fiamma arde, tenue ma ostinata, come un ricordo di qualcosa che non doveva essere dimenticato.",
+  "La palude tace. L'aria è ancora marcescente, ma qui — intorno alla grazia — c'è qualcosa di antico e sicuro. Resti immobile più del necessario.",
+  "Il calore dell'Altopiano è diverso vicino alla grazia. Non brucia. Scalda. Per un momento sembri quasi capire perché qualcuno avrebbe potuto giurare di difendere questo posto.",
+  "Oltre la Cittadella non ci sono più grazie. Lo sai. Questa fiamma è l'ultima cosa vera prima dell'oscurità. Siediti. Respira. Poi alzati.",
+];
 function openGrace(tile){
   tile.cleared = true;
   player.checkpoint = tile.idx;
@@ -1104,22 +1222,32 @@ function openGrace(tile){
   log("Ti riposi a un sito di grazia. Tutto è ripristinato.","good");
   renderAll();
   renderGraceMenu();
+  const fl = $("grace-flavor");
+  if(fl) fl.textContent = GRACE_FLAVOR[tile.region]||GRACE_FLAVOR[0];
   $("ov-grace").classList.add("open");
 }
 function showGraceMenu(){
   renderGraceMenu();
   $("ov-grace").classList.add("open");
 }
-function levelCost(){ return 50 + (player.level-1)*35; }
+function levelCost(){ return 45 + (player.level-1)*30; }
 function renderGraceMenu(){
   const cost = levelCost();
   const can = player.runes >= cost;
+  const C = player ? CLASSES[player.cls||"vagabondo"] : null;
+  const tec = C ? TECNICAS[C.tecnica] : null;
   $("grace-levelup").innerHTML = `
-    <div class="shop-item"><div><span class="nm">Vigore</span><div class="d">+10 vitalità massima (e cura completa)</div></div>
-      <button id="lv-vig" ${can?"":"disabled"}>⟐ ${cost} rune</button></div>
-    <div class="shop-item"><div><span class="nm">Forza</span><div class="d">+1 attacco</div></div>
-      <button id="lv-for" ${can?"":"disabled"}>⟐ ${cost} rune</button></div>
-    <p class="center">Rune possedute: <strong style="color:var(--gold-bright)">${player.runes}</strong></p>`;
+    <div class="grace-stats-row">
+      <span>♥ <strong>${player.hp}</strong>/<strong>${player.maxhp}</strong></span>
+      <span>⚔ ATK <strong>${player.atk}</strong></span>
+      <span>🧪 <strong>${player.flasks}</strong>/${player.maxflasks}</span>
+      <span>⟐ <strong style="color:var(--gold-bright)">${player.runes}</strong> rune</span>
+    </div>
+    ${tec?`<div class="grace-tecnica-hint" style="color:${tec.col}">${tec.icon} Tecnica: <strong>${tec.nm}</strong></div>`:""}
+    <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">♥</span><div><span class="nm">Vigore</span><div class="d">+10 vitalità massima (e cura completa)</div></div></div>
+      <button id="lv-vig" ${can?"":"disabled"}>⟐ ${cost}</button></div>
+    <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">⚔</span><div><span class="nm">Forza</span><div class="d">+1 attacco permanente</div></div></div>
+      <button id="lv-for" ${can?"":"disabled"}>⟐ ${cost}</button></div>`;
   $("lv-vig").addEventListener("click", ()=>levelUp("vig"));
   $("lv-for").addEventListener("click", ()=>levelUp("for"));
 }
@@ -1135,16 +1263,16 @@ function levelUp(which){
 }
 $("grace-leave").addEventListener("click", ()=>{
   $("ov-grace").classList.remove("open");
-  setAction("❋ Grazia", "La fiamma arde quieta. Puoi meditare ancora o proseguire.", [["Tira il dado",rollMove],["Medita",showGraceMenu]]);
+  setAction("❋ Grazia", "La fiamma arde quieta. Puoi meditare ancora o proseguire.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
 
 /* ===================== MERCANTE ===================== */
 const SHOP_BASE = [
-  {id:"flask", nm:"Fiaschetta in più", d:"+1 fiaschetta massima (e ricarica)", price:90, repeat:true},
-  {id:"sharp", nm:"Pietra per affilare", d:"+1 attacco permanente", price:120, repeat:true},
-  {id:"heart", nm:"Cuore di pietra", d:"+10 vitalità massima", price:100, repeat:true},
-  {id:"vial",  nm:"Fiala potenziata", d:"Le fiaschette curano 10 in più", price:110, repeat:false},
-  {id:"charm", nm:"Talismano del recupero", d:"Alla morte conservi metà delle rune", price:140, repeat:false},
+  {id:"flask", icon:"🧪", nm:"Fiaschetta in più", d:"+1 fiaschetta massima (e ricarica)", price:90, repeat:true},
+  {id:"sharp", icon:"⚔", nm:"Pietra per affilare", d:"+1 attacco permanente", price:120, repeat:true},
+  {id:"heart", icon:"♥", nm:"Cuore di pietra", d:"+10 vitalità massima", price:100, repeat:true},
+  {id:"vial",  icon:"✦", nm:"Fiala potenziata", d:"Le fiaschette curano 10 in più", price:110, repeat:false},
+  {id:"charm", icon:"☽", nm:"Talismano del recupero", d:"Alla morte conservi metà delle rune", price:140, repeat:false},
 ];
 let shopBought = {};
 function openShop(tile){
@@ -1160,7 +1288,7 @@ function renderShop(tile){
     const price = Math.round(item.price * mult / 5)*5;
     const row = document.createElement("div");
     row.className = "shop-item";
-    row.innerHTML = `<div><span class="nm">${item.nm}</span><div class="d">${item.d}</div></div>`;
+    row.innerHTML = `<div style="display:flex;align-items:baseline;gap:.5rem"><span style="font-size:1.1rem">${item.icon||""}</span><div><span class="nm">${item.nm}</span><div class="d">${item.d}</div></div></div>`;
     const btn = document.createElement("button");
     btn.textContent = `⟐ ${price}`;
     btn.disabled = player.runes < price;
@@ -1188,7 +1316,7 @@ function applyItem(item){
 }
 $("shop-leave").addEventListener("click", ()=>{
   $("ov-shop").classList.remove("open");
-  setAction("⚖ Mercante", "«Torna quando vuoi, viandante.» Tira il dado per proseguire.", [["Tira il dado",rollMove]]);
+  setAction("⚖ Mercante", "«Torna quando vuoi, viandante.» Tira il dado per proseguire.", [["Tira il dado",rollMove]], "shop");
 });
 
 
@@ -1912,6 +2040,115 @@ function bsHeroDie(){
   bsPush(220, null, ()=>{ dissolveFighter(BS.hero); spawnBurst(BS.hero.baseX, BS.hero.baseY-22, "#9c3a32", 14, 1.6); BS.shake=260; });
 }
 
+/* ---- cutscene boss ---- */
+function drawCutsceneCanvas(bossIdx){
+  const cv = $("cutscene-canvas");
+  if(!cv) return;
+  const ctx = cv.getContext("2d");
+  const bc = BOSS_CUTSCENES[bossIdx];
+  const bossKey = ["sentinella_boss","madre_boss","cenere_boss","sovrano_boss"][bossIdx];
+  ctx.clearRect(0,0,200,200);
+  const grad = ctx.createRadialGradient(100,100,10,100,100,100);
+  grad.addColorStop(0, bc.color+"44");
+  grad.addColorStop(1, "transparent");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,200,200);
+  const spr = SPRITES[bossKey];
+  if(!spr||!spr.px) return;
+  const el = ENEMY_LOOK[bossKey];
+  const pal = el ? el.pal : ["#888","#aaa","#ccc","#fff"];
+  const scale = 8;
+  const pw = spr.w * scale;
+  const ph = spr.px.length / spr.w * scale;
+  const ox = Math.round((200-pw)/2);
+  const oy = Math.round((200-ph)/2);
+  for(let i=0;i<spr.px.length;i++){
+    const ci = spr.px[i];
+    if(ci===0) continue;
+    const sx = i%spr.w, sy = Math.floor(i/spr.w);
+    ctx.fillStyle = pal[ci-1]||"#888";
+    ctx.fillRect(ox+sx*scale, oy+sy*scale, scale, scale);
+  }
+}
+let _cutsceneResolve = null;
+function showBossCutscene(bossIdx, onComplete){
+  const bc = BOSS_CUTSCENES[bossIdx];
+  const ov = $("ov-cutscene");
+  const textEl = $("cutscene-text");
+  const dotsEl = $("cutscene-dots");
+  const fightBtn = $("cutscene-fight");
+  const skipBtn  = $("cutscene-skip");
+  ov.style.setProperty("--cs-col", bc.color);
+  ov.classList.add("open");
+  drawCutsceneCanvas(bossIdx);
+  let panelIdx = 0;
+  let typing = false;
+  let typeTimer = null;
+  function done(){
+    ov.classList.remove("open");
+    onComplete();
+  }
+  function showFight(){
+    if(fightBtn) fightBtn.style.display = "";
+    if(dotsEl)   dotsEl.style.display = "none";
+  }
+  function typePanel(text, cb){
+    typing = true;
+    textEl.textContent = "";
+    let i=0;
+    function tick(){
+      if(i<text.length){
+        textEl.textContent += text[i++];
+        typeTimer = setTimeout(tick, 28);
+      } else {
+        typing = false;
+        if(cb) setTimeout(cb, 700);
+      }
+    }
+    tick();
+  }
+  function nextPanel(){
+    clearTimeout(typeTimer);
+    if(panelIdx < bc.panels.length){
+      typePanel(bc.panels[panelIdx++], ()=>{
+        if(panelIdx < bc.panels.length) nextPanel();
+        else showFight();
+      });
+    } else {
+      showFight();
+    }
+  }
+  if(fightBtn) fightBtn.style.display = "none";
+  if(dotsEl)   dotsEl.style.display = "";
+  nextPanel();
+  const onSkip = ()=>{
+    clearTimeout(typeTimer);
+    cleanup();
+    done();
+  };
+  const onFight = ()=>{
+    clearTimeout(typeTimer);
+    cleanup();
+    done();
+  };
+  const onKey = (e)=>{
+    if(e.key==="Escape"){ onSkip(); }
+    else if(e.key==="Enter"||e.key===" "){
+      if(typing){ clearTimeout(typeTimer); textEl.textContent=bc.panels[panelIdx-1]; typing=false; setTimeout(()=>{ if(panelIdx<bc.panels.length) nextPanel(); else showFight(); },200); }
+      else if(fightBtn&&fightBtn.style.display!==""){ /* not shown yet */ }
+      else onFight();
+    }
+  };
+  function cleanup(){
+    if(skipBtn)  skipBtn.removeEventListener("click", onSkip);
+    if(fightBtn) fightBtn.removeEventListener("click", onFight);
+    document.removeEventListener("keydown", onKey);
+  }
+  if(skipBtn)  skipBtn.addEventListener("click", onSkip);
+  if(fightBtn) fightBtn.addEventListener("click", onFight);
+  document.addEventListener("keydown", onKey);
+}
+
 /* ---- animazione ingresso boss ---- */
 function bsBossIntro(bossIdx){
   if(!BS.enemy) return;
@@ -1955,14 +2192,27 @@ function startCombat(enemy, tile, isBoss, isElite){
   combat = {
     e:{...enemy, maxhp:enemy.hp},
     tile, isBoss, isElite:!!isElite,
-    turn:0, charging:false,
+    turn:0, charging:false, staggered:false, shielded:false,
   };
-  $("cb-name").textContent = isBoss ? "Duello con il Boss" : (isElite ? "Nemico Élite" : "Scontro");
+  player.ardore = 0;
+  if(isBoss){
+    showBossCutscene(tile.region, ()=>openCombatModal(enemy, tile, isBoss, isElite));
+  } else {
+    openCombatModal(enemy, tile, isBoss, isElite);
+  }
+}
+function openCombatModal(enemy, tile, isBoss, isElite){
+  const C = CLASSES[player.cls||"vagabondo"];
+  const tec = TECNICAS[C.tecnica];
+  const tn = $("tecnica-label");
+  if(tn && tec) tn.textContent = `${tec.icon} ${tec.nm}`;
+  $("cb-name").textContent = isBoss ? "♛ "+enemy.n : (isElite ? "☠ "+enemy.n : "⚔ Scontro");
   $("cb-sub").textContent = enemy.sub || (isElite ? "Un avversario temibile ti sbarra la strada." : "Le lame si incrociano nella polvere.");
   $("cb-ename").textContent = enemy.n;
   $("combat-log").innerHTML = `<div>${enemy.n} ti si para davanti.</div>`;
   $("cb-flee").style.display = (isBoss||isElite) ? "none" : "";
   renderCombat();
+  renderArdore();
   $("ov-combat").classList.add("open");
   bsInit(enemy.n, tile.region, !!isBoss, !!isElite);
   if(isBoss){ Music.start("boss"+tile.region); bsBossIntro(tile.region); }
@@ -1996,6 +2246,71 @@ function cbLog(html, cls){
   box.appendChild(d);
   while(box.children.length>4) box.removeChild(box.firstChild);
 }
+function gainArdore(n){
+  if(!player) return;
+  player.ardore = Math.min(100, (player.ardore||0)+n);
+  renderArdore();
+}
+function renderArdore(){
+  if(!player) return;
+  const a = player.ardore||0;
+  const fill = $("ardore-fill");
+  const pct  = $("ardore-pct");
+  const wrap = $("ardore-wrap");
+  const btn  = $("cb-tecnica");
+  if(fill) fill.style.width = a+"%";
+  if(pct)  pct.textContent  = a+"%";
+  if(wrap) wrap.classList.toggle("ready", a>=100);
+  if(btn){
+    btn.disabled = a<100;
+  }
+}
+function actTecnica(){
+  if(!combat||combat.over||bsBusy()) return;
+  const a = player.ardore||0;
+  if(a<100) return;
+  player.ardore = 0;
+  combat.turn++;
+  const C = CLASSES[player.cls||"vagabondo"];
+  const key = C.tecnica;
+  const tec = TECNICAS[key];
+  cbLog(`<span class="warn">${tec.icon} <strong>${tec.nm}</strong> — ${tec.desc}</span>`);
+  if(key==="lama_spezzata"){
+    bsHeroAttack();
+    const dmg = (d6()+player.atk)*2;
+    combat.e.hp -= dmg;
+    floatDmg("cb-eside", "-"+dmg, tec.col);
+    cbLog(`Lama Spezzata: <strong>${dmg}</strong> danni. Il nemico è stordito!`);
+    combat.staggered = true;
+  } else if(key==="barriera_ferro"){
+    combat.shielded = true;
+    cbLog(`Barriera di Ferro: il prossimo colpo sarà riflesso.`);
+  } else if(key==="divorare_cenere"){
+    let totalDmg=0, totalHeal=0;
+    for(let i=0;i<3;i++){
+      const dmg = d6()+player.atk;
+      combat.e.hp -= dmg;
+      const heal = Math.round(dmg/2);
+      player.hp = Math.min(player.maxhp, player.hp+heal);
+      totalDmg+=dmg; totalHeal+=heal;
+    }
+    bsHeroAttack();
+    floatDmg("cb-eside", "-"+totalDmg, tec.col);
+    floatDmg("cb-pside", "+"+totalHeal, "#b9d49a");
+    cbLog(`<span class="heal">Divorare la Cenere: ${totalDmg} danni, +${totalHeal} curati.</span>`);
+  } else if(key==="colpo_basso"){
+    bsHeroAttack();
+    const mult = (combat.charging||combat.phase2) ? 3 : 1;
+    const dmg = (d6()+player.atk)*mult;
+    combat.e.hp -= dmg;
+    floatDmg("cb-eside", "-"+dmg, tec.col);
+    cbLog(`Colpo Basso: <strong>${dmg}</strong> danni${mult===3?" (×3!)":""}.`);
+    if(mult===3) combat.charging = false;
+  }
+  renderArdore();
+  if(!checkCombatEnd() && combat.e.hp>0) enemyTurn(false);
+  checkCombatEnd();
+}
 function enemyDamage(){
   const e = combat.e;
   let dmg = d6() + e.atk;
@@ -2013,14 +2328,30 @@ function maybeCharge(){
 function enemyTurn(skip){
   if(combat.e.hp<=0) return;
   if(skip){ maybeCharge(); return; }
+  if(combat.staggered){
+    combat.staggered = false;
+    cbLog(`<span class="warn">${combat.e.n} è stordito — salta il turno.</span>`);
+    maybeCharge();
+    return;
+  }
   const wasCharged = combat.charging;
   bsEnemyAttack(wasCharged);
-  const dmg = enemyDamage();
-  player.hp -= dmg;
-  cbLog(`<span class="hit">${combat.e.n} ti colpisce per ${dmg}.</span>`);
-  floatDmg("cb-pside", "-"+dmg, "#e07a6e");
-  fx($("ov-combat").querySelector(".modal"), "shake", 450);
-  fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
+  let dmg = enemyDamage();
+  if(combat.shielded){
+    combat.shielded = false;
+    const counterDmg = d6()+player.atk;
+    combat.e.hp -= counterDmg;
+    cbLog(`<span class="heal">Barriera di Ferro assorbe il colpo! Contrattacchi per ${counterDmg}.</span>`);
+    floatDmg("cb-eside", "-"+counterDmg, "#80c0ff");
+    fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
+  } else {
+    player.hp -= dmg;
+    cbLog(`<span class="hit">${combat.e.n} ti colpisce per ${dmg}.</span>`);
+    floatDmg("cb-pside", "-"+dmg, "#e07a6e");
+    fx($("ov-combat").querySelector(".modal"), "shake", 450);
+    fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
+  }
+  gainArdore(10);
   maybeCharge();
 }
 function checkCombatEnd(){
@@ -2040,6 +2371,7 @@ function actAttack(){
   combat.e.hp -= dmg;
   cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>.`);
   floatDmg("cb-eside", "-"+dmg, "#ecc857");
+  gainArdore(12);
   if(combat.e.hp>0) enemyTurn(false);
   checkCombatEnd();
 }
@@ -2056,14 +2388,16 @@ function actParry(){
     cbLog(`<span class="heal">Parata riuscita (${roll})${wasCharging?" — il colpo devastante va a vuoto":""}! Contrattacchi per ${dmg}.</span>`);
     fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
     floatDmg("cb-eside", "-"+dmg, "#ecc857");
+    gainArdore(22);
     enemyTurn(true);
   } else {
     cbLog(`La parata fallisce (${roll}).`);
+    gainArdore(6);
     enemyTurn(false);
   }
   checkCombatEnd();
 }
-function flaskHeal(){ return Math.max(18, Math.round(player.maxhp*0.4)) + player.flaskBonus; }
+function flaskHeal(){ return Math.max(20, Math.round(player.maxhp*0.38)) + (player.flaskBonus||0); }
 function actFlask(){
   if(combat.over || player.flasks<=0 || bsBusy()) return;
   combat.turn++;
@@ -2075,6 +2409,7 @@ function actFlask(){
   cbLog(`<span class="heal">Bevi una fiaschetta: +${heal} vitalità.</span>`);
   fx($("ov-combat").querySelector(".modal"), "flash-heal", 650);
   floatDmg("cb-pside", "+"+heal, "#b9d49a");
+  gainArdore(4);
   enemyTurn(false);
   checkCombatEnd();
 }
@@ -2092,7 +2427,7 @@ function actFlee(){
     combat = null;
     log("Fuggi dallo scontro, arretrando di una casella.");
     renderBoard(); renderStats();
-    setAction("Fuga", "Ti metti in salvo, ma il nemico resta in agguato. Tira il dado.", [["Tira il dado",rollMove]]);
+    setAction("Fuga", "Ti metti in salvo, ma il nemico resta in agguato. Tira il dado.", [["Tira il dado",rollMove]], "enemy");
     return;
   }
   cbLog(`La fuga fallisce (${roll}).`);
@@ -2102,6 +2437,7 @@ function actFlee(){
 function winCombat(){
   if(combat.over) return;
   combat.over = true;
+  player.ardore = 0;
   const e = combat.e;
   const reward = rnd(e.r[0], e.r[1] || e.r[0]);
   player.runes += reward;
@@ -2121,7 +2457,7 @@ function winCombat(){
     renderAll();
     if(wasFinal){ victory(); return; }
     if(wasBoss){
-      setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,tiles[player.pos].region+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]]);
+      setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,tiles[player.pos].region+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]], "boss");
     } else {
       setAction("Vittoria", "Il sentiero torna silenzioso. Tira il dado per avanzare.", [["Tira il dado",rollMove]]);
     }
@@ -2131,6 +2467,7 @@ function winCombat(){
 /* ===================== MORTE E VITTORIA ===================== */
 let runesDropAmount = 0;
 function die(){
+  player.ardore = 0;
   bsHeroDie();
   Music.stop();
   sfx("death");
@@ -2164,7 +2501,7 @@ $("death-respawn").addEventListener("click", ()=>{
   player.flasks = player.maxflasks;
   log("Risorgi all'ultima grazia.","good");
   renderAll();
-  setAction("❋ Risveglio", "La grazia ti ha richiamato. Il tuo nemico ti attende ancora.", [["Tira il dado",rollMove],["Medita",showGraceMenu]]);
+  setAction("❋ Risveglio", "La grazia ti ha richiamato. Il tuo nemico ti attende ancora.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
 
 function victory(){
@@ -2212,6 +2549,7 @@ $("cb-attack").addEventListener("click", ()=>{ if(combat) actAttack(); });
 $("cb-parry").addEventListener("click", ()=>{ if(combat) actParry(); });
 $("cb-flask").addEventListener("click", ()=>{ if(combat) actFlask(); });
 $("cb-flee").addEventListener("click", ()=>{ if(combat) actFlee(); });
+$("cb-tecnica").addEventListener("click", ()=>{ if(combat) actTecnica(); });
 
 $("btn-sound").addEventListener("click", ()=>{
   AudioFX.enabled = !AudioFX.enabled;
@@ -2243,6 +2581,7 @@ if(document.addEventListener){
       if(k==="a") actAttack();
       else if(k==="p") actParry();
       else if(k==="f") actFlask();
+      else if(k==="t") actTecnica();
       else if(k==="s" && !combat.isBoss && !combat.isElite) actFlee();
       return;
     }
@@ -2305,10 +2644,13 @@ function renderClassPicker(){
     card.className = "class-card" + (key===chosenClass ? " sel" : "");
     card.setAttribute("role","button");
     card.tabIndex = 0;
+    const tec = TECNICAS[C.tecnica];
     card.innerHTML = `
       <div class="cls-head"><span class="cls-glyph">${C.glyph}</span><span class="cls-name">${C.nm}</span></div>
       <div class="cls-desc">${C.desc}</div>
-      <div class="cls-stats"><b>${C.hp}</b> PV · <b>${C.atk}</b> ATK · <b>${C.flasks}</b> fiaschette${C.runes?` · <b>${C.runes}</b> rune`:""}</div>`;
+      <div class="cls-stats"><b>${C.hp}</b> PV · <b>${C.atk}</b> ATK · <b>${C.flasks}</b> fiaschette${C.runes?` · <b>${C.runes}</b> rune`:""}</div>
+      ${tec?`<div class="cls-tecnica" style="color:${tec.col}">${tec.icon} <strong>${tec.nm}</strong> — <span style="color:#7e6f4d;font-size:.78rem">${tec.desc}</span></div>`:""}
+    `;
     const pick = ()=>{ chosenClass = key; renderClassPicker(); sfx("step"); };
     card.addEventListener("click", pick);
     card.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(); } });
@@ -2368,7 +2710,7 @@ $("btn-continue").addEventListener("click", ()=>{
   renderAll();
   drawPortrait();
   log("Riprendi il viaggio dove l'avevi lasciato.","gold");
-  setAction("Il sentiero", "La grazia ti guida ancora. Tira il dado per avanzare.", [["Tira il dado",rollMove],["Medita",showGraceMenu]]);
+  setAction("Il sentiero", "La grazia ti guida ancora. Tira il dado per avanzare.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
 
 /* ===================== IMPOSTAZIONI ===================== */
