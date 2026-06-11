@@ -508,6 +508,39 @@ kbd{
 .set-row input[type=range]{width:100%;accent-color:var(--gold)}
 .set-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);justify-self:start}
 .set-val{font-family:var(--f-pixel);font-size:.78rem;color:var(--gold-bright);text-align:right}
+
+/* ---------- canvas morte ---------- */
+#death-canvas{
+  position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);
+  width:min(560px,94vw);height:auto;image-rendering:pixelated;image-rendering:crisp-edges;
+  z-index:1;opacity:.9;pointer-events:none;
+}
+/* ---------- transizione di regione ---------- */
+#region-wipe{
+  position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;
+  background:var(--ink);overflow:hidden;
+}
+#region-wipe.run{display:flex;animation:wipefade 1.5s ease forwards}
+@keyframes wipefade{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
+#region-wipe::before,#region-wipe::after{
+  content:"";position:absolute;left:0;right:0;height:50%;background:linear-gradient(180deg,#1a140c,#0d0b08);
+  z-index:1;
+}
+#region-wipe::before{top:0;animation:wipetop 1.5s ease forwards}
+#region-wipe::after{bottom:0;animation:wipebot 1.5s ease forwards}
+@keyframes wipetop{0%{transform:translateY(0)}55%{transform:translateY(0)}100%{transform:translateY(-100%)}}
+@keyframes wipebot{0%{transform:translateY(0)}55%{transform:translateY(0)}100%{transform:translateY(100%)}}
+#region-wipe-inner{position:relative;z-index:2;text-align:center;padding:1rem}
+#region-wipe-num{font-family:var(--f-pixel);font-size:2.4rem;color:var(--edge);letter-spacing:.1em;text-shadow:3px 3px 0 #000}
+#region-wipe-name{font-family:var(--f-pixel);font-size:.9rem;color:var(--gold-bright);text-transform:uppercase;letter-spacing:.06em;margin-top:.8rem;text-shadow:2px 2px 0 #000;line-height:1.5}
+#region-wipe .wline{width:60%;height:1px;background:var(--edge);margin:1rem auto 0}
+/* ---------- medaglie ---------- */
+#victory-medals{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:.4em 0 .2em}
+.vmedal{display:flex;align-items:center;gap:.4em;border:1px solid #6b561f;background:rgba(40,30,12,.6);
+  padding:.3em .7em;font-size:.92rem;color:var(--gold-bright)}
+.vmedal.fresh{animation:medalpop .6s ease-out;border-color:var(--gold-bright);box-shadow:0 0 14px rgba(236,200,87,.4)}
+@keyframes medalpop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.vmedal .vm-ic{font-size:1.1rem}
 </style>
 </head>
 <body>
@@ -738,7 +771,8 @@ kbd{
 
 <!-- ============ MORTE ============ -->
 <div class="overlay" id="ov-death">
-  <div class="modal" style="background:transparent;border:none;box-shadow:none">
+  <canvas id="death-canvas" width="340" height="150" aria-hidden="true"></canvas>
+  <div class="modal" style="background:transparent;border:none;box-shadow:none;position:relative;z-index:2">
     <p id="death-text">Sei morto</p>
     <p class="center" id="death-sub"></p>
     <div class="runstats" id="death-stats"></div>
@@ -753,8 +787,17 @@ kbd{
   <div class="modal">
     <p id="victory-text">Le Terre sono tue</p>
     <p class="center" id="victory-sub"></p>
+    <div id="victory-medals"></div>
     <div class="runstats" id="victory-stats"></div>
     <div class="btnrow"><button id="victory-restart">Nuovo viaggio</button></div>
+  </div>
+</div>
+
+<!-- ============ TRANSIZIONE DI REGIONE ============ -->
+<div id="region-wipe" aria-hidden="true">
+  <div id="region-wipe-inner">
+    <div id="region-wipe-num"></div>
+    <div id="region-wipe-name"></div>
   </div>
 </div>
 
@@ -919,8 +962,11 @@ function newGame(cls){
     runes:C.runes, level:1, checkpoint:0,
     items:[...C.items], canMove:true, deaths:0,
     rolls:0, runesEarned:C.runes, startedAt:Date.now(),
-    ardore:0, visitedRegions:[0],
+    ardore:0, visitedRegions:[0], lastRegionSeen:0,
   };
+  // piccolo bonus permanente: +8 rune iniziali per ogni titolo ottenuto
+  const medalBonus = getMedals().length * 8;
+  if(medalBonus){ player.runes += medalBonus; player.runesEarned += medalBonus; }
   tiles[0].cleared = true; // grazia iniziale già accesa
   combat = null;
   runesDropTile = null;
@@ -932,7 +978,13 @@ function newGame(cls){
   drawPortrait();
   saveGame();
   setAction("Il sentiero", "La grazia ti guida verso est. Tira il dado per avanzare.", [["Tira il dado",rollMove]]);
-  setTimeout(()=>showLorePanel(REGION_LORE[0], ()=>{}), 900);
+  setTimeout(()=>showLorePanel(REGION_LORE[0], ()=>resumeAmbient()), 900);
+}
+function resumeAmbient(){
+  if(!player || !AudioFX.enabled) return;
+  if($("ov-combat").classList.contains("open")) return;
+  const reg = tiles[player.pos] ? tiles[player.pos].region : 0;
+  Ambient.start(reg);
 }
 
 /* ===================== UTILITÀ ===================== */
@@ -1013,9 +1065,10 @@ function hasSave(){
 }
 /* record personali */
 function getStats(){
-  if(!storageOk()) return {wins:0, deaths:0, bestRolls:null, bestLevel:0};
-  try{ return JSON.parse(localStorage.getItem(STATS_KEY)) || {wins:0,deaths:0,bestRolls:null,bestLevel:0}; }
-  catch(e){ return {wins:0,deaths:0,bestRolls:null,bestLevel:0}; }
+  const def = {wins:0, deaths:0, bestRolls:null, bestLevel:0, medals:[]};
+  if(!storageOk()) return def;
+  try{ return Object.assign(def, JSON.parse(localStorage.getItem(STATS_KEY)) || {}); }
+  catch(e){ return def; }
 }
 function saveStats(st){
   if(!storageOk()) return;
@@ -1242,12 +1295,20 @@ function arriveAt(tile, roll){
     toast(`⟐ ${rec} rune recuperate`, "gold");
     sfx("rune");
   }
-  // lore prima visita in una nuova regione
+  // transizione visiva + lore all'ingresso di una nuova regione
   const _vr = player.visitedRegions = player.visitedRegions||[0];
-  if(tile.region>0 && !_vr.includes(tile.region)){
-    _vr.push(tile.region);
-    const lore = REGION_LORE[tile.region];
-    if(lore){ showLorePanel(lore, ()=>arriveAt(tile, roll)); return; }
+  if(player.lastRegionSeen==null) player.lastRegionSeen = tiles[player.checkpoint] ? tiles[player.checkpoint].region : 0;
+  if(tile.region !== player.lastRegionSeen){
+    const newRegion = tile.region;
+    const firstVisit = !_vr.includes(newRegion);
+    player.lastRegionSeen = newRegion;
+    if(firstVisit) _vr.push(newRegion);
+    regionTransition(newRegion, ()=>{
+      const lore = firstVisit ? REGION_LORE[newRegion] : null;
+      if(lore) showLorePanel(lore, ()=>arriveAt(tile, roll));
+      else arriveAt(tile, roll);
+    });
+    return;
   }
   if(tile.cleared && tile.type!=="grace" && tile.type!=="shop"){
     const fl = flavor("path", tile.region);
@@ -1632,6 +1693,106 @@ const AudioFX = {
   }
 };
 function sfx(n){ AudioFX.play(n); }
+
+/* ===================== AMBIENZA SONORA PER REGIONE ===================== */
+/* drone continuo + eventi sparsi (gocce, scintille, ping) generati a runtime.
+   Suona durante l'esplorazione; si ferma in combattimento e ai menù. */
+const Ambient = {
+  timer:0, region:-1, bus:null, drone:[], enabled:true,
+  ensure(){
+    if(!AudioFX.ensure()) return false;
+    if(!this.bus){
+      this.bus = AudioFX.ctx.createGain();
+      this.bus.gain.value = 0.0001;
+      this.bus.connect(AudioFX.ctx.destination);
+    }
+    return true;
+  },
+  vol(){ return Math.max(0, Math.min(1, (Music.vol||0.6))) * 0.5; },
+  start(region){
+    if(!AudioFX.enabled || !this.enabled || !this.ensure()) return;
+    if(AudioFX.ctx.state==="suspended") AudioFX.ctx.resume();
+    if(this.region===region && this.timer) return;
+    this.stop(true);
+    this.region = region;
+    const c = AudioFX.ctx, now = c.currentTime;
+    // drone: due oscillatori detunati, frequenza per regione
+    const baseFreq = [55, 49, 62, 41][region] || 50;
+    const types = ["sine","triangle","sawtooth","sawtooth"];
+    [-5,5].forEach((cents,i)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type = types[region]||"sine";
+      o.frequency.value = baseFreq*Math.pow(2,cents/1200);
+      g.gain.value = i===0?0.5:0.32;
+      o.connect(g); g.connect(this.bus); o.start(now);
+      this.drone.push(o,g);
+    });
+    this.bus.gain.cancelScheduledValues(now);
+    this.bus.gain.setValueAtTime(Math.max(0.0001,this.bus.gain.value), now);
+    this.bus.gain.exponentialRampToValueAtTime(Math.max(0.0001,this.vol()), now+1.2);
+    this.timer = setInterval(()=>this.tick(), 380);
+  },
+  tick(){
+    if(!AudioFX.enabled || !this.bus){ this.stop(); return; }
+    const c = AudioFX.ctx, t = c.currentTime;
+    const r = this.region;
+    if(r===0){ // Sepolcreto: vento metallico + campana rara
+      if(Math.random()<.5) AmbientNoise(t,.5,.012, 'wind');
+      if(Math.random()<.05) AmbientTone(this.bus,[196,233][Math.random()<.5?0:1],t,1.6,"sine",.05);
+    } else if(r===1){ // Palude: gocce
+      if(Math.random()<.4){ const f=520+Math.random()*500; AmbientTone(this.bus,f,t,.25,"sine",.06,f*0.4); }
+      if(Math.random()<.12) AmbientNoise(t,.3,.008,'wind');
+    } else if(r===2){ // Altopiano: crepitio di fuoco
+      if(Math.random()<.7) AmbientNoise(t,.05+Math.random()*.06,.02,'crackle');
+      if(Math.random()<.04) AmbientTone(this.bus,70,t,.8,"sawtooth",.05);
+    } else if(r===3){ // Cittadella: silenzio distorto + ping alti
+      if(Math.random()<.18){ const f=1200+Math.random()*900; AmbientTone(this.bus,f,t,.6,"square",.018,f*0.7); }
+      if(Math.random()<.08) AmbientNoise(t,.7,.006,'wind');
+    }
+  },
+  setRegion(region){
+    if(this.timer && this.region!==region) this.start(region);
+  },
+  setVol(){
+    if(this.bus && this.timer && AudioFX.ctx){
+      const t=AudioFX.ctx.currentTime;
+      this.bus.gain.cancelScheduledValues(t);
+      this.bus.gain.setValueAtTime(Math.max(0.0001,this.vol()), t);
+    }
+  },
+  stop(keepRegion){
+    if(this.timer){ clearInterval(this.timer); this.timer=0; }
+    if(this.bus && AudioFX.ctx){
+      const t=AudioFX.ctx.currentTime;
+      this.bus.gain.cancelScheduledValues(t);
+      this.bus.gain.setValueAtTime(Math.max(0.0001,this.bus.gain.value), t);
+      this.bus.gain.exponentialRampToValueAtTime(0.0001, t+0.4);
+    }
+    this.drone.forEach(n=>{ try{ if(n.stop) n.stop(AudioFX.ctx.currentTime+0.5); }catch(e){} });
+    this.drone = [];
+    if(!keepRegion) this.region = -1;
+  },
+};
+function AmbientTone(bus, freq, t, dur, type, vol, slideTo){
+  const c=AudioFX.ctx, o=c.createOscillator(), g=c.createGain();
+  o.type=type||"sine"; o.frequency.setValueAtTime(freq,t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20,slideTo), t+dur);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol||0.04, t+Math.min(0.08,dur*0.3));
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(bus); o.start(t); o.stop(t+dur+0.05);
+}
+function AmbientNoise(t, dur, vol, kind){
+  const c=AudioFX.ctx, n=Math.floor(c.sampleRate*dur);
+  const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++){
+    const env = kind==='crackle' ? (Math.random()<.3?1:0) : (1-i/n);
+    d[i]=(Math.random()*2-1)*env;
+  }
+  const src=c.createBufferSource(); src.buffer=buf;
+  const g=c.createGain(); g.gain.value=vol||0.01;
+  src.connect(g); g.connect(Ambient.bus||AudioFX.out()); src.start(t);
+}
 
 /* ===================== TOAST ===================== */
 function toast(msg, cls){
@@ -2599,6 +2760,21 @@ function showLorePanel(cfg, onComplete){
   document.addEventListener("keydown",onKey);
 }
 
+/* ---- transizione visiva all'ingresso di una nuova regione ---- */
+function regionTransition(region, cb){
+  const ov = $("region-wipe");
+  if(!ov || REDUCED){ if(cb) cb(); return; }
+  $("region-wipe-num").textContent = String(region+1).padStart(2,"0");
+  $("region-wipe-name").innerHTML = `${REGIONS[region]}<div class="wline"></div>`;
+  ov.classList.remove("run"); void ov.offsetWidth;
+  ov.classList.add("run");
+  Ambient.setRegion(region);
+  sfx("grace");
+  let fired=false;
+  setTimeout(()=>{ if(!fired){ fired=true; if(cb) cb(); } }, 820); // a schermo coperto
+  setTimeout(()=>{ ov.classList.remove("run"); }, 1500);
+}
+
 /* ---- animazione ingresso boss ---- */
 function bsBossIntro(bossIdx){
   if(!BS.enemy) return;
@@ -2764,6 +2940,7 @@ function openCombatModal(enemy, tile, isBoss, isElite){
   $("cb-flee").style.display = (isBoss||isElite) ? "none" : "";
   renderCombat();
   renderArdore();
+  Ambient.stop(true);
   $("ov-combat").classList.add("open");
   bsInit(enemy.n, tile.region, !!isBoss, !!isElite);
   if(isBoss){ Music.start("boss"+tile.region); bsBossIntro(tile.region); }
@@ -3038,6 +3215,7 @@ function actFlee(){
     combat = null;
     log("Fuggi dallo scontro, arretrando di una casella.");
     renderBoard(); renderStats();
+    resumeAmbient();
     setAction("Fuga", "Ti metti in salvo, ma il nemico resta in agguato. Tira il dado.", [["Tira il dado",rollMove]], "enemy");
     return;
   }
@@ -3069,6 +3247,7 @@ function winCombat(){
     combat = null;
     renderAll();
     if(wasFinal){ victory(); return; }
+    resumeAmbient();
     if(wasBoss){
       const epi = BOSS_EPILOGUE[bossRegion];
       const goNext = ()=>setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,bossRegion+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]], "boss");
@@ -3116,6 +3295,8 @@ function die(){
     <div class="st"><div class="n">${tiles.filter(t=>t.type==="boss"&&t.cleared).length}/4</div><div class="l">Boss</div></div>`;
   player.runes = kept;
   combat = null;
+  Ambient.stop();
+  const deathRegion = tiles[player.pos] ? tiles[player.pos].region : 0;
   respawnEnemies();
   recordDeath();
   log("Sei morto. Le rune restano dove sei caduto.","bad");
@@ -3123,30 +3304,117 @@ function die(){
     bsStop();
     $("ov-combat").classList.remove("open");
     $("ov-death").classList.add("open");
+    playDeathScene(deathRegion);
   }, REDUCED?60:1300);
+}
+/* scena di morte: l'eroe crolla mentre un'onda d'urto rossa si espande */
+let _deathRaf = 0;
+function playDeathScene(region){
+  const cv = $("death-canvas");
+  if(!cv || !cv.getContext || REDUCED) return;
+  const ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  const W=cv.width, H=cv.height;
+  // particelle dell'eroe che si disgrega
+  const map = SPRITES.hero, px = 5, sz = {w:map[0].length, h:map.length};
+  const ox = Math.round(W/2 - sz.w*px/2), oy = Math.round(H - sz.h*px - 10);
+  const parts = [];
+  for(let r=0;r<sz.h;r++)for(let c=0;c<sz.w;c++){
+    const ch = map[r][c]; if(ch===".") continue;
+    parts.push({x:ox+c*px, y:oy+r*px, vx:(Math.random()-.5)*1.2, vy:-Math.random()*1.5-0.3,
+      c:HERO_PAL[ch]||"#caa", life:1, delay:300+r*55+Math.random()*120});
+  }
+  const rings = [];
+  let last = performance.now(), t0 = last;
+  if(_deathRaf) cancelAnimationFrame(_deathRaf);
+  function loop(ts){
+    const dt = Math.min(50, ts-last); last = ts; const el = ts-t0;
+    ctx.clearRect(0,0,W,H);
+    // onde d'urto rosse periodiche
+    if(rings.length<4 && el > rings.length*420){ rings.push({r:0, life:1}); }
+    rings.forEach(rg=>{
+      rg.r += dt*0.22; rg.life -= dt/1400;
+      if(rg.life>0){
+        ctx.strokeStyle = `rgba(156,58,50,${Math.max(0,rg.life)*0.6})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(W/2, oy+sz.h*px*0.5, rg.r, 0, 7); ctx.stroke();
+      }
+    });
+    // sprite intatta finché non si disgrega, poi particelle
+    parts.forEach(p=>{
+      if(el < p.delay){
+        ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, px, px);
+      } else {
+        p.x += p.vx*dt/16; p.y += p.vy*dt/16; p.vy += 0.05*dt/16; p.life -= dt/2600;
+        if(p.life>0){ ctx.globalAlpha = Math.max(0,p.life); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, px, px); ctx.globalAlpha = 1; }
+      }
+    });
+    if(el < 3200 && $("ov-death").classList.contains("open")) _deathRaf = requestAnimationFrame(loop);
+    else _deathRaf = 0;
+  }
+  _deathRaf = requestAnimationFrame(loop);
 }
 $("death-respawn").addEventListener("click", ()=>{
   $("ov-death").classList.remove("open");
+  if(_deathRaf){ cancelAnimationFrame(_deathRaf); _deathRaf=0; }
   player.pos = player.checkpoint;
   player.hp = player.maxhp;
   player.flasks = player.maxflasks;
+  player.lastRegionSeen = tiles[player.pos] ? tiles[player.pos].region : 0;
   log("Risorgi all'ultima grazia.","good");
   renderAll();
+  resumeAmbient();
   setAction("❋ Risveglio", "La grazia ti ha richiamato. Il tuo nemico ti attende ancora.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
 
+/* ===================== MEDAGLIE / TITOLI ===================== */
+const MEDALS = [
+  {id:"finisher", ic:"✦", nm:"Senza Fiamma",    desc:"Completa il viaggio",            test:()=>true},
+  {id:"flawless", ic:"☀", nm:"Imbattuto",       desc:"Vinci senza mai morire",         test:()=>(player.deaths||0)===0},
+  {id:"swift",    ic:"⚡", nm:"Fulmineo",         desc:"Vinci in meno di 45 tiri",       test:()=>(player.rolls||0)<45},
+  {id:"beggar",   ic:"⚱", nm:"Mendico Asceso",  desc:"Vinci nei panni del Mendico",    test:()=>(player.cls||chosenClass)==="mendico"},
+];
+function getMedals(){ const st=getStats(); return st.medals||[]; }
+function unlockMedals(){
+  const st = getStats();
+  const owned = st.medals || [];
+  const fresh = [];
+  MEDALS.forEach(m=>{ if(m.test() && !owned.includes(m.id)){ owned.push(m.id); fresh.push(m.id); } });
+  st.medals = owned;
+  saveStats(st);
+  return fresh;
+}
+function medalHTML(ids, freshIds){
+  return ids.map(id=>{
+    const m = MEDALS.find(x=>x.id===id); if(!m) return "";
+    const fresh = freshIds && freshIds.includes(id) ? " fresh" : "";
+    return `<span class="vmedal${fresh}" title="${m.desc}"><span class="vm-ic">${m.ic}</span>${m.nm}</span>`;
+  }).join("");
+}
+function renderTitleMedals(){
+  const host = $("title-medal-strip");
+  if(!host) return;
+  const ids = getMedals();
+  host.innerHTML = ids.map(id=>{ const m=MEDALS.find(x=>x.id===id); return m?`<span class="medal" title="${m.nm}: ${m.desc}">${m.ic}</span>`:""; }).join("");
+}
 function victory(){
   sfx("victory");
   recordVictory();
+  const fresh = unlockMedals();
   clearSave();
   const st = getStats();
   const best = st.bestRolls!=null ? `${st.bestRolls} tiri` : "—";
   $("victory-sub").innerHTML = `Il Sovrano Senza Nome è caduto. Le Terre Spezzate conoscono di nuovo l'alba.<br><span style="font-size:.85rem;color:#6b5c3c">Classe: ${CLASSES[player.cls||chosenClass].nm} · Miglior viaggio: ${best}</span>`;
+  const medals = getMedals();
+  $("victory-medals").innerHTML = medals.length
+    ? `<div style="font-size:.78rem;color:#6b5c3c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3em;font-family:var(--f-pixel)">Titoli ottenuti${fresh.length?" · "+fresh.length+" nuovo!":""}</div>`+medalHTML(medals, fresh)
+    : "";
   $("victory-stats").innerHTML = `
     <div class="st"><div class="n">${player.level}</div><div class="l">Livello</div></div>
     <div class="st"><div class="n">${player.rolls||0}</div><div class="l">Tiri</div></div>
     <div class="st"><div class="n">${player.deaths||0}</div><div class="l">Morti</div></div>
     <div class="st"><div class="n">${player.runes}</div><div class="l">Rune finali</div></div>`;
+  Ambient.stop();
   $("ov-victory").classList.add("open");
 }
 $("victory-restart").addEventListener("click", ()=>{
@@ -3160,6 +3428,7 @@ $("victory-restart").addEventListener("click", ()=>{
   const ec = $("title-embers"); if(ec && ec.style) ec.style.display = "";
   renderClassPicker();
   updateTitleStats();
+  renderTitleMedals();
   refreshContinueBtn();
   // riavvia musica menu
   menuMusicStarted = false;
@@ -3184,7 +3453,8 @@ $("cb-tecnica").addEventListener("click", ()=>{ if(combat) actTecnica(); });
 
 $("btn-sound").addEventListener("click", ()=>{
   AudioFX.enabled = !AudioFX.enabled;
-  if(!AudioFX.enabled) Music.stop();
+  if(!AudioFX.enabled){ Music.stop(); Ambient.stop(); }
+  else resumeAmbient();
   $("btn-sound").textContent = AudioFX.enabled ? "♪" : "✕";
   $("btn-sound").style.opacity = AudioFX.enabled ? "1" : ".5";
   if(AudioFX.enabled) sfx("rune");
@@ -3303,6 +3573,7 @@ function refreshContinueBtn(){
 }
 renderClassPicker();
 updateTitleStats();
+renderTitleMedals();
 refreshContinueBtn();
 
 function enterGame(){
@@ -3338,8 +3609,10 @@ $("btn-continue").addEventListener("click", ()=>{
   sfx("grace");
   const C = CLASSES[player.cls||chosenClass] || CLASSES.vagabondo;
   $("char-name").textContent = player.name || C.name;
+  player.lastRegionSeen = tiles[player.pos] ? tiles[player.pos].region : 0;
   renderAll();
   drawPortrait();
+  resumeAmbient();
   log("Riprendi il viaggio dove l'avevi lasciato.","gold");
   setAction("Il sentiero", "La grazia ti guida ancora. Tira il dado per avanzare.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
@@ -3378,7 +3651,7 @@ function openSettings(){
 }
 $("btn-settings").addEventListener("click", openSettings);
 $("settings-close").addEventListener("click", ()=>$("ov-settings").classList.remove("open"));
-$("vol-music").addEventListener("input", e=>{ settings.music=+e.target.value; applySettings(settings); saveSettings(settings); });
+$("vol-music").addEventListener("input", e=>{ settings.music=+e.target.value; applySettings(settings); Ambient.setVol(); saveSettings(settings); });
 $("vol-sfx").addEventListener("input", e=>{ settings.sfx=+e.target.value; applySettings(settings); saveSettings(settings); });
 $("vol-sfx").addEventListener("change", ()=>{ AudioFX.ensure(); sfx("rune"); });
 $("opt-anim").addEventListener("change", e=>{ settings.anim=e.target.checked; applySettings(settings); saveSettings(settings); });
