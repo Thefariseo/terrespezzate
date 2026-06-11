@@ -1,14 +1,2226 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Le Terre Spezzate Ascension</title>
-  <meta name="description" content="Board game soulslike React/Vite con pixel art, boss music e meccaniche roguelite." />
-  <meta name="theme-color" content="#0d0b08" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Terre Spezzate — Gioco da tavolo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d0b08;
+  --coal:#16110c;
+  --panel:#1d1710;
+  --edge:#3a2e1c;
+  --gold:#c9a227;
+  --gold-bright:#ecc857;
+  --parchment:#ddd2b6;
+  --faded:#9a8d6f;
+  --blood:#9c3a32;
+  --grace:#ffd87a;
+  --rot:#5a6b4a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--ink);
+  color:var(--parchment);
+  font-family:'EB Garamond',serif;
+  font-size:17px;
+  line-height:1.45;
+  background-image:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,162,39,.07), transparent 60%);
+  min-height:100vh;
+}
+h1,h2,h3,.cz{font-family:'Cinzel',serif}
+button{
+  font-family:'Cinzel',serif;
+  background:linear-gradient(180deg,#2a2114,#1a140c);
+  color:var(--gold-bright);
+  border:1px solid var(--edge);
+  padding:.55em 1.3em;
+  font-size:.85rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:border-color .2s, color .2s, transform .08s;
+}
+button:hover:not(:disabled){border-color:var(--gold);color:#fff}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!important;transition:none!important}
+
+/* ---------- animazioni ---------- */
+.die.rolling{animation:dietumble .4s linear infinite}
+@keyframes dietumble{
+  0%{transform:rotate(-6deg) translateY(0)}
+  25%{transform:rotate(5deg) translateY(-3px)}
+  50%{transform:rotate(-4deg) translateY(0)}
+  75%{transform:rotate(6deg) translateY(-2px)}
+  100%{transform:rotate(-6deg) translateY(0)}
+}
+.die.landed{animation:dieland .35s ease-out}
+@keyframes dieland{0%{transform:scale(1.6);text-shadow:0 0 22px rgba(236,200,87,.9)}100%{transform:scale(1)}}
+.tile .pawn{animation:pawnpop .22s ease-out}
+@keyframes pawnpop{0%{transform:scale(.3) translateY(-8px);opacity:.2}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.tile.stepped{animation:steppulse .3s ease-out}
+@keyframes steppulse{0%{box-shadow:0 0 0 0 rgba(236,200,87,.5)}100%{box-shadow:0 0 0 10px rgba(236,200,87,0)}}
+.tile.ignite .icon{animation:ignite 1.1s ease-out}
+@keyframes ignite{
+  0%{text-shadow:none;transform:scale(1)}
+  35%{text-shadow:0 0 28px rgba(255,216,122,1),0 0 60px rgba(255,216,122,.7);transform:scale(1.7)}
+  100%{text-shadow:0 0 8px rgba(255,216,122,.5);transform:scale(1)}
+}
+.overlay.open .modal{animation:modalin .3s ease-out}
+@keyframes modalin{0%{opacity:0;transform:translateY(14px) scale(.98)}100%{opacity:1;transform:none}}
+.overlay.open .modal h2{animation:bannerin .55s ease-out}
+@keyframes bannerin{0%{opacity:0;letter-spacing:.5em}100%{opacity:1}}
+.fighter{position:relative}
+.float-dmg{
+  position:absolute;left:50%;top:-6px;transform:translateX(-50%);
+  font-family:'Cinzel',serif;font-weight:700;font-size:1.25rem;pointer-events:none;
+  animation:floatup .95s ease-out forwards;white-space:nowrap;z-index:5;
+}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,8px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}100%{opacity:0;transform:translate(-50%,-30px) scale(1)}}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.flash-blood{animation:flashblood .45s}
+@keyframes flashblood{0%{box-shadow:inset 0 0 0 100vmax rgba(156,58,50,.28)}100%{box-shadow:inset 0 0 0 100vmax rgba(156,58,50,0)}}
+.flash-heal{animation:flashheal .6s}
+@keyframes flashheal{0%{box-shadow:inset 0 0 0 100vmax rgba(120,160,90,.22)}100%{box-shadow:inset 0 0 0 100vmax rgba(120,160,90,0)}}
+.flash-parry{animation:flashparry .5s}
+@keyframes flashparry{0%{box-shadow:inset 0 0 0 100vmax rgba(236,200,87,.3)}100%{box-shadow:inset 0 0 0 100vmax rgba(236,200,87,0)}}
+#ov-death.open #death-text{animation:deathfade 2.6s ease-out}
+@keyframes deathfade{0%{opacity:0;letter-spacing:.6em;filter:blur(6px)}60%{opacity:1}100%{letter-spacing:.2em;filter:none}}
+#ov-death.open #death-sub,#ov-death.open .btnrow{animation:slowin 2.6s ease-out}
+@keyframes slowin{0%,55%{opacity:0}100%{opacity:1}}
+#ov-victory.open #victory-text{animation:victin 2s ease-out}
+@keyframes victin{0%{opacity:0;transform:scale(.92);text-shadow:0 0 0 rgba(236,200,87,0)}100%{opacity:1;transform:scale(1);text-shadow:0 0 50px rgba(236,200,87,.5)}}
+.bar>i{transition:width .45s cubic-bezier(.2,.8,.3,1)}
+
+/* ---------- schermata titolo ---------- */
+#title-screen{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:2rem;gap:1.6rem;
+}
+.sigil{width:120px;height:120px;opacity:.9}
+#title-screen h1{
+  font-size:clamp(2.2rem,6vw,4.2rem);font-weight:900;letter-spacing:.14em;
+  color:var(--gold-bright);text-transform:uppercase;
+  text-shadow:0 0 30px rgba(236,200,87,.25);
+}
+#title-screen .sub{color:var(--faded);font-style:italic;font-size:1.1rem;max-width:34em}
+.rules{
+  max-width:40em;text-align:left;border:1px solid var(--edge);padding:1.2rem 1.5rem;
+  background:rgba(22,17,12,.7);color:var(--faded);font-size:.95rem;
+}
+.rules strong{color:var(--parchment)}
+.rules p{margin:.35em 0}
+
+/* ---------- layout di gioco ---------- */
+#game-screen{display:none;max-width:1180px;margin:0 auto;padding:1rem}
+.topbar{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+  border-bottom:1px solid var(--edge);padding-bottom:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.topbar h1{font-size:1.15rem;letter-spacing:.18em;color:var(--gold);font-weight:700;text-transform:uppercase}
+#region-name{color:var(--faded);font-style:italic}
+.layout{display:grid;grid-template-columns:1fr 320px;gap:1.2rem}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* ---------- tabellone ---------- */
+#board{
+  display:grid;grid-template-columns:repeat(9,1fr);gap:7px;
+  background:var(--coal);border:1px solid var(--edge);padding:14px;
+}
+.tile{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#211a11;border:1px solid #2e2516;position:relative;
+  font-size:clamp(.8rem,2vw,1.2rem);color:var(--faded);user-select:none;
+}
+.tile .icon{line-height:1}
+.tile .num{position:absolute;top:2px;left:4px;font-size:.55rem;color:#5b4f38;font-family:'Cinzel',serif}
+.tile.grace{border-color:#6b561f;color:var(--grace);box-shadow:inset 0 0 14px rgba(255,216,122,.15)}
+.tile.grace.active-grace .icon{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{text-shadow:0 0 6px rgba(255,216,122,.5)}50%{text-shadow:0 0 18px rgba(255,216,122,.95)}}
+.tile.boss{border-color:var(--blood);color:#d4756b}
+.tile.elite{color:#c08f5a}
+.tile.cleared{opacity:.45}
+.tile.cleared .icon::after{content:""}
+.tile.runes-drop{box-shadow:inset 0 0 12px rgba(236,200,87,.45);border-color:var(--gold)}
+.tile.current{
+  border-color:var(--gold-bright);
+  box-shadow:0 0 0 1px var(--gold-bright), 0 0 16px rgba(236,200,87,.35);
+  background:#2a2113;color:var(--gold-bright);
+}
+.tile .pawn{
+  position:absolute;bottom:2px;right:4px;font-size:.7rem;color:var(--gold-bright);
+}
+.legend{display:flex;flex-wrap:wrap;gap:.9rem;margin-top:.6rem;font-size:.8rem;color:var(--faded)}
+.legend span b{color:var(--parchment);font-weight:500}
+
+/* ---------- pannello azione ---------- */
+#action-panel{
+  margin-top:1rem;border:1px solid var(--edge);background:var(--panel);
+  padding:1.1rem 1.3rem;min-height:170px;
+}
+#action-panel h2{color:var(--gold);font-size:1rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem}
+#action-text{color:var(--parchment);margin-bottom:.8rem;min-height:2.4em}
+#action-buttons{display:flex;flex-wrap:wrap;gap:.6rem}
+.die{
+  display:inline-block;min-width:2.1em;text-align:center;border:1px solid var(--gold);
+  color:var(--gold-bright);font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;
+  padding:.18em .3em;margin-left:.4em;background:#241c0f;
+}
+
+/* ---------- colonna laterale ---------- */
+.side{display:flex;flex-direction:column;gap:1rem}
+.card{border:1px solid var(--edge);background:var(--panel);padding:1rem 1.1rem}
+.card h3{color:var(--gold);font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem}
+.statline{display:flex;justify-content:space-between;font-size:.98rem;padding:.12em 0}
+.statline .v{color:var(--gold-bright);font-family:'Cinzel',serif;font-size:.9rem}
+.bar{height:10px;background:#241c12;border:1px solid var(--edge);margin:.3em 0 .6em;position:relative}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7e2c26,#b8503f);transition:width .3s}
+.bar.gold>i{background:linear-gradient(90deg,#8a6b14,#ecc857)}
+#inv{font-size:.9rem;color:var(--faded)}
+#inv li{list-style:none;padding:.1em 0}
+#inv li::before{content:"✦ ";color:var(--gold)}
+#log{max-height:260px;overflow-y:auto;font-size:.9rem;color:var(--faded);display:flex;flex-direction:column-reverse}
+#log p{padding:.18em 0;border-bottom:1px dotted #2c2415}
+#log p.good{color:#b9d49a}
+#log p.bad{color:#d4847a}
+#log p.gold{color:var(--gold-bright)}
+
+/* ---------- overlay (combattimento, grazia, mercante, morte) ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(8,6,4,.88);display:none;
+  align-items:center;justify-content:center;padding:1rem;z-index:50;
+}
+.overlay.open{display:flex}
+.modal{
+  width:min(560px,100%);border:1px solid var(--edge);background:var(--coal);
+  padding:1.6rem 1.8rem;box-shadow:0 0 60px rgba(0,0,0,.8);
+  max-height:94vh;overflow-y:auto;
+}
+.modal::-webkit-scrollbar{width:6px}
+.modal::-webkit-scrollbar-thumb{background:#3a2e1c}
+.modal h2{color:var(--gold-bright);font-size:1.3rem;letter-spacing:.12em;text-transform:uppercase;text-align:center}
+.modal .sub{color:var(--faded);font-style:italic;text-align:center;margin:.2em 0 1em}
+.combat-row{display:flex;justify-content:space-between;gap:1rem;margin:.8em 0}
+.fighter{flex:1}
+.fighter .name{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.08em;color:var(--parchment)}
+.fighter.enemy .name{color:#d4938b}
+#battle-canvas{
+  display:block;width:100%;height:auto;margin:.4em 0 .2em;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  border:1px solid var(--edge);background:#000;
+}
+#combat-log{min-height:4.6em;border:1px solid #2c2415;background:#14100a;padding:.6em .8em;
+  font-size:.92rem;color:var(--faded);margin:.6em 0}
+#combat-log .hit{color:#e8b0a6}
+#combat-log .heal{color:#b9d49a}
+#combat-log .warn{color:var(--gold-bright);font-style:italic}
+.btnrow{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:.8rem}
+.shop-item{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+  border-bottom:1px dotted #2c2415;padding:.55em 0}
+.shop-item .d{font-size:.85rem;color:var(--faded)}
+.shop-item .nm{color:var(--parchment)}
+.price{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:.85rem;white-space:nowrap}
+
+/* ---------- topbar evoluta ---------- */
+.topbar{align-items:center}
+.tb-right{display:flex;gap:.5rem;align-items:center}
+.iconbtn{padding:.4em .7em;font-size:.9rem;line-height:1;min-width:2.4em}
+#progress{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+#progress .seg{display:flex;align-items:center;gap:.45rem}
+#progress .gem{
+  width:11px;height:11px;transform:rotate(45deg);
+  border:1px solid var(--edge);background:#241c10;transition:all .4s;
+}
+#progress .gem.beaten{background:var(--gold);border-color:var(--gold-bright);box-shadow:0 0 8px rgba(236,200,87,.5)}
+#progress .gem.next{border-color:var(--blood);box-shadow:0 0 6px rgba(156,58,50,.45)}
+#progress .lbl{font-size:.7rem;letter-spacing:.1em;color:var(--faded);text-transform:uppercase;font-family:'Cinzel',serif}
+
+/* ---------- tabellone con etichette di regione ---------- */
+#board{display:flex;flex-direction:column;gap:10px}
+.region-row{display:flex;flex-direction:column;gap:5px}
+.region-label{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+  color:#6b5c3c;padding:0 2px;
+}
+.region-label .bossname{color:#7e4038;letter-spacing:.08em}
+.region-label.active{color:var(--gold)}
+.region-label.active .bossname{color:#c46a5e}
+.tiles-row{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+
+/* ---------- pannello personaggio ---------- */
+.char-head{display:flex;gap:.8rem;align-items:center;margin-bottom:.6rem}
+#portrait{width:52px;height:52px;image-rendering:pixelated;border:1px solid var(--edge);background:#11151e;flex:none}
+.char-head .who{min-width:0}
+.char-head h3{margin-bottom:.15rem}
+.char-head .lvl{font-size:.8rem;color:var(--faded)}
+.bar{height:14px;position:relative;overflow:hidden}
+.bar .ghost{position:absolute;inset:0;width:0;background:#e8dcc0;transition:width 1s ease-out .35s}
+.bar .fill{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#7e2c26,#b8503f);transition:width .25s ease-out}
+.bar .bartext{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:#f4ecd8;
+  text-shadow:0 1px 2px rgba(0,0,0,.9);z-index:2;
+}
+#flask-pips{display:flex;gap:5px;margin:.3em 0 .1em;flex-wrap:wrap}
+.pip{
+  width:13px;height:20px;border:1px solid var(--edge);border-radius:2px 2px 5px 5px;
+  background:#1a140c;position:relative;
+}
+.pip.full{background:linear-gradient(180deg,#3a4d2c 20%,#7ba35a);border-color:#5c7a44;box-shadow:0 0 6px rgba(123,163,90,.3)}
+.pip::before{content:"";position:absolute;top:-3px;left:3px;right:3px;height:3px;background:#2a2114;border:1px solid var(--edge);border-bottom:none}
+.rune-row{display:flex;align-items:center;gap:.45rem;margin-top:.35em;padding-top:.45em;border-top:1px dotted #2c2415}
+.rune-glyph{color:var(--gold-bright);font-size:1.05rem}
+#rune-num{font-size:1.05rem}
+
+/* ---------- toast ---------- */
+#toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:90;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{
+  background:rgba(20,15,9,.94);border:1px solid var(--edge);color:var(--parchment);
+  font-size:.9rem;padding:.45em 1.1em;animation:toastin 3s ease forwards;max-width:90vw;text-align:center;
+}
+.toast.gold{border-color:#6b561f;color:var(--gold-bright)}
+.toast.good{border-color:#3d4a30;color:#b9d49a}
+@keyframes toastin{0%{opacity:0;transform:translateY(-8px)}8%,82%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px)}}
+
+/* ---------- bottoni ---------- */
+button.primary{
+  background:linear-gradient(180deg,#4a3a14,#2c2208);
+  border-color:#6b561f;color:#f4e6b8;
+  box-shadow:0 0 14px rgba(236,200,87,.12), inset 0 1px 0 rgba(236,200,87,.18);
+}
+button.primary:hover:not(:disabled){border-color:var(--gold-bright);box-shadow:0 0 20px rgba(236,200,87,.28)}
+kbd{
+  font-family:'Cinzel',serif;font-size:.62em;border:1px solid #4a3c24;border-bottom-width:2px;
+  padding:.1em .45em;margin-left:.55em;color:#9a8a5e;border-radius:2px;background:#171208;
+}
+.btnrow button{position:relative}
+#cb-turn{text-align:center;font-size:.78rem;color:var(--faded);letter-spacing:.14em;text-transform:uppercase;font-family:'Cinzel',serif;margin-top:.2em}
+#charge-warning{
+  display:none;text-align:center;font-size:.85rem;color:#ffb08a;border:1px solid #6e3a22;
+  background:rgba(110,40,25,.18);padding:.35em .6em;margin:.45em 0 0;
+  animation:warnpulse 1.1s ease-in-out infinite;
+}
+#charge-warning.show{display:block}
+@keyframes warnpulse{0%,100%{box-shadow:0 0 0 rgba(255,120,80,0)}50%{box-shadow:0 0 14px rgba(255,120,80,.3)}}
+
+/* ---------- aiuto ---------- */
+#ov-help .modal{max-height:86vh;overflow-y:auto}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin:.8em 0}
+@media(max-width:560px){.help-grid{grid-template-columns:1fr}}
+.help-card{border:1px solid #2c2415;background:#14100a;padding:.7em .9em;font-size:.88rem;color:var(--faded)}
+.help-card b{color:var(--parchment);font-family:'Cinzel',serif;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:.3em}
+.help-card .ic{color:var(--gold);margin-right:.3em}
+
+/* ---------- riepiloghi ---------- */
+.runstats{display:flex;justify-content:center;gap:1.6rem;margin:.9em 0 .2em;flex-wrap:wrap}
+.runstats .st{text-align:center}
+.runstats .st .n{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold-bright)}
+.runstats .st .l{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faded)}
+
+/* ---------- desktop largo ---------- */
+@media (min-width:1500px){
+  #game-screen{max-width:1340px}
+  .layout{grid-template-columns:1fr 360px}
+  #log{max-height:340px}
+}
+
+/* ---------- scrollbar e mobile ---------- */
+#log::-webkit-scrollbar{width:6px}
+#log::-webkit-scrollbar-thumb{background:#3a2e1c}
+@media (max-width:900px){
+  .side{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;align-items:start}
+  .side .card:last-child{grid-column:1/-1}
+}
+@media (max-width:560px){
+  .side{grid-template-columns:1fr}
+  body{font-size:15.5px}
+  .tiles-row{gap:4px}
+  .btnrow button{flex:1 1 40%}
+}
+
+/* ---------- morte / vittoria ---------- */
+#death-text{
+  font-size:clamp(2.4rem,8vw,5rem);font-family:'Cinzel',serif;font-weight:900;
+  color:var(--blood);letter-spacing:.2em;text-align:center;text-transform:uppercase;
+  text-shadow:0 0 40px rgba(156,58,50,.5);
+}
+#victory-text{
+  font-size:clamp(1.8rem,6vw,3.4rem);font-family:'Cinzel',serif;font-weight:900;
+  color:var(--gold-bright);letter-spacing:.16em;text-align:center;text-transform:uppercase;
+  text-shadow:0 0 50px rgba(236,200,87,.5);
+}
+.center{text-align:center;color:var(--faded);margin-top:.8em}
+
+/* ---------- selettore classi ---------- */
+#class-picker{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;
+  max-width:40em;width:100%;margin:.4rem 0;
+}
+@media(max-width:560px){#class-picker{grid-template-columns:1fr}}
+.class-card{
+  border:1px solid var(--edge);background:rgba(22,17,12,.72);
+  padding:.7rem .9rem;cursor:pointer;text-align:left;transition:border-color .2s,background .2s,transform .08s;
+  display:flex;flex-direction:column;gap:.25rem;
+}
+.class-card:hover{border-color:var(--gold);background:rgba(36,28,15,.8)}
+.class-card.sel{border-color:var(--gold-bright);background:rgba(42,33,19,.9);box-shadow:0 0 16px rgba(236,200,87,.18)}
+.class-card .cls-head{display:flex;align-items:center;gap:.5rem}
+.class-card .cls-glyph{font-size:1.3rem;color:var(--gold-bright)}
+.class-card .cls-name{font-family:'Cinzel',serif;font-size:.82rem;letter-spacing:.08em;color:var(--parchment);text-transform:uppercase}
+.class-card .cls-desc{font-size:.84rem;color:var(--faded);line-height:1.35}
+.class-card .cls-stats{font-size:.75rem;color:#7e6f4d;font-family:'Cinzel',serif;letter-spacing:.04em}
+.class-card .cls-stats b{color:var(--gold)}
+.title-actions{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:.3rem}
+
+/* ---------- impostazioni ---------- */
+.set-row{display:grid;grid-template-columns:5.5em 1fr 3.2em;align-items:center;gap:.8rem;margin:.7em 0}
+.set-row label{font-family:'Cinzel',serif;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faded)}
+.set-row input[type=range]{width:100%;accent-color:var(--gold)}
+.set-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);justify-self:start}
+.set-val{font-family:'Cinzel',serif;font-size:.78rem;color:var(--gold-bright);text-align:right}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+
+<!-- ============ TITOLO ============ -->
+<canvas id="title-embers" style="position:fixed;inset:0;width:100%;height:100%;z-index:-1;opacity:.7" aria-hidden="true"></canvas>
+<section id="title-screen">
+  <svg class="sigil" viewBox="0 0 100 100" aria-hidden="true" style="filter:drop-shadow(0 0 18px rgba(201,162,39,.35))">
+    <g fill="none" stroke="#c9a227" stroke-width="1.6">
+      <circle cx="50" cy="50" r="44" opacity=".5"/>
+      <circle cx="50" cy="50" r="34" opacity=".8"/>
+      <path d="M50 18 v64 M50 30 c-14 6 -20 16 -22 28 M50 30 c14 6 20 16 22 28 M50 44 c-9 4 -13 10 -14 18 M50 44 c9 4 13 10 14 18"/>
+      <circle cx="50" cy="22" r="4" fill="#ecc857" stroke="none"/>
+    </g>
+  </svg>
+  <h1>Le Terre Spezzate</h1>
+  <p class="sub">Un gioco da tavolo in solitario ispirato alle terre maledette dei soulslike.
+  Attraversa quattro regioni, raccogli rune, accendi i siti di grazia e abbatti il Sovrano Senza Nome.</p>
+  <div class="rules cz" style="font-family:'EB Garamond',serif">
+    <p><strong>Come si gioca</strong></p>
+    <p>• Tira il dado per avanzare sul tabellone. Ogni casella nasconde nemici, tesori, mercanti o eventi.</p>
+    <p>• Le caselle <strong style="color:var(--grace)">❋ di grazia</strong> ti curano, ricaricano le fiaschette e ti permettono di salire di livello spendendo rune. Sono il tuo punto di ritorno.</p>
+    <p>• In combattimento puoi <strong>attaccare</strong>, <strong>parare</strong> (con 3+ blocchi il colpo e contrattacchi) o bere una <strong>fiaschetta</strong>.</p>
+    <p>• Se muori perdi tutte le rune: restano a terra dove sei caduto. Riprendile passando di lì... se ci riesci.</p>
+    <p>• Quando muori o riposi a una grazia, i nemici (boss esclusi) <strong>ricompaiono</strong>: ottimi per accumulare rune.</p>
+    <p>• Non puoi oltrepassare un <strong style="color:#d4756b">♛ boss</strong>: dovrai affrontarlo. Ti fermi anche alla prima grazia spenta che incontri.</p>
+  </div>
+  <div id="class-picker" aria-label="Scegli la tua classe"></div>
+  <div class="title-actions">
+    <button id="btn-continue" class="primary" style="display:none;font-size:1rem;padding:.8em 2.2em">Riprendi il viaggio</button>
+    <button id="btn-start" class="primary" style="font-size:1rem;padding:.8em 2.4em">Inizia il viaggio</button>
+  </div>
+  <p id="title-stats" style="font-size:.82rem;color:#6b5c3c;min-height:1.2em"></p>
+  <p style="font-size:.8rem;color:#5b4f38">Tastiera: Spazio per agire · A/P/F/S in combattimento · ? per le regole</p>
+</section>
+
+<!-- ============ GIOCO ============ -->
+<section id="game-screen">
+  <div class="topbar">
+    <h1>Le Terre Spezzate</h1>
+    <div id="progress" aria-label="Avanzamento boss"></div>
+    <div class="tb-right">
+      <span id="region-name"></span>
+      <button class="iconbtn" id="btn-sound" title="Audio attivo/disattivo" aria-label="Audio">♪</button>
+      <button class="iconbtn" id="btn-settings" title="Impostazioni audio" aria-label="Impostazioni">⚙</button>
+      <button class="iconbtn" id="btn-help" title="Regole e comandi" aria-label="Aiuto">?</button>
+    </div>
+  </div>
+  <div class="layout">
+    <div>
+      <div id="board" aria-label="Tabellone di gioco"></div>
+      <div class="legend">
+        <span><b style="color:var(--grace)">❋</b> Grazia</span>
+        <span><b>⚔</b> Nemico</span>
+        <span><b style="color:#c08f5a">☠</b> Élite</span>
+        <span><b style="color:#d4756b">♛</b> Boss</span>
+        <span><b>⚖</b> Mercante</span>
+        <span><b style="color:var(--gold)">✦</b> Tesoro</span>
+        <span><b>?</b> Evento</span>
+      </div>
+      <div id="action-panel">
+        <h2 id="action-title">Il sentiero</h2>
+        <p id="action-text"></p>
+        <div id="action-buttons"></div>
+      </div>
+    </div>
+    <aside class="side">
+      <div class="card">
+        <div class="char-head">
+          <canvas id="portrait" width="14" height="14" aria-hidden="true"></canvas>
+          <div class="who">
+            <h3 id="char-name">Senza Fiamma</h3>
+            <div class="lvl" id="char-lvl">Livello 1</div>
+          </div>
+        </div>
+        <div class="bar" aria-label="Vitalità"><i class="ghost" id="hp-ghost"></i><i class="fill" id="hp-bar"></i><span class="bartext" id="hp-num"></span></div>
+        <div class="statline"><span>Attacco</span><span class="v" id="atk-num"></span></div>
+        <div class="statline"><span>Fiaschette <span style="font-size:.78em;color:#6b5c3c" id="flask-heal-hint"></span></span><span class="v" id="flask-num"></span></div>
+        <div id="flask-pips" aria-hidden="true"></div>
+        <div class="rune-row"><span class="rune-glyph">⟐</span><span class="v" id="rune-num">0</span><span style="font-size:.8rem;color:var(--faded)">rune</span></div>
+        <div style="margin-top:.7em"><button id="btn-flask-out" style="width:100%">Bevi fiaschetta <kbd>F</kbd></button></div>
+      </div>
+      <div class="card">
+        <h3>Equipaggiamento</h3>
+        <ul id="inv"></ul>
+      </div>
+      <div class="card">
+        <h3>Cronaca</h3>
+        <div id="log"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<div id="toasts" aria-live="polite"></div>
+
+<!-- ============ AIUTO ============ -->
+<div class="overlay" id="ov-help">
+  <div class="modal">
+    <h2>Regole &amp; Comandi</h2>
+    <div class="help-grid">
+      <div class="help-card"><b>Movimento</b><span class="ic">⚄</span>Tira il dado e avanza. Ti fermi sempre ai <span style="color:#d4756b">boss</span> e alla prima <span style="color:var(--grace)">grazia spenta</span>. Le grazie attraversate ti curano e aggiornano il checkpoint.</div>
+      <div class="help-card"><b>Combattimento</b><span class="ic">⚔</span>Attacca: d6 + Attacco. Para: con 3+ blocchi e contrattacchi. Quando il boss si prepara al colpo devastante, è il momento di parare. Fuggi solo dai nemici comuni (5+).</div>
+      <div class="help-card"><b>Morte e rune</b><span class="ic">☠</span>Alla morte perdi le rune: restano dove sei caduto, recuperale passando di lì. Risorgi all'ultima grazia. I nemici (boss esclusi) ricompaiono a ogni morte o riposo.</div>
+      <div class="help-card"><b>Crescita</b><span class="ic">❋</span>Alle grazie spendi rune per Vigore (+10 PV) o Forza (+1 ATK). Dal mercante: fiaschette, affilature e talismani. Le fiaschette curano il 40% della vitalità massima.</div>
+    </div>
+    <div class="help-card" style="margin-bottom:.4em"><b>Tastiera</b>Spazio/Invio: azione principale · In combattimento: <kbd style="margin-left:0">A</kbd> attacca, <kbd style="margin-left:0">P</kbd> para, <kbd style="margin-left:0">F</kbd> fiaschetta, <kbd style="margin-left:0">S</kbd> fuggi</div>
+    <div class="btnrow"><button id="help-close">Chiudi</button></div>
+  </div>
+</div>
+
+<!-- ============ IMPOSTAZIONI ============ -->
+<div class="overlay" id="ov-settings">
+  <div class="modal" style="width:min(440px,100%)">
+    <h2>⚙ Impostazioni</h2>
+    <p class="sub">Regola i volumi e le animazioni.</p>
+    <div class="set-row">
+      <label for="vol-music">Musica</label>
+      <input type="range" id="vol-music" min="0" max="100" value="60">
+      <span class="set-val" id="vol-music-val">60%</span>
+    </div>
+    <div class="set-row">
+      <label for="vol-sfx">Effetti</label>
+      <input type="range" id="vol-sfx" min="0" max="100" value="100">
+      <span class="set-val" id="vol-sfx-val">100%</span>
+    </div>
+    <div class="set-row">
+      <label for="opt-anim">Animazioni</label>
+      <input type="checkbox" id="opt-anim" checked>
+      <span class="set-val" id="opt-anim-val">Attive</span>
+    </div>
+    <div id="settings-records" class="help-card" style="margin-top:.6em"></div>
+    <div class="btnrow"><button id="settings-close">Chiudi</button></div>
+  </div>
+</div>
+
+<!-- ============ COMBATTIMENTO ============ -->
+<div class="overlay" id="ov-combat">
+  <div class="modal">
+    <h2 id="cb-name"></h2>
+    <p class="sub" id="cb-sub"></p>
+    <canvas id="battle-canvas" width="340" height="150" aria-hidden="true"></canvas>
+    <div class="combat-row">
+      <div class="fighter" id="cb-pside">
+        <div class="name">Senza Fiamma</div>
+        <div class="bar"><i class="ghost" id="cb-php-ghost"></i><i class="fill" id="cb-php"></i><span class="bartext" id="cb-pstat"></span></div>
+      </div>
+      <div class="fighter enemy" id="cb-eside">
+        <div class="name" id="cb-ename"></div>
+        <div class="bar"><i class="ghost" id="cb-ehp-ghost"></i><i class="fill" id="cb-ehp"></i><span class="bartext" id="cb-estat"></span></div>
+      </div>
+    </div>
+    <div id="combat-log"></div>
+    <div id="charge-warning">⚠ Colpo devastante in arrivo — para!</div>
+    <div class="btnrow">
+      <button id="cb-attack">Attacca <kbd>A</kbd></button>
+      <button id="cb-parry">Para <kbd>P</kbd></button>
+      <button id="cb-flask">Fiaschetta <kbd>F</kbd></button>
+      <button id="cb-flee">Fuggi <kbd>S</kbd></button>
+    </div>
+    <div id="cb-turn"></div>
+    <div id="cb-nowplaying" style="text-align:center;font-size:.72rem;color:#6b5c3c;letter-spacing:.12em;margin-top:.25em;font-style:italic"></div>
+  </div>
+</div>
+
+<!-- ============ GRAZIA ============ -->
+<div class="overlay" id="ov-grace">
+  <div class="modal">
+    <h2 style="color:var(--grace)">❋ Sito di Grazia</h2>
+    <p class="sub">Il calore della grazia ti ristora. Vitalità e fiaschette ripristinate.</p>
+    <div id="grace-levelup"></div>
+    <div class="btnrow"><button id="grace-leave">Riprendi il cammino</button></div>
+  </div>
+</div>
+
+<!-- ============ MERCANTE ============ -->
+<div class="overlay" id="ov-shop">
+  <div class="modal">
+    <h2>⚖ Mercante Errante</h2>
+    <p class="sub">«Rune in cambio di sopravvivenza, viandante. Affare onesto.»</p>
+    <div id="shop-list"></div>
+    <p class="center" id="shop-runes"></p>
+    <div class="btnrow"><button id="shop-leave">Congedati</button></div>
+  </div>
+</div>
+
+<!-- ============ MORTE ============ -->
+<div class="overlay" id="ov-death">
+  <div class="modal" style="background:transparent;border:none;box-shadow:none">
+    <p id="death-text">Sei morto</p>
+    <p class="center" id="death-sub"></p>
+    <div class="runstats" id="death-stats"></div>
+    <div class="btnrow"><button id="death-respawn">Risorgi alla grazia</button></div>
+  </div>
+</div>
+
+<!-- ============ VITTORIA ============ -->
+<div class="overlay" id="ov-victory">
+  <div class="modal">
+    <p id="victory-text">Le Terre sono tue</p>
+    <p class="center" id="victory-sub"></p>
+    <div class="runstats" id="victory-stats"></div>
+    <div class="btnrow"><button id="victory-restart">Nuovo viaggio</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ===================== DATI ===================== */
+const REGIONS = ["Sepolcreto dei Primi", "Palude del Vespro", "Altopiano Cinereo", "Cittadella del Crepuscolo"];
+
+const ENEMIES = [
+  // regione 0
+  [{n:"Soldato Errante",hp:11,atk:2,r:[25,40]},{n:"Segugio di Tomba",hp:9,atk:3,r:[25,40]}],
+  // regione 1
+  [{n:"Spettro di Fango",hp:16,atk:3,r:[45,70]},{n:"Strega di Palude",hp:14,atk:4,r:[45,70]}],
+  // regione 2
+  [{n:"Cavaliere di Brace",hp:22,atk:5,r:[75,110]},{n:"Arciere di Cenere",hp:19,atk:6,r:[75,110]}],
+  // regione 3
+  [{n:"Guardia Crepuscolare",hp:28,atk:7,r:[120,170]},{n:"Accolito del Vuoto",hp:25,atk:8,r:[120,170]}],
+];
+const ELITES = [
+  {n:"Campione Caduto",hp:20,atk:3,r:[90,120]},
+  {n:"Divoratore della Melma",hp:28,atk:5,r:[150,190]},
+  {n:"Golem di Scorie",hp:38,atk:7,r:[220,280]},
+  {n:"Araldo della Fine",hp:50,atk:9,r:[320,400]},
+];
+const BOSSES = [
+  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:34,atk:4,r:[160,160]},
+  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:50,atk:6,r:[300,300]},
+  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:68,atk:8,r:[480,480]},
+  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:95,atk:10,r:[1000,1000]},
+];
+
+// tipi casella per regione (9 caselle): grazia, nemico, evento, nemico, tesoro, mercante, élite, evento, boss
+const REGION_PATTERN = ["grace","enemy","event","enemy","treasure","shop","elite","event","boss"];
+const ICONS = {grace:"❋",enemy:"⚔",elite:"☠",boss:"♛",shop:"⚖",treasure:"✦",event:"?",empty:"·"};
+
+/* ===================== CLASSI DI PARTENZA ===================== */
+const CLASSES = {
+  vagabondo: {
+    nm:"Vagabondo", name:"Senza Fiamma",
+    desc:"Equilibrato. Spada e scudo, nessuna debolezza.",
+    hp:30, atk:3, flasks:3, runes:0,
+    items:[], glyph:"⚔",
+  },
+  cavaliere: {
+    nm:"Cavaliere Decaduto", name:"Cavaliere",
+    desc:"Robusto e corazzato: più vitalità, ma parte senza rune.",
+    hp:42, atk:3, flasks:3, runes:0,
+    items:["Corazza incrinata"], glyph:"♞",
+  },
+  asceta: {
+    nm:"Asceta Cinereo", name:"Asceta",
+    desc:"Aggressivo e fragile: colpisce duro, ma regge poco.",
+    hp:24, atk:5, flasks:2, runes:30,
+    items:["Voto del digiuno"], glyph:"☥",
+  },
+  mendico: {
+    nm:"Mendico", name:"Mendico",
+    desc:"Sfida pura: debole e disarmato, ma con quattro fiaschette.",
+    hp:28, atk:2, flasks:4, runes:0,
+    items:["Ciotola scheggiata"], glyph:"⚱",
+  },
+};
+let chosenClass = "vagabondo";
+
+/* ===================== STATO ===================== */
+let tiles, player, combat, runesDropTile;
+
+function newGame(cls){
+  chosenClass = cls || chosenClass || "vagabondo";
+  const C = CLASSES[chosenClass];
+  tiles = [];
+  for(let r=0;r<4;r++){
+    REGION_PATTERN.forEach((t,i)=>{
+      tiles.push({type:t, region:r, cleared:false, idx:r*9+i});
+    });
+  }
+  player = {
+    cls:chosenClass, name:C.name,
+    pos:0, hp:C.hp, maxhp:C.hp, atk:C.atk,
+    flasks:C.flasks, maxflasks:C.flasks, flaskBonus:0,
+    runes:C.runes, level:1, checkpoint:0,
+    items:[...C.items], canMove:true, deaths:0,
+    rolls:0, runesEarned:C.runes, startedAt:Date.now(),
+  };
+  tiles[0].cleared = true; // grazia iniziale già accesa
+  combat = null;
+  runesDropTile = null;
+  shopBought = {};
+  $("char-name").textContent = C.name;
+  logClear();
+  log(`${C.nm}: il viaggio ha inizio nel Sepolcreto dei Primi.`,"gold");
+  renderAll();
+  drawPortrait();
+  saveGame();
+  setAction("Il sentiero", "La grazia ti guida verso est. Tira il dado per avanzare.", [["Tira il dado",rollMove]]);
+}
+
+/* ===================== UTILITÀ ===================== */
+const $ = id => document.getElementById(id);
+const d6 = () => 1 + Math.floor(Math.random()*6);
+const SYS_REDUCED = (typeof window!=="undefined" && window.matchMedia) ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+let REDUCED = SYS_REDUCED; // può essere modificato dalle impostazioni
+const sleep = ms => new Promise(r=>setTimeout(r, REDUCED?0:ms));
+function fx(el, cls, dur){
+  if(!el || REDUCED) return;
+  el.classList.remove(cls);
+  void el.offsetWidth; // riavvia l'animazione
+  el.classList.add(cls);
+  setTimeout(()=>el.classList.remove(cls), dur||600);
+}
+function floatDmg(sideId, text, color){
+  if(REDUCED) return;
+  const host = $(sideId);
+  if(!host) return;
+  const sp = document.createElement("span");
+  sp.className = "float-dmg";
+  sp.textContent = text;
+  sp.style.color = color;
+  host.appendChild(sp);
+  setTimeout(()=>sp.remove(), 1000);
+}
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+
+function log(msg, cls){
+  const p = document.createElement("p");
+  p.textContent = msg;
+  if(cls) p.className = cls;
+  $("log").prepend(p);
+}
+function logClear(){ $("log").innerHTML = ""; }
+
+/* ===================== SALVATAGGIO ===================== */
+const SAVE_KEY = "terreSpezzate.save.v1";
+const STATS_KEY = "terreSpezzate.stats.v1";
+let saveAvailable = false;
+function storageOk(){
+  try{ const k="__ts_test__"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }
+  catch(e){ return false; }
+}
+function saveGame(){
+  if(!storageOk() || !player) return;
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      v:1, player, tiles, shopBought, chosenClass, runesDropTile, runesDropAmount,
+    }));
+    saveAvailable = true;
+  }catch(e){ /* spazio esaurito: ignora */ }
+}
+function loadGame(){
+  if(!storageOk()) return false;
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const s = JSON.parse(raw);
+    if(!s || !s.player || !s.tiles) return false;
+    player = s.player; tiles = s.tiles;
+    shopBought = s.shopBought || {};
+    chosenClass = s.chosenClass || "vagabondo";
+    runesDropTile = s.runesDropTile ?? null;
+    runesDropAmount = s.runesDropAmount || 0;
+    combat = null;
+    return true;
+  }catch(e){ return false; }
+}
+function clearSave(){
+  if(!storageOk()) return;
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  saveAvailable = false;
+}
+function hasSave(){
+  if(!storageOk()) return false;
+  try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; }
+}
+/* record personali */
+function getStats(){
+  if(!storageOk()) return {wins:0, deaths:0, bestRolls:null, bestLevel:0};
+  try{ return JSON.parse(localStorage.getItem(STATS_KEY)) || {wins:0,deaths:0,bestRolls:null,bestLevel:0}; }
+  catch(e){ return {wins:0,deaths:0,bestRolls:null,bestLevel:0}; }
+}
+function saveStats(st){
+  if(!storageOk()) return;
+  try{ localStorage.setItem(STATS_KEY, JSON.stringify(st)); }catch(e){}
+}
+function recordVictory(){
+  const st = getStats();
+  st.wins = (st.wins||0)+1;
+  if(st.bestRolls==null || player.rolls < st.bestRolls) st.bestRolls = player.rolls;
+  if((player.level||0) > (st.bestLevel||0)) st.bestLevel = player.level;
+  saveStats(st);
+}
+function recordDeath(){
+  const st = getStats();
+  st.deaths = (st.deaths||0)+1;
+  saveStats(st);
+}
+
+/* ===================== RENDER ===================== */
+const TILE_TITLES = {grace:"Sito di grazia: riposo, cure e livelli", enemy:"Nemico", elite:"Nemico élite", boss:"Boss della regione", shop:"Mercante errante", treasure:"Tesoro", event:"Evento misterioso", empty:"Sentiero"};
+function buildBoard(){
+  const b = $("board");
+  b.innerHTML = "";
+  for(let row=0; row<4; row++){
+    const wrap = document.createElement("div");
+    wrap.className = "region-row";
+    const lbl = document.createElement("div");
+    lbl.className = "region-label";
+    lbl.id = "rlabel-"+row;
+    lbl.innerHTML = `<span>${row+1} · ${REGIONS[row]}</span><span class="bossname">♛ ${BOSSES[row].n}</span>`;
+    wrap.appendChild(lbl);
+    const grid = document.createElement("div");
+    grid.className = "tiles-row";
+    for(let col=0; col<9; col++){
+      // serpentina: righe dispari da destra a sinistra
+      const idx = row*9 + (row%2===0 ? col : 8-col);
+      const t = tiles[idx];
+      const div = document.createElement("div");
+      div.className = "tile " + t.type;
+      div.id = "tile-"+idx;
+      div.title = (t.type==="boss" ? BOSSES[t.region].n : TILE_TITLES[t.type]) + ` — casella ${idx+1}`;
+      div.innerHTML = `<span class="num">${idx+1}</span><span class="icon">${ICONS[t.type]}</span>`;
+      grid.appendChild(div);
+    }
+    wrap.appendChild(grid);
+    b.appendChild(wrap);
+  }
+}
+function renderBoard(){
+  tiles.forEach(t=>{
+    const el = $("tile-"+t.idx);
+    el.classList.toggle("cleared", t.cleared && t.type!=="grace");
+    el.classList.toggle("active-grace", t.type==="grace" && t.idx===player.checkpoint);
+    el.classList.toggle("current", t.idx===player.pos);
+    el.classList.toggle("runes-drop", runesDropTile===t.idx);
+    const old = el.querySelector(".pawn");
+    if(old) old.remove();
+    if(t.idx===player.pos){
+      const s=document.createElement("span"); s.className="pawn"; s.textContent="⬤"; el.appendChild(s);
+    }
+  });
+  $("region-name").textContent = REGIONS[tiles[player.pos].region];
+  for(let r=0;r<4;r++){
+    const el = $("rlabel-"+r);
+    if(el) el.classList.toggle("active", r===tiles[player.pos].region);
+  }
+}
+function renderStats(){
+  $("char-lvl").textContent = `Livello ${player.level}`;
+  $("hp-num").textContent = `${player.hp} / ${player.maxhp}`;
+  const pct = (100*Math.max(0,player.hp)/player.maxhp)+"%";
+  $("hp-bar").style.width = pct;
+  $("hp-ghost").style.width = pct;
+  $("atk-num").textContent = `${player.atk} + d6`;
+  $("flask-num").textContent = `${player.flasks} / ${player.maxflasks}`;
+  $("flask-heal-hint").textContent = `(cura ${flaskHeal()})`;
+  let pips = "";
+  for(let i=0;i<player.maxflasks;i++) pips += `<div class="pip${i<player.flasks?" full":""}"></div>`;
+  $("flask-pips").innerHTML = pips;
+  animNumber($("rune-num"), player.runes);
+  $("inv").innerHTML = player.items.length
+    ? player.items.map(i=>`<li>${i}</li>`).join("")
+    : `<li style="opacity:.5">Solo stracci e una spada smussata.</li>`;
+  $("btn-flask-out").disabled = player.flasks<=0 || player.hp>=player.maxhp || !!combat;
+  renderProgress();
+  saveGame();
+}
+function renderProgress(){
+  const host = $("progress");
+  if(!host) return;
+  let html = "";
+  let nextFound = false;
+  for(let r=0;r<4;r++){
+    const boss = tiles[r*9+8];
+    let cls = boss.cleared ? "beaten" : (!nextFound ? (nextFound=true, "next") : "");
+    html += `<span class="seg"><span class="gem ${cls}" title="${BOSSES[r].n}"></span></span>`;
+  }
+  host.innerHTML = html;
+}
+function drawPortrait(){
+  const cv = $("portrait");
+  if(!cv || !cv.getContext) return;
+  const ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#11151e"; ctx.fillRect(0,0,14,14);
+  const map = SPRITES.hero;
+  for(let r=0;r<map.length;r++)for(let c=0;c<map[0].length;c++){
+    const ch = map[r][c];
+    if(ch===".") continue;
+    ctx.fillStyle = HERO_PAL[ch]||"#f0f";
+    ctx.fillRect(c+1, r+2, 1, 1);
+  }
+}
+function renderAll(){ buildBoard(); renderBoard(); renderStats(); }
+
+function setAction(title, text, buttons){
+  $("action-title").textContent = title;
+  $("action-text").innerHTML = text;
+  const box = $("action-buttons");
+  box.innerHTML = "";
+  (buttons||[]).forEach(([label,fn,disabled], i)=>{
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    if(i===0 && btn.classList) btn.classList.add("primary");
+    btn.disabled = !!disabled;
+    btn.addEventListener("click", fn);
+    box.appendChild(btn);
+  });
+}
+
+/* ===================== MOVIMENTO ===================== */
+function passOver(tile){
+  // attraversando una grazia ti ristori e aggiorni il checkpoint
+  if(tile.type==="grace"){
+    if(!tile.cleared){
+      tile.cleared = true;
+      log(`Sfiori un sito di grazia spento: la fiamma si accende (casella ${tile.idx+1}).`,"good");
+      fx($("tile-"+tile.idx), "ignite", 1200);
+      toast("❋ Grazia accesa — checkpoint e cure", "gold");
+      sfx("grace");
+    } else {
+      log("Passi accanto a una grazia accesa e ti ristori in fretta.","good");
+      toast("❋ Ristorato dalla grazia", "good");
+    }
+    player.checkpoint = tile.idx;
+    player.hp = player.maxhp;
+    player.flasks = player.maxflasks;
+  }
+  // attraversando il luogo della morte recuperi le rune cadute
+  if(runesDropTile===tile.idx){
+    player.runes += runesDropAmount;
+    runesDropTile = null;
+    log(`Recuperi ${runesDropAmount} rune dal luogo della tua morte.`,"gold");
+    toast(`⟐ ${runesDropAmount} rune recuperate`, "gold");
+    sfx("rune");
+  }
+}
+let moving = false;
+async function animateDie(roll){
+  setAction("Il dado rotola...", `<span class="die rolling" id="live-die">·</span>`, []);
+  const el = $("live-die");
+  if(!REDUCED){
+    for(let i=0;i<9;i++){ el.textContent = d6(); await sleep(60+i*8); }
+  }
+  el.textContent = roll;
+  el.classList.remove("rolling");
+  el.classList.add("landed");
+  await sleep(420);
+}
+async function rollMove(){
+  if(!player.canMove || moving || combat) return;
+  moving = true;
+  player.rolls = (player.rolls||0)+1;
+  const roll = d6();
+  sfx("dice");
+  await animateDie(roll);
+  let target = player.pos + roll;
+  // non si oltrepassa un boss non sconfitto, né la fine del tabellone
+  for(let i=player.pos+1; i<=Math.min(target, tiles.length-1); i++){
+    const t = tiles[i];
+    if((t.type==="boss" || t.type==="grace") && !t.cleared){ target = i; break; }
+  }
+  target = Math.min(target, tiles.length-1);
+  log(`Tiri ${roll} e avanzi fino alla casella ${target+1}.`);
+  // la pedina avanza una casella alla volta
+  for(let i=player.pos+1; i<=target; i++){
+    player.pos = i;
+    if(i<target) passOver(tiles[i]);
+    renderBoard(); renderStats();
+    fx($("tile-"+i), "stepped", 320);
+    sfx("step");
+    await sleep(190);
+  }
+  moving = false;
+  arriveAt(tiles[target], roll);
+}
+
+function arriveAt(tile, roll){
+  // recupero rune cadute
+  if(runesDropTile===tile.idx){
+    const rec = runesDropAmount;
+    player.runes += rec;
+    runesDropTile = null;
+    log(`Recuperi ${rec} rune dal luogo della tua morte.`,"gold");
+    toast(`⟐ ${rec} rune recuperate`, "gold");
+    sfx("rune");
+  }
+  if(tile.cleared && tile.type!=="grace" && tile.type!=="shop"){
+    setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. Questo luogo è ormai silenzioso. Prosegui.`, [["Tira il dado",rollMove]]);
+    renderStats();
+    return;
+  }
+  switch(tile.type){
+    case "grace": openGrace(tile); break;
+    case "enemy": startCombat(pickEnemy(tile.region), tile, false); break;
+    case "elite": startCombat({...ELITES[tile.region]}, tile, false, true); break;
+    case "boss":  startCombat({...BOSSES[tile.region]}, tile, true); break;
+    case "shop":  openShop(tile); break;
+    case "treasure": openTreasure(tile, roll); break;
+    case "event": runEvent(tile, roll); break;
+    default:
+      setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. Il vento soffia tra le rovine. Nulla accade.`, [["Tira il dado",rollMove]]);
+  }
+}
+
+function pickEnemy(region){
+  const pool = ENEMIES[region];
+  return {...pool[Math.floor(Math.random()*pool.length)]};
+}
+
+/* ===================== TESORI ED EVENTI ===================== */
+function openTreasure(tile, roll){
+  tile.cleared = true;
+  const amount = rnd(30,80) + tile.region*15;
+  player.runes += amount;
+  sfx("rune");
+  log(`Apri uno scrigno dimenticato: ${amount} rune.`,"gold");
+  renderBoard(); renderStats();
+  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. Tra le ossa trovi uno scrigno: <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]]);
+}
+
+function runEvent(tile, roll){
+  tile.cleared = true;
+  const ev = rnd(1,9);
+  let text="";
+  if(ev===1){
+    const r = rnd(25,55)+tile.region*10;
+    player.runes += r;
+    text = `Un cadavere stringe ancora la sua borsa: <strong style="color:var(--gold-bright)">${r} rune</strong>.`;
+    log(`Evento: trovi ${r} rune.`,"gold"); sfx("rune");
+  } else if(ev===2){
+    const dmg = rnd(4,9)+tile.region*2;
+    player.hp = Math.max(1, player.hp - dmg);
+    text = `Una trappola scatta dal terreno! Perdi <strong style="color:#d4847a">${dmg} vitalità</strong>.`;
+    log(`Evento: una trappola ti ferisce (-${dmg} PV).`,"bad"); sfx("hurt");
+  } else if(ev===3){
+    const heal = rnd(8,14);
+    player.hp = Math.min(player.maxhp, player.hp + heal);
+    text = `Una viandante cieca ti offre un decotto amaro. Recuperi <strong style="color:#b9d49a">${heal} vitalità</strong>.`;
+    log(`Evento: una viandante ti cura (+${heal} PV).`,"good"); sfx("flask");
+  } else if(ev===4){
+    text = `Un'imboscata! Un nemico sbuca dalle rovine.`;
+    log("Evento: imboscata!","bad");
+    renderBoard(); renderStats();
+    setAction("? Evento", text, []);
+    setTimeout(()=>startCombat(pickEnemy(tile.region), tile, false), 600);
+    return;
+  } else if(ev===5){
+    const r = rnd(15,30); const heal = rnd(4,8);
+    player.runes += r;
+    player.hp = Math.min(player.maxhp, player.hp + heal);
+    text = `Una piccola reliquia benedetta: <strong style="color:var(--gold-bright)">${r} rune</strong> e <strong style="color:#b9d49a">${heal} vitalità</strong>.`;
+    log(`Evento: reliquia (+${r} rune, +${heal} PV).`,"good"); sfx("rune");
+  } else if(ev===6){
+    // scommessa: il viandante azzardo
+    const stake = Math.min(player.runes, 30+tile.region*15);
+    if(stake>=10){
+      setAction("? Statua del Caso", `Una statua corrosa porge una coppa. Puoi <strong>scommettere ${stake} rune</strong>: con un tiro di 4+ raddoppi, altrimenti le perdi.`,
+        [["Scommetti",()=>{
+          const r2=d6();
+          player.runes -= stake;
+          if(r2>=4){ player.runes += stake*2; log(`Scommessa (${r2}): vinci ${stake*2} rune!`,"gold"); toast(`⟐ +${stake} rune`,"gold"); sfx("level"); }
+          else { log(`Scommessa (${r2}): perdi ${stake} rune.`,"bad"); sfx("hurt"); }
+          renderStats();
+          setAction("? Statua del Caso","La statua tace di nuovo. Tira il dado.",[["Tira il dado",rollMove]]);
+        }],["Rifiuta",()=>setAction("? Evento","Volti le spalle alla sorte. Tira il dado.",[["Tira il dado",rollMove]])]]);
+      renderBoard(); renderStats();
+      return;
+    }
+    const r = rnd(20,40)+tile.region*8; player.runes += r;
+    text = `La statua, vuota, lascia cadere <strong style="color:var(--gold-bright)">${r} rune</strong> ai tuoi piedi.`;
+    log(`Evento: rune dalla statua (+${r}).`,"gold"); sfx("rune");
+  } else if(ev===7){
+    // fonte: scegli cura o fiaschetta
+    setAction("? Fonte Spezzata", `Una fonte ribolle di luce fioca. Bevi per <strong>curarti del tutto</strong>, oppure raccogline l'essenza per <strong>ricaricare le fiaschette</strong>.`,
+      [["Bevi (cura totale)",()=>{ player.hp=player.maxhp; log("Bevi alla fonte: vitalità ripristinata.","good"); sfx("grace"); renderStats(); setAction("? Fonte","L'acqua si placa. Tira il dado.",[["Tira il dado",rollMove]]); }],
+       ["Raccogli (fiaschette)",()=>{ player.flasks=player.maxflasks; log("Ricarichi tutte le fiaschette alla fonte.","good"); sfx("flask"); renderStats(); setAction("? Fonte","L'acqua si placa. Tira il dado.",[["Tira il dado",rollMove]]); }]]);
+    renderBoard(); renderStats();
+    return;
+  } else if(ev===8){
+    // mercante nascosto: dono di un oggetto se non già posseduto
+    const heal = rnd(6,12);
+    player.flaskBonus += 4;
+    player.hp = Math.min(player.maxhp, player.hp+heal);
+    text = `Un eremita ti insegna a distillare meglio: le fiaschette curano <strong style="color:#b9d49a">4 in più</strong> e recuperi ${heal} vitalità.`;
+    log("Evento: l'eremita potenzia le fiaschette (+4 cura).","good"); sfx("buy");
+  } else {
+    // maledizione/benedizione del caso
+    if(d6()>=4){
+      player.atk += 1;
+      text = `Una runa antica si fonde con la tua arma: <strong style="color:var(--gold-bright)">+1 attacco permanente</strong>.`;
+      log("Evento: benedizione runica (+1 ATK).","gold"); sfx("level");
+    } else {
+      const r = rnd(10,25)+tile.region*6; player.runes += r;
+      text = `Sussurri tra le rovine ti guidano a <strong style="color:var(--gold-bright)">${r} rune</strong> nascoste.`;
+      log(`Evento: rune nascoste (+${r}).`,"gold"); sfx("rune");
+    }
+  }
+  renderBoard(); renderStats();
+  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${text}`, [["Tira il dado",rollMove]]);
+}
+
+/* ===================== GRAZIA ===================== */
+function respawnEnemies(){
+  tiles.forEach(t=>{ if((t.type==="enemy"||t.type==="elite") && t.cleared) t.cleared=false; });
+  log("I nemici delle terre si ridestano.","bad");
+}
+function openGrace(tile){
+  tile.cleared = true;
+  player.checkpoint = tile.idx;
+  player.hp = player.maxhp;
+  player.flasks = player.maxflasks;
+  respawnEnemies();
+  sfx("grace");
+  log("Ti riposi a un sito di grazia. Tutto è ripristinato.","good");
+  renderAll();
+  renderGraceMenu();
+  $("ov-grace").classList.add("open");
+}
+function showGraceMenu(){
+  renderGraceMenu();
+  $("ov-grace").classList.add("open");
+}
+function levelCost(){ return 50 + (player.level-1)*35; }
+function renderGraceMenu(){
+  const cost = levelCost();
+  const can = player.runes >= cost;
+  $("grace-levelup").innerHTML = `
+    <div class="shop-item"><div><span class="nm">Vigore</span><div class="d">+10 vitalità massima (e cura completa)</div></div>
+      <button id="lv-vig" ${can?"":"disabled"}>⟐ ${cost} rune</button></div>
+    <div class="shop-item"><div><span class="nm">Forza</span><div class="d">+1 attacco</div></div>
+      <button id="lv-for" ${can?"":"disabled"}>⟐ ${cost} rune</button></div>
+    <p class="center">Rune possedute: <strong style="color:var(--gold-bright)">${player.runes}</strong></p>`;
+  $("lv-vig").addEventListener("click", ()=>levelUp("vig"));
+  $("lv-for").addEventListener("click", ()=>levelUp("for"));
+}
+function levelUp(which){
+  const cost = levelCost();
+  if(player.runes < cost) return;
+  player.runes -= cost;
+  player.level++;
+  sfx("level");
+  if(which==="vig"){ player.maxhp += 10; player.hp = player.maxhp; log(`Sali al livello ${player.level}: +10 vitalità.`,"gold"); }
+  else { player.atk += 1; log(`Sali al livello ${player.level}: +1 attacco.`,"gold"); }
+  renderStats(); renderGraceMenu();
+}
+$("grace-leave").addEventListener("click", ()=>{
+  $("ov-grace").classList.remove("open");
+  setAction("❋ Grazia", "La fiamma arde quieta. Puoi meditare ancora o proseguire.", [["Tira il dado",rollMove],["Medita",showGraceMenu]]);
+});
+
+/* ===================== MERCANTE ===================== */
+const SHOP_BASE = [
+  {id:"flask", nm:"Fiaschetta in più", d:"+1 fiaschetta massima (e ricarica)", price:90, repeat:true},
+  {id:"sharp", nm:"Pietra per affilare", d:"+1 attacco permanente", price:120, repeat:true},
+  {id:"heart", nm:"Cuore di pietra", d:"+10 vitalità massima", price:100, repeat:true},
+  {id:"vial",  nm:"Fiala potenziata", d:"Le fiaschette curano 10 in più", price:110, repeat:false},
+  {id:"charm", nm:"Talismano del recupero", d:"Alla morte conservi metà delle rune", price:140, repeat:false},
+];
+let shopBought = {};
+function openShop(tile){
+  renderShop(tile);
+  $("ov-shop").classList.add("open");
+}
+function renderShop(tile){
+  const mult = 1 + tile.region*0.35;
+  const list = $("shop-list");
+  list.innerHTML = "";
+  SHOP_BASE.forEach(item=>{
+    if(!item.repeat && (shopBought[item.id])) return;
+    const price = Math.round(item.price * mult / 5)*5;
+    const row = document.createElement("div");
+    row.className = "shop-item";
+    row.innerHTML = `<div><span class="nm">${item.nm}</span><div class="d">${item.d}</div></div>`;
+    const btn = document.createElement("button");
+    btn.textContent = `⟐ ${price}`;
+    btn.disabled = player.runes < price;
+    btn.addEventListener("click", ()=>{
+      if(player.runes < price) return;
+      player.runes -= price;
+      applyItem(item);
+      renderShop(tile); renderStats();
+    });
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+  $("shop-runes").innerHTML = `Rune possedute: <strong style="color:var(--gold-bright)">${player.runes}</strong>`;
+}
+function applyItem(item){
+  shopBought[item.id] = true;
+  if(item.id==="flask"){ player.maxflasks++; player.flasks = player.maxflasks; }
+  if(item.id==="sharp"){ player.atk++; }
+  if(item.id==="heart"){ player.maxhp += 10; player.hp += 10; }
+  if(item.id==="vial"){ player.flaskBonus += 10; player.items.push("Fiala potenziata"); }
+  if(item.id==="charm"){ player.items.push("Talismano del recupero"); }
+  log(`Acquisti: ${item.nm}.`,"gold");
+  toast(`✦ ${item.nm}`, "gold");
+  sfx("buy");
+}
+$("shop-leave").addEventListener("click", ()=>{
+  $("ov-shop").classList.remove("open");
+  setAction("⚖ Mercante", "«Torna quando vuoi, viandante.» Tira il dado per proseguire.", [["Tira il dado",rollMove]]);
+});
+
+
+/* ===================== AUDIO RETRÒ ===================== */
+const AudioFX = {
+  ctx:null, enabled:true, sfxVol:1, sfxBus:null,
+  ensure(){
+    if(this.ctx) return true;
+    const AC = (typeof AudioContext!=="undefined") ? AudioContext :
+               (typeof webkitAudioContext!=="undefined" ? webkitAudioContext : null);
+    if(!AC) return false;
+    try{ this.ctx = new AC(); }catch(e){ return false; }
+    this.sfxBus = this.ctx.createGain();
+    this.sfxBus.gain.value = this.sfxVol;
+    this.sfxBus.connect(this.ctx.destination);
+    return true;
+  },
+  setSfxVol(v){
+    this.sfxVol = Math.max(0,Math.min(1,v));
+    if(this.sfxBus) this.sfxBus.gain.value = this.sfxVol;
+  },
+  out(){ return this.sfxBus || this.ctx.destination; },
+  tone(freq, when, dur, type, vol, slideTo){
+    const c=this.ctx, o=c.createOscillator(), g=c.createGain();
+    o.type=type||"square"; o.frequency.setValueAtTime(freq, when);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20,slideTo), when+dur);
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vol||0.06, when+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, when+dur);
+    o.connect(g); g.connect(this.out());
+    o.start(when); o.stop(when+dur+0.05);
+  },
+  noise(when, dur, vol){
+    const c=this.ctx, n=Math.floor(c.sampleRate*dur);
+    const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=c.createBufferSource(); src.buffer=buf;
+    const g=c.createGain(); g.gain.value=vol||0.05;
+    src.connect(g); g.connect(this.out()); src.start(when);
+  },
+  play(name){
+    if(!this.enabled || !this.ensure()) return;
+    if(this.ctx.state==="suspended") this.ctx.resume();
+    const t=this.ctx.currentTime;
+    switch(name){
+      case "dice":  this.noise(t,.08,.04); this.noise(t+.09,.06,.03); break;
+      case "step":  this.tone(190,t,.05,"square",.022); break;
+      case "hit":   this.noise(t,.1,.06); this.tone(140,t,.12,"square",.05,70); break;
+      case "hurt":  this.noise(t,.12,.07); this.tone(95,t,.18,"sawtooth",.06,45); break;
+      case "parry": this.tone(880,t,.07,"square",.05); this.tone(1320,t+.06,.12,"square",.05); break;
+      case "flask": this.tone(330,t,.09,"triangle",.06); this.tone(440,t+.09,.09,"triangle",.06); this.tone(550,t+.18,.14,"triangle",.06); break;
+      case "rune":  this.tone(1040,t,.06,"square",.045); this.tone(1560,t+.05,.09,"square",.04); break;
+      case "buy":   this.tone(660,t,.07,"square",.05); this.tone(880,t+.07,.1,"square",.05); break;
+      case "level": [523,659,784,1046].forEach((f,i)=>this.tone(f,t+i*.09,.12,"square",.055)); break;
+      case "grace": [392,523,659].forEach((f,i)=>this.tone(f,t+i*.05,.5,"triangle",.04)); break;
+      case "kill":  this.noise(t,.14,.06); this.tone(520,t,.16,"square",.05,160); break;
+      case "boss":  [196,247,196,165].forEach((f,i)=>this.tone(f,t+i*.14,.18,"sawtooth",.055)); break;
+      case "death": [392,330,262,196].forEach((f,i)=>this.tone(f,t+i*.22,.3,"triangle",.06)); break;
+      case "victory":[523,659,784,1046,784,1046,1318].forEach((f,i)=>this.tone(f,t+i*.13,.2,"square",.05)); break;
+      case "charge": this.tone(110,t,.4,"sawtooth",.05,220); break;
+      case "flee":  this.tone(440,t,.08,"square",.045,880); break;
+    }
+  }
+};
+function sfx(n){ AudioFX.play(n); }
+
+/* ===================== TOAST ===================== */
+function toast(msg, cls){
+  const host = $("toasts");
+  if(!host || !host.appendChild) return;
+  const d = document.createElement("div");
+  d.className = "toast" + (cls?" "+cls:"");
+  d.textContent = msg;
+  host.appendChild(d);
+  setTimeout(()=>d.remove(), REDUCED?1200:3100);
+}
+
+/* ===================== NUMERI ANIMATI ===================== */
+function animNumber(el, to){
+  if(!el) return;
+  const from = el._v ?? to;
+  el._v = to;
+  if(REDUCED || typeof requestAnimationFrame==="undefined" || from===to){ el.textContent = to; return; }
+  const t0 = performance.now(), dur = 450;
+  function tick(ts){
+    const p = Math.min(1,(ts-t0)/dur);
+    el.textContent = Math.round(from+(to-from)*(1-Math.pow(1-p,3)));
+    if(p<1 && el._v===to) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+
+/* ===================== MUSICA: SEQUENCER CHIPTUNE ===================== */
+function nf(n){ // "A#2" -> frequenza
+  const m = /^([A-G]#?)(-?\d)$/.exec(n);
+  const ix = {C:0,"C#":1,D:2,"D#":3,E:4,F:5,"F#":6,G:7,"G#":8,A:9,"A#":10,B:11}[m[1]];
+  return 440*Math.pow(2,(ix-9)/12 + (parseInt(m[2],10)-4));
+}
+function seq(len, map){ const a=new Array(len).fill(null); for(const k in map) a[+k]=map[k]; return a; }
+
+/* Ogni tema: titolo, bpm, len (passi da sedicesimo), tracce bass/lead/drum */
+const THEMES = {
+  boss0: { title:"Veglia della Sentinella", bpm:84, len:32, bassType:"triangle",
+    bass: seq(32,{0:"A2",2:"A2",4:"E2",6:"A2",8:"F2",10:"F2",12:"E2",14:"E2",
+                  16:"A2",18:"A2",20:"G2",22:"G2",24:"F2",26:"F2",28:"E2",30:"E2"}),
+    lead: seq(32,{0:["E4",4],6:"D4",8:["C4",4],12:"B3",16:["C4",4],20:"D4",22:["E4",4],28:["B3",3]}),
+    drum: seq(32,{0:"k",4:"h",8:"k",12:"h",16:"k",20:"h",24:"k",26:"k",28:"h"}),
+  },
+  boss1: { title:"Ninnananna della Palude", bpm:96, len:32, bassType:"triangle",
+    bass: seq(32,{0:"D2",3:"F2",6:"D2",8:"D2",11:"G#2",14:"D2",
+                  16:"D2",19:"F2",22:"D2",24:"C2",27:"A#1",30:"A1"}),
+    lead: seq(32,{4:["D5",2],7:"C#5",10:["D5",3],16:["F5",3],20:"E5",23:"D#5",26:["D5",4]}),
+    drum: seq(32,{0:"k",6:"h",10:"k",14:"h",16:"k",22:"h",26:"k",30:"h"}),
+  },
+  boss2: { title:"Galoppo nella Cenere", bpm:148, len:32, bassType:"sawtooth",
+    bass: seq(32,{0:"E2",1:"E2",3:"E2",4:"E2",5:"E2",7:"E2",8:"G2",9:"G2",11:"G2",12:"A2",13:"A2",15:"A2",
+                  16:"E2",17:"E2",19:"E2",20:"E2",21:"E2",23:"E2",24:"C3",25:"C3",27:"C3",28:"B2",29:"B2",31:"B2"}),
+    lead: seq(32,{0:"E4",2:"G4",4:"E4",6:"B4",8:"A4",10:"G4",12:"F#4",14:"G4",
+                  16:"E4",18:"G4",20:"B4",22:"E5",24:"D5",26:"B4",28:"C5",30:"B4"}),
+    drum: seq(32,{0:"k",2:"h",4:"s",6:"h",8:"k",10:"h",12:"s",14:"h",
+                  16:"k",18:"h",20:"s",22:"h",24:"k",26:"h",28:"s",30:"h"}),
+  },
+  boss3: { title:"Corona del Senza Nome", bpm:156, len:32, bassType:"sawtooth",
+    bass: seq(32,{0:"A2",2:"A2",4:"A2",6:"A2",8:"F2",10:"F2",12:"F2",14:"F2",
+                  16:"G2",18:"G2",20:"G2",22:"G2",24:"E2",26:"E2",28:"G#2",30:"G#2"}),
+    lead: seq(32,{0:"A4",2:"C5",4:"E5",6:"A5",8:"F4",10:"A4",12:"C5",14:"F5",
+                  16:"G4",18:"B4",20:"D5",22:"G5",24:"E4",26:"G#4",28:"B4",30:"E5"}),
+    drum: seq(32,{0:"k",2:"h",4:"s",6:"h",8:"k",10:"h",12:"s",14:"h",
+                  16:"k",18:"h",20:"s",22:"h",24:"k",25:"k",26:"h",28:"s",30:"h"}),
+  },
+  elite: { title:"Sfida dell'Élite", bpm:128, len:16, bassType:"triangle",
+    bass: seq(16,{0:"A2",2:"A2",4:"G2",6:"A2",8:"F2",10:"F2",12:"E2",14:"E2"}),
+    lead: seq(16,{0:["A4",2],6:"C5",8:["G4",2],14:"E4"}),
+    drum: seq(16,{0:"k",4:"h",8:"k",12:"h"}),
+  },
+};
+
+const Music = {
+  timer:0, step:0, nextTime:0, theme:null, gain:null, vol:0.6,
+  ensure(){
+    if(!AudioFX.ensure()) return false;
+    if(!this.gain){
+      this.gain = AudioFX.ctx.createGain();
+      this.gain.gain.value = this.vol;
+      this.gain.connect(AudioFX.ctx.destination);
+    }
+    return true;
+  },
+  setVol(v){
+    this.vol = Math.max(0,Math.min(1,v));
+    if(this.gain && this.theme && AudioFX.ctx){
+      const t = AudioFX.ctx.currentTime;
+      this.gain.gain.cancelScheduledValues(t);
+      this.gain.gain.setValueAtTime(Math.max(0.0001,this.vol), t);
+    }
+  },
+  start(name){
+    if(!AudioFX.enabled || !this.ensure()) return;
+    this.stop();
+    const th = THEMES[name];
+    if(!th) return;
+    if(AudioFX.ctx.state==="suspended") AudioFX.ctx.resume();
+    this.theme = th;
+    th.spb = 60/th.bpm/4;
+    this.step = 0;
+    this.nextTime = AudioFX.ctx.currentTime + 0.08;
+    this.gain.gain.cancelScheduledValues(AudioFX.ctx.currentTime);
+    this.gain.gain.setValueAtTime(0.0001, AudioFX.ctx.currentTime);
+    this.gain.gain.exponentialRampToValueAtTime(Math.max(0.0001,this.vol), AudioFX.ctx.currentTime+0.5);
+    this.timer = setInterval(()=>this.schedule(), 30);
+  },
+  stop(){
+    if(this.timer){ clearInterval(this.timer); this.timer=0; }
+    if(this.theme && this.gain && AudioFX.ctx){
+      const t = AudioFX.ctx.currentTime;
+      this.gain.gain.cancelScheduledValues(t);
+      this.gain.gain.setValueAtTime(this.gain.gain.value, t);
+      this.gain.gain.exponentialRampToValueAtTime(0.0001, t+0.35);
+    }
+    this.theme = null;
+  },
+  schedule(){
+    if(!this.theme || !AudioFX.enabled){ this.stop(); return; }
+    const c = AudioFX.ctx;
+    while(this.nextTime < c.currentTime + 0.15){
+      this.playStep(this.step, this.nextTime);
+      this.nextTime += this.theme.spb;
+      this.step = (this.step+1)%this.theme.len;
+    }
+  },
+  inst(freq, t, dur, type, vol){
+    const c=AudioFX.ctx, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol,t+0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(this.gain);
+    o.start(t); o.stop(t+dur+0.05);
+  },
+  drum(kind, t){
+    const c=AudioFX.ctx;
+    if(kind==="k"){
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="sine";
+      o.frequency.setValueAtTime(130,t);
+      o.frequency.exponentialRampToValueAtTime(38,t+0.1);
+      g.gain.setValueAtTime(0.22,t);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
+      o.connect(g); g.connect(this.gain); o.start(t); o.stop(t+0.15);
+    } else {
+      const dur = kind==="s" ? 0.09 : 0.035;
+      const n = Math.floor(c.sampleRate*dur);
+      const buf = c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+      const src=c.createBufferSource(); src.buffer=buf;
+      const g=c.createGain(); g.gain.value = kind==="s" ? 0.14 : 0.06;
+      src.connect(g); g.connect(this.gain); src.start(t);
+    }
+  },
+  playStep(st, t){
+    const th=this.theme, spb=th.spb;
+    const b=th.bass[st];
+    if(b) this.inst(nf(b), t, spb*1.9, th.bassType||"triangle", 0.105);
+    const l=th.lead[st];
+    if(l){
+      const [n,d] = Array.isArray(l) ? l : [l,1];
+      this.inst(nf(n), t, spb*d*0.92, "square", 0.062);
+      this.inst(nf(n)*2.003, t, spb*d*0.92, "square", 0.016); // sdoppiamento leggero
+    }
+    const dr=th.drum[st];
+    if(dr) this.drum(dr, t);
+  },
+};
+
+/* ===================== SCENA DI BATTAGLIA RETRÒ ===================== */
+const SPRITES = {
+hero:[
+"...aa.......",
+"..aaaa..w...",
+"..aeea..w...",
+"..aaaa..w...",
+"...bb..ww...",
+".abbbbaw....",
+"a.bbbbb.....",
+"..bbbb......",
+"..b..b......",
+"..b..b......",
+".aa..aa.....",
+],
+humanoid:[
+"...aaa......",
+"...asa..w...",
+"...aaa..w...",
+".bbbbb..w...",
+"b.bbbb.ww...",
+"b.bbbbb.w...",
+"..bbb...w...",
+"..b.b...w...",
+"..b.b.......",
+".aa.aa......",
+],
+beast:[
+".......aa...",
+"......aeaa..",
+".aaaaaaaa...",
+"aaaaaaaaa...",
+"a.aaaaaa....",
+"..a..a.a....",
+"..a..a..a...",
+".aa.aa..aa..",
+],
+ghost:[
+"....aaa.....",
+"...aaaaa....",
+"..aaeaeaa...",
+"..aaaaaaa...",
+"..baaaaab...",
+"...aaaaa....",
+"...aaaa.....",
+"..a.aa.a....",
+".a..a...a...",
+"....a.......",
+],
+witch:[
+".....a......",
+"....aaa.....",
+"...aaaaa....",
+"....ses..w..",
+"...bbbbb.w..",
+"..b.bbb.ww..",
+"..b.bbbb.w..",
+".b..bbbb.w..",
+"....bbbb.w..",
+"...bbbbbb...",
+"..bbbbbbbb..",
+],
+bigknight:[
+".....aaaa.......",
+"....aaaaaa..w...",
+"....aeaeaa..w...",
+"....aaaaaa..w...",
+"..bbbbbbbb.ww...",
+".b.bbbbbbbbww...",
+".b.bbbbbbb.ww...",
+".b.bbbbbbb..w...",
+"....bbbbbb..w...",
+"...bbbbbbb..w...",
+"...bbb.bbb..w...",
+"...bb...bb......",
+"...bb...bb......",
+"..aaa...aaa.....",
+],
+golem:[
+"...aaaaaa.......",
+"..aaaaaaaa......",
+"..aaeaaeaa......",
+".baaaaaaaab.....",
+"bb.aaaaaa.bb....",
+"bb.aaaaaa.bb....",
+"b..aaaaaa..b....",
+"...aaaaaa.......",
+"..aaa..aaa......",
+"..aaa..aaa......",
+".aaaa..aaaa.....",
+],
+blob:[
+"......aa.aa.....",
+"....aaaaaaaa....",
+"...aaaaaaaaaa...",
+"..aaeaaaaeaaaa..",
+"..aaaaaaaaaaaa..",
+".aaaaeaaeaaaaaa.",
+".aabaaaaaabaaaa.",
+"aaaaaaaaaaaaaaa.",
+"aabaaabaaabaaba.",
+".a..a...a...a...",
+],
+sovereign:[
+"...c.c.c.c......",
+"....ccccc.......",
+"....aaaaa...w...",
+"....aeaea...w...",
+"....aaaaa..www..",
+"..bbbbbbbb..w...",
+".b.bbbbbbb..w...",
+".b.bbbbbbbb.w...",
+".b.bbbbbbb..w...",
+"....bbbbbb..w...",
+"...bbbbbbb..w...",
+"...bbb.bbb..w...",
+"...bb...bb......",
+"...bb...bb......",
+"..aaa...aaa.....",
+],
+};
+const HERO_PAL = {a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"};
+const ENEMY_LOOK = {
+  "Soldato Errante":   {sp:"humanoid", pal:{a:"#8a93a3",b:"#5a6373",e:"#0a0c10",s:"#b8a48a",w:"#c8cdd8"}},
+  "Segugio di Tomba":  {sp:"beast",    pal:{a:"#6a6f7e",b:"#3c4150",e:"#ffd87a",s:"#999",w:"#ccc"}},
+  "Spettro di Fango":  {sp:"ghost",    pal:{a:"#7ca58a",b:"#3d5a48",e:"#eaffd8",s:"#999",w:"#ccc"}},
+  "Strega di Palude":  {sp:"witch",    pal:{a:"#4a6b52",b:"#33493a",e:"#d8ffb0",s:"#a8b890",w:"#8a7345"}},
+  "Cavaliere di Brace":{sp:"humanoid", pal:{a:"#a55b35",b:"#6e3a22",e:"#ffd0a0",s:"#caa27a",w:"#e8a050"}},
+  "Arciere di Cenere": {sp:"humanoid", pal:{a:"#9a7a5a",b:"#5f4a36",e:"#1a1208",s:"#caa27a",w:"#caa468"}},
+  "Guardia Crepuscolare":{sp:"humanoid",pal:{a:"#7a6a9e",b:"#4c4068",e:"#e0d0ff",s:"#b0a0c8",w:"#b8a8e0"}},
+  "Accolito del Vuoto":{sp:"ghost",    pal:{a:"#8a72b8",b:"#4e3d70",e:"#f0e0ff",s:"#999",w:"#ccc"}},
+  "Campione Caduto":   {sp:"bigknight",pal:{a:"#9aa3b3",b:"#5e6878",e:"#ffd87a",s:"#999",w:"#d0d6e0"}},
+  "Divoratore della Melma":{sp:"blob", pal:{a:"#5f7a4a",b:"#3a4d2c",e:"#e0ffb0",s:"#999",w:"#ccc"}},
+  "Golem di Scorie":   {sp:"golem",    pal:{a:"#7e5a42",b:"#4e3626",e:"#ff9a40",s:"#999",w:"#ccc"}},
+  "Araldo della Fine": {sp:"bigknight",pal:{a:"#8a72b8",b:"#52426e",e:"#ff6a5a",s:"#999",w:"#c8b0f0"}},
+  "Sentinella Spezzata":{sp:"bigknight",pal:{a:"#a8b0bd",b:"#646e7d",e:"#ffd87a",s:"#999",w:"#dde2ea"},boss:1},
+  "Madre della Palude":{sp:"blob",     pal:{a:"#6b8a52",b:"#42572f",e:"#f0ffc0",s:"#999",w:"#ccc"},boss:1},
+  "Cavaliere della Cenere":{sp:"bigknight",pal:{a:"#b06a3a",b:"#6e3e20",e:"#ffcf90",s:"#999",w:"#ffb060"},boss:1},
+  "Sovrano Senza Nome":{sp:"sovereign",pal:{a:"#bdb4cf",b:"#5e5478",e:"#ff5a4a",s:"#999",w:"#e8e0ff",c:"#ecc857"},boss:1},
+};
+const REGION_BG = [
+  {sky0:"#0c1018",sky1:"#1b2434",hill:"#131a26",ground:"#1a2230",line:"#2c3a52",mote:"#8fa8c8",spire:"#0e141e"},
+  {sky0:"#0a120d",sky1:"#17271d",hill:"#0f1c14",ground:"#152319",line:"#2c4a34",mote:"#7fae8a",spire:"#0b150f"},
+  {sky0:"#170d09",sky1:"#2c1810",hill:"#1e110a",ground:"#22140c",line:"#583020",mote:"#e8a050",spire:"#170d07"},
+  {sky0:"#0f0a16",sky1:"#1f1434",hill:"#160e26",ground:"#191130",line:"#3c2c5e",mote:"#a98fd8",spire:"#110a1e"},
+];
+const BS = {ctx:null,cv:null,raf:0,t:0,queue:[],cur:null,parts:[],slashes:[],motes:[],shake:0,
+  hero:null,enemy:null,bg:null,spires:[],lastTs:0};
+
+function spriteSize(map){ return {w:map[0].length, h:map.length}; }
+function mkFighter(map,pal,scale,baseX,baseY,flip){
+  return {map,pal,scale,baseX,baseY,flip,dx:0,dy:0,flash:0,dead:false,bob:Math.random()*6};
+}
+function bsInit(enemyName,region,isBoss,isElite){
+  const cv = $("battle-canvas");
+  if(!cv || !cv.getContext){ BS.ctx=null; return; }
+  BS.cv = cv; BS.ctx = cv.getContext("2d");
+  BS.ctx.imageSmoothingEnabled = false;
+  BS.bg = REGION_BG[region];
+  BS.queue=[]; BS.cur=null; BS.parts=[]; BS.slashes=[]; BS.shake=0;
+  // guglie di sfondo pseudo-casuali ma stabili per regione
+  BS.spires=[];
+  let seed = region*7+3;
+  const rng = ()=>{ seed=(seed*1103515245+12345)%2147483648; return seed/2147483648; };
+  for(let x=8;x<340;x+=18+Math.floor(rng()*20)){
+    BS.spires.push({x, w:4+Math.floor(rng()*8), h:18+Math.floor(rng()*42)});
+  }
+  BS.motes=[];
+  for(let i=0;i<16;i++) BS.motes.push({x:Math.random()*340,y:Math.random()*130,v:.08+Math.random()*.25,r:Math.random()>.5?1:2});
+  const groundY = 132;
+  BS.hero = mkFighter(SPRITES.hero, HERO_PAL, 5, 78, groundY, false);
+  const look = ENEMY_LOOK[enemyName] || {sp:"humanoid",pal:{a:"#999",b:"#666",e:"#fff",s:"#caa",w:"#ddd"}};
+  const scale = isBoss ? 7 : (isElite ? 6 : 5);
+  BS.enemy = mkFighter(SPRITES[look.sp], look.pal, scale, 252, groundY, true);
+  if(!BS.raf && typeof requestAnimationFrame!=="undefined"){
+    BS.lastTs = performance.now();
+    BS.raf = requestAnimationFrame(bsLoop);
+  }
+}
+function bsStop(){
+  if(BS.raf && typeof cancelAnimationFrame!=="undefined") cancelAnimationFrame(BS.raf);
+  BS.raf=0; BS.ctx=null; BS.queue=[]; BS.cur=null;
+}
+function bsBusy(){ return !!BS.ctx && (BS.queue.length>0 || !!BS.cur); }
+function bsPush(dur,tick,end){ if(!BS.ctx) return; BS.queue.push({dur:REDUCED?1:dur,tick,end,t0:null}); }
+
+function drawSprite(f){
+  const ctx = BS.ctx, sz = spriteSize(f.map), px = f.scale;
+  const w = sz.w*px, h = sz.h*px;
+  const bobY = f.dead?0:Math.sin((BS.t/520)+f.bob)*2;
+  const ox = Math.round(f.baseX + f.dx - w/2);
+  const oy = Math.round(f.baseY + f.dy - h + bobY);
+  for(let r=0;r<sz.h;r++){
+    for(let c=0;c<sz.w;c++){
+      const ch = f.map[r][f.flip ? sz.w-1-c : c];
+      if(ch===".") continue;
+      ctx.fillStyle = f.flash>0 ? "#ffffff" : (f.pal[ch]||"#f0f");
+      ctx.fillRect(ox+c*px, oy+r*px, px, px);
+    }
+  }
+  // aura rossa pulsante quando il boss carica il colpo
+  if(f===BS.enemy && typeof combat!=="undefined" && combat && combat.charging && !f.dead){
+    const a = .25+.2*Math.sin(BS.t/130);
+    ctx.strokeStyle = `rgba(220,70,50,${a})`;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(ox-4, oy-4, w+8, h+8);
+  }
+}
+function spawnSlash(x,y,flip,color){
+  BS.slashes.push({x,y,flip,color,life:1});
+}
+function spawnBurst(x,y,color,n,spread){
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2, sp=(spread||1)*(0.6+Math.random()*1.8);
+    BS.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,c:color,life:1,g:.06,sz:2+Math.floor(Math.random()*2)});
+  }
+}
+function dissolveFighter(f){
+  const sz=spriteSize(f.map), px=f.scale;
+  const w=sz.w*px, h=sz.h*px;
+  const ox=f.baseX+f.dx-w/2, oy=f.baseY+f.dy-h;
+  for(let r=0;r<sz.h;r++)for(let c=0;c<sz.w;c++){
+    const ch=f.map[r][f.flip?sz.w-1-c:c];
+    if(ch===".") continue;
+    if(Math.random()<.7) BS.parts.push({
+      x:ox+c*px+px/2, y:oy+r*px+px/2,
+      vx:(Math.random()-.5)*2.4, vy:-Math.random()*2.6,
+      c:f.pal[ch]||"#fff", life:1, g:.09, sz:px-1
+    });
+  }
+  f.dead = true;
+}
+function bsLoop(ts){
+  if(!BS.ctx){ BS.raf=0; return; }
+  const dt = Math.min(50, ts-BS.lastTs); BS.lastTs = ts; BS.t = ts;
+  // coda di animazioni
+  if(!BS.cur && BS.queue.length) { BS.cur = BS.queue.shift(); BS.cur.t0 = ts; }
+  if(BS.cur){
+    const p = Math.min(1,(ts-BS.cur.t0)/BS.cur.dur);
+    BS.cur.tick && BS.cur.tick(p);
+    if(p>=1){ BS.cur.end && BS.cur.end(); BS.cur=null; }
+  }
+  if(BS.hero && BS.hero.flash>0) BS.hero.flash-=dt;
+  if(BS.enemy && BS.enemy.flash>0) BS.enemy.flash-=dt;
+  if(BS.shake>0) BS.shake-=dt;
+  draw(dt);
+  BS.raf = requestAnimationFrame(bsLoop);
+}
+function draw(dt){
+  const ctx=BS.ctx, bg=BS.bg;
+  ctx.save();
+  if(BS.shake>0 && !REDUCED) ctx.translate((Math.random()-.5)*5,(Math.random()-.5)*4);
+  // cielo
+  const g = ctx.createLinearGradient(0,0,0,150);
+  g.addColorStop(0,bg.sky0); g.addColorStop(1,bg.sky1);
+  ctx.fillStyle=g; ctx.fillRect(-6,-6,352,162);
+  // luna/bagliore
+  ctx.fillStyle="rgba(236,200,87,.10)"; ctx.beginPath(); ctx.arc(286,26,20,0,7); ctx.fill();
+  ctx.fillStyle="rgba(236,200,87,.16)"; ctx.beginPath(); ctx.arc(286,26,12,0,7); ctx.fill();
+  // guglie in rovina
+  ctx.fillStyle=bg.spire;
+  BS.spires.forEach(sp=>{ ctx.fillRect(sp.x, 112-sp.h, sp.w, sp.h); ctx.fillRect(sp.x-2, 112-sp.h+6, sp.w+4, 3); });
+  // collina e terreno
+  ctx.fillStyle=bg.hill; ctx.fillRect(-6,106,352,30);
+  ctx.fillStyle=bg.ground; ctx.fillRect(-6,132,352,24);
+  ctx.fillStyle=bg.line; ctx.fillRect(-6,132,352,2);
+  // pulviscolo ambientale
+  BS.motes.forEach(m=>{
+    if(!REDUCED){ m.y-=m.v*dt/16; m.x+=Math.sin((BS.t/900)+m.y)*0.15; if(m.y<-4){m.y=140;m.x=Math.random()*340;} }
+    ctx.fillStyle=bg.mote; ctx.globalAlpha=.4; ctx.fillRect(m.x,m.y,m.r,m.r); ctx.globalAlpha=1;
+  });
+  // combattenti
+  if(BS.hero && !BS.hero.dead) drawSprite(BS.hero);
+  if(BS.enemy && !BS.enemy.dead) drawSprite(BS.enemy);
+  // fendenti
+  BS.slashes = BS.slashes.filter(sl=>{
+    sl.life -= dt/260;
+    if(sl.life<=0) return false;
+    ctx.fillStyle = sl.color;
+    ctx.globalAlpha = Math.max(0,sl.life);
+    const d = sl.flip?-1:1;
+    for(let i=0;i<5;i++){
+      ctx.fillRect(sl.x + d*(i*5 - 10), sl.y - 16 + i*7, 9, 3);
+    }
+    ctx.globalAlpha = 1;
+    return true;
+  });
+  // particelle
+  BS.parts = BS.parts.filter(pa=>{
+    pa.life -= dt/900;
+    if(pa.life<=0) return false;
+    pa.x += pa.vx*dt/16; pa.y += pa.vy*dt/16; pa.vy += pa.g*dt/16;
+    ctx.globalAlpha = Math.max(0,pa.life);
+    ctx.fillStyle = pa.c;
+    ctx.fillRect(pa.x, pa.y, pa.sz, pa.sz);
+    ctx.globalAlpha = 1;
+    return true;
+  });
+  ctx.restore();
+}
+/* sequenze d'attacco */
+function easeOutBack(p){ return 1+2.7*Math.pow(p-1,3)+1.7*Math.pow(p-1,2); }
+function bsHeroAttack(){
+  bsPush(560, p=>{
+    const f=BS.hero;
+    const fwd = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
+    f.dx = fwd*110;
+    if(p>=.42 && p<.5 && !f._hit){ f._hit=true;
+      sfx("hit");
+      spawnSlash(BS.enemy.baseX-14, BS.enemy.baseY-34, false, "#ecc857");
+      spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, "#ecc857", 8, 1.2);
+      BS.enemy.flash=110; BS.enemy.dx=10; BS.shake=160;
+    }
+  }, ()=>{ BS.hero.dx=0; BS.hero._hit=false; BS.enemy.dx=0; });
+}
+function bsEnemyAttack(charged){
+  bsPush(charged?720:560, p=>{
+    const f=BS.enemy;
+    const fwd = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
+    f.dx = -fwd*(charged?130:110);
+    if(p>=.42 && p<.5 && !f._hit){ f._hit=true;
+      sfx("hurt");
+      spawnSlash(BS.hero.baseX+14, BS.hero.baseY-30, true, charged?"#ff6a4a":"#d4756b");
+      spawnBurst(BS.hero.baseX, BS.hero.baseY-26, charged?"#ff6a4a":"#c46a5e", charged?16:8, charged?2:1.2);
+      BS.hero.flash=110; BS.hero.dx=-10; BS.shake=charged?300:160;
+    }
+  }, ()=>{ BS.enemy.dx=0; BS.enemy._hit=false; BS.hero.dx=0; });
+}
+function bsParry(){
+  bsPush(620, p=>{
+    const f=BS.enemy;
+    const fwd = p<.4 ? (p/.4) : Math.max(0, 1-(p-.4)/.35);
+    f.dx = -fwd*100;
+    if(p>=.36 && p<.44 && !f._hit){ f._hit=true;
+      sfx("parry");
+      const cx = BS.hero.baseX+34, cy = BS.hero.baseY-34;
+      spawnBurst(cx, cy, "#ecc857", 18, 2.2);
+      spawnBurst(cx, cy, "#fff7dd", 8, 1.4);
+      BS.enemy.flash=90; BS.enemy.dx=-86; BS.shake=200;
+    }
+  }, ()=>{ BS.enemy.dx=0; BS.enemy._hit=false; });
+}
+function bsFlask(){
+  bsPush(520, p=>{
+    if(Math.random()<.5) BS.parts.push({
+      x:BS.hero.baseX-18+Math.random()*36, y:BS.hero.baseY-4,
+      vx:(Math.random()-.5)*.4, vy:-1.2-Math.random(), c:"#b9d49a", life:.9, g:-.01, sz:2
+    });
+  }, null);
+}
+function bsEnemyDie(){
+  bsPush(220, null, ()=>{ dissolveFighter(BS.enemy); spawnBurst(BS.enemy.baseX, BS.enemy.baseY-26, "#ecc857", 14, 1.6); BS.shake=240; });
+}
+function bsHeroDie(){
+  bsPush(220, null, ()=>{ dissolveFighter(BS.hero); spawnBurst(BS.hero.baseX, BS.hero.baseY-22, "#9c3a32", 14, 1.6); BS.shake=260; });
+}
+
+/* ===================== COMBATTIMENTO ===================== */
+function startCombat(enemy, tile, isBoss, isElite){
+  combat = {
+    e:{...enemy, maxhp:enemy.hp},
+    tile, isBoss, isElite:!!isElite,
+    turn:0, charging:false,
+  };
+  $("cb-name").textContent = isBoss ? "Duello con il Boss" : (isElite ? "Nemico Élite" : "Scontro");
+  $("cb-sub").textContent = enemy.sub || (isElite ? "Un avversario temibile ti sbarra la strada." : "Le lame si incrociano nella polvere.");
+  $("cb-ename").textContent = enemy.n;
+  $("combat-log").innerHTML = `<div>${enemy.n} ti si para davanti.</div>`;
+  $("cb-flee").style.display = (isBoss||isElite) ? "none" : "";
+  renderCombat();
+  $("ov-combat").classList.add("open");
+  bsInit(enemy.n, tile.region, !!isBoss, !!isElite);
+  if(isBoss){ Music.start("boss"+tile.region); }
+  else if(isElite){ Music.start("elite"); }
+  const np = $("cb-nowplaying");
+  if(np){
+    const th = isBoss ? THEMES["boss"+tile.region] : (isElite ? THEMES.elite : null);
+    np.textContent = th ? "♪ "+th.title : "";
+  }
+  setAction("Scontro in corso", `${enemy.n} ti affronta.`, []);
+}
+function renderCombat(){
+  const e = combat.e;
+  const ppct = (100*Math.max(0,player.hp)/player.maxhp)+"%";
+  const epct = (100*Math.max(0,e.hp)/e.maxhp)+"%";
+  $("cb-php").style.width = ppct;  $("cb-php-ghost").style.width = ppct;
+  $("cb-ehp").style.width = epct;  $("cb-ehp-ghost").style.width = epct;
+  $("cb-pstat").textContent = `${Math.max(0,player.hp)} / ${player.maxhp}`;
+  $("cb-estat").textContent = `${Math.max(0,e.hp)} / ${e.maxhp}`;
+  $("cb-flask").disabled = player.flasks<=0;
+  $("cb-turn").textContent = `Turno ${combat.turn+1} · Fiaschette ${player.flasks}/${player.maxflasks} · Nemico ATK ${e.atk}+d6`;
+  const cw = $("charge-warning");
+  if(cw && cw.classList) cw.classList.toggle("show", !!combat.charging);
+  renderStats();
+}
+function cbLog(html, cls){
+  const d = document.createElement("div");
+  if(cls) d.className = cls;
+  d.innerHTML = html;
+  const box = $("combat-log");
+  box.appendChild(d);
+  while(box.children.length>4) box.removeChild(box.firstChild);
+}
+function enemyDamage(){
+  const e = combat.e;
+  let dmg = d6() + e.atk;
+  if(combat.charging){ dmg = Math.round(dmg*1.6); combat.charging = false; cbLog(`<span class="hit">${e.n} scatena il colpo caricato!</span>`); }
+  return dmg;
+}
+function maybeCharge(){
+  // i boss caricano un colpo potente ogni tanto: avviso al giocatore
+  if(combat.isBoss && !combat.charging && combat.turn % 3 === 2 && combat.e.hp>0){
+    combat.charging = true;
+    sfx("charge");
+    cbLog(`<span class="warn">${combat.e.n} si prepara a un colpo devastante... forse è il momento di parare.</span>`);
+  }
+}
+function enemyTurn(skip){
+  if(combat.e.hp<=0) return;
+  if(skip){ maybeCharge(); return; }
+  const wasCharged = combat.charging;
+  bsEnemyAttack(wasCharged);
+  const dmg = enemyDamage();
+  player.hp -= dmg;
+  cbLog(`<span class="hit">${combat.e.n} ti colpisce per ${dmg}.</span>`);
+  floatDmg("cb-pside", "-"+dmg, "#e07a6e");
+  fx($("ov-combat").querySelector(".modal"), "shake", 450);
+  fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
+  maybeCharge();
+}
+function checkCombatEnd(){
+  renderCombat();
+  if(combat.e.hp<=0){ winCombat(); return true; }
+  if(player.hp<=0){ die(); return true; }
+  return false;
+}
+function actAttack(){
+  if(combat.over || bsBusy()) return;
+  combat.turn++;
+  bsHeroAttack();
+  const dmg = d6() + player.atk;
+  combat.e.hp -= dmg;
+  cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>.`);
+  floatDmg("cb-eside", "-"+dmg, "#ecc857");
+  if(combat.e.hp>0) enemyTurn(false);
+  checkCombatEnd();
+}
+function actParry(){
+  if(combat.over || bsBusy()) return;
+  combat.turn++;
+  const roll = d6();
+  if(roll>=3){
+    bsParry();
+    const wasCharging = combat.charging;
+    combat.charging = false;
+    const dmg = Math.ceil((d6()+player.atk)/2);
+    combat.e.hp -= dmg;
+    cbLog(`<span class="heal">Parata riuscita (${roll})${wasCharging?" — il colpo devastante va a vuoto":""}! Contrattacchi per ${dmg}.</span>`);
+    fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
+    floatDmg("cb-eside", "-"+dmg, "#ecc857");
+    enemyTurn(true);
+  } else {
+    cbLog(`La parata fallisce (${roll}).`);
+    enemyTurn(false);
+  }
+  checkCombatEnd();
+}
+function flaskHeal(){ return Math.max(18, Math.round(player.maxhp*0.4)) + player.flaskBonus; }
+function actFlask(){
+  if(combat.over || player.flasks<=0 || bsBusy()) return;
+  combat.turn++;
+  sfx("flask");
+  bsFlask();
+  player.flasks--;
+  const heal = flaskHeal();
+  player.hp = Math.min(player.maxhp, player.hp + heal);
+  cbLog(`<span class="heal">Bevi una fiaschetta: +${heal} vitalità.</span>`);
+  fx($("ov-combat").querySelector(".modal"), "flash-heal", 650);
+  floatDmg("cb-pside", "+"+heal, "#b9d49a");
+  enemyTurn(false);
+  checkCombatEnd();
+}
+function actFlee(){
+  if(combat.over || bsBusy()) return;
+  combat.turn++;
+  const roll = d6();
+  if(roll>=5){
+    cbLog(`Fuggi (${roll})!`);
+    Music.stop();
+    sfx("flee");
+    bsStop();
+    $("ov-combat").classList.remove("open");
+    player.pos = Math.max(0, player.pos-1);
+    combat = null;
+    log("Fuggi dallo scontro, arretrando di una casella.");
+    renderBoard(); renderStats();
+    setAction("Fuga", "Ti metti in salvo, ma il nemico resta in agguato. Tira il dado.", [["Tira il dado",rollMove]]);
+    return;
+  }
+  cbLog(`La fuga fallisce (${roll}).`);
+  enemyTurn(false);
+  checkCombatEnd();
+}
+function winCombat(){
+  if(combat.over) return;
+  combat.over = true;
+  const e = combat.e;
+  const reward = rnd(e.r[0], e.r[1] || e.r[0]);
+  player.runes += reward;
+  combat.tile.cleared = true;
+  log(`${e.n} cade. Ottieni ${reward} rune.`,"gold");
+  cbLog(`<span class="heal"><strong>NEMICO ABBATTUTO</strong> — ${reward} rune.</span>`);
+  bsEnemyDie();
+  Music.stop();
+  sfx(combat.isBoss ? "boss" : "kill");
+  if(reward>0) toast(`⟐ +${reward} rune`, "gold");
+  const wasBoss = combat.isBoss;
+  const wasFinal = combat.tile.idx === tiles.length-1;
+  setTimeout(()=>{
+    bsStop();
+    $("ov-combat").classList.remove("open");
+    combat = null;
+    renderAll();
+    if(wasFinal){ victory(); return; }
+    if(wasBoss){
+      setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,tiles[player.pos].region+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]]);
+    } else {
+      setAction("Vittoria", "Il sentiero torna silenzioso. Tira il dado per avanzare.", [["Tira il dado",rollMove]]);
+    }
+  }, REDUCED?60:1600);
+}
+
+/* ===================== MORTE E VITTORIA ===================== */
+let runesDropAmount = 0;
+function die(){
+  bsHeroDie();
+  Music.stop();
+  sfx("death");
+  player.deaths = (player.deaths||0)+1;
+  const hasCharm = player.items.includes("Talismano del recupero");
+  const kept = hasCharm ? Math.floor(player.runes/2) : 0;
+  runesDropAmount = player.runes - kept;
+  runesDropTile = runesDropAmount>0 ? player.pos : null;
+  $("death-sub").textContent = runesDropAmount>0
+    ? `${runesDropAmount} rune giacciono sulla casella ${player.pos+1}.${hasCharm?` Il talismano ne salva ${kept}.`:""}`
+    : "Non avevi rune da perdere.";
+  $("death-stats").innerHTML = `
+    <div class="st"><div class="n">${player.level}</div><div class="l">Livello</div></div>
+    <div class="st"><div class="n">${player.deaths||1}</div><div class="l">Morti</div></div>
+    <div class="st"><div class="n">${tiles.filter(t=>t.type==="boss"&&t.cleared).length}/4</div><div class="l">Boss</div></div>`;
+  player.runes = kept;
+  combat = null;
+  respawnEnemies();
+  recordDeath();
+  log("Sei morto. Le rune restano dove sei caduto.","bad");
+  setTimeout(()=>{
+    bsStop();
+    $("ov-combat").classList.remove("open");
+    $("ov-death").classList.add("open");
+  }, REDUCED?60:1300);
+}
+$("death-respawn").addEventListener("click", ()=>{
+  $("ov-death").classList.remove("open");
+  player.pos = player.checkpoint;
+  player.hp = player.maxhp;
+  player.flasks = player.maxflasks;
+  log("Risorgi all'ultima grazia.","good");
+  renderAll();
+  setAction("❋ Risveglio", "La grazia ti ha richiamato. Il tuo nemico ti attende ancora.", [["Tira il dado",rollMove],["Medita",showGraceMenu]]);
+});
+
+function victory(){
+  sfx("victory");
+  recordVictory();
+  clearSave();
+  const st = getStats();
+  const best = st.bestRolls!=null ? `${st.bestRolls} tiri` : "—";
+  $("victory-sub").innerHTML = `Il Sovrano Senza Nome è caduto. Le Terre Spezzate conoscono di nuovo l'alba.<br><span style="font-size:.85rem;color:#6b5c3c">Classe: ${CLASSES[player.cls||chosenClass].nm} · Miglior viaggio: ${best}</span>`;
+  $("victory-stats").innerHTML = `
+    <div class="st"><div class="n">${player.level}</div><div class="l">Livello</div></div>
+    <div class="st"><div class="n">${player.rolls||0}</div><div class="l">Tiri</div></div>
+    <div class="st"><div class="n">${player.deaths||0}</div><div class="l">Morti</div></div>
+    <div class="st"><div class="n">${player.runes}</div><div class="l">Rune finali</div></div>`;
+  $("ov-victory").classList.add("open");
+}
+$("victory-restart").addEventListener("click", ()=>{
+  $("ov-victory").classList.remove("open");
+  clearSave();
+  shopBought = {};
+  Music.stop();
+  $("game-screen").style.display = "none";
+  $("title-screen").style.display = "flex";
+  startEmbers();
+  const ec = $("title-embers"); if(ec && ec.style) ec.style.display = "";
+  renderClassPicker();
+  updateTitleStats();
+  refreshContinueBtn();
+});
+
+/* ===================== INPUT GLOBALI ===================== */
+$("btn-flask-out").addEventListener("click", ()=>{
+  if(combat || player.flasks<=0 || player.hp>=player.maxhp) return;
+  player.flasks--;
+  const healOut = flaskHeal();
+  player.hp = Math.min(player.maxhp, player.hp + healOut);
+  log(`Bevi una fiaschetta: +${healOut} vitalità.`,"good");
+  fx($("btn-flask-out").closest(".card"), "flash-heal", 650);
+  renderStats();
+});
+$("cb-attack").addEventListener("click", ()=>{ if(combat) actAttack(); });
+$("cb-parry").addEventListener("click", ()=>{ if(combat) actParry(); });
+$("cb-flask").addEventListener("click", ()=>{ if(combat) actFlask(); });
+$("cb-flee").addEventListener("click", ()=>{ if(combat) actFlee(); });
+
+$("btn-sound").addEventListener("click", ()=>{
+  AudioFX.enabled = !AudioFX.enabled;
+  if(!AudioFX.enabled) Music.stop();
+  $("btn-sound").textContent = AudioFX.enabled ? "♪" : "✕";
+  $("btn-sound").style.opacity = AudioFX.enabled ? "1" : ".5";
+  if(AudioFX.enabled) sfx("rune");
+});
+$("btn-help").addEventListener("click", ()=>$("ov-help").classList.add("open"));
+$("help-close").addEventListener("click", ()=>$("ov-help").classList.remove("open"));
+
+/* ===================== VISIBILITÀ SCHEDA ===================== */
+if(document.addEventListener){
+  document.addEventListener("visibilitychange", ()=>{
+    if(!AudioFX.ctx) return;
+    if(document.hidden){ AudioFX.ctx.suspend(); }
+    else if(AudioFX.enabled){ AudioFX.ctx.resume(); }
+  });
+}
+
+/* ===================== TASTIERA ===================== */
+if(document.addEventListener){
+  document.addEventListener("keydown", (e)=>{
+    if(e.repeat) return;
+    const k = (e.key||"").toLowerCase();
+    if(k==="escape"){ $("ov-help").classList.remove("open"); $("ov-settings").classList.remove("open"); return; }
+    const combatOpen = $("ov-combat").classList.contains("open");
+    if(combatOpen && combat){
+      if(k==="a") actAttack();
+      else if(k==="p") actParry();
+      else if(k==="f") actFlask();
+      else if(k==="s" && !combat.isBoss && !combat.isElite) actFlee();
+      return;
+    }
+    // nessun overlay aperto: spazio/invio = azione principale
+    if(document.querySelector && document.querySelector(".overlay.open")) return;
+    if(k===" " || k==="enter"){
+      const b = $("action-buttons").querySelector ? $("action-buttons").querySelector("button:not(:disabled)") : null;
+      if(b){ b.click(); e.preventDefault(); }
+    } else if(k==="f"){
+      const fb = $("btn-flask-out");
+      if(fb && !fb.disabled) fb.click();
+    }
+  });
+}
+
+/* ===================== BRACI DEL TITOLO ===================== */
+let emberRaf = 0;
+let embersBound = false;
+function startEmbers(){
+  const cv = $("title-embers");
+  if(!cv || !cv.getContext || REDUCED || typeof requestAnimationFrame==="undefined") return;
+  if(emberRaf) return; // già in esecuzione
+  const ctx = cv.getContext("2d");
+  function size(){ cv.width = innerWidth; cv.height = innerHeight; }
+  size();
+  if(window.addEventListener && !embersBound){ window.addEventListener("resize", size); embersBound = true; }
+  const embers = [];
+  for(let i=0;i<46;i++) embers.push({
+    x:Math.random()*cv.width, y:Math.random()*cv.height,
+    v:.2+Math.random()*.6, s:1+Math.random()*2, ph:Math.random()*7,
+    c:Math.random()<.75?"#c9a227":"#9c3a32"
+  });
+  let last = performance.now();
+  function loop(ts){
+    const dt = Math.min(50, ts-last); last = ts;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    embers.forEach(e=>{
+      e.y -= e.v*dt/16;
+      e.x += Math.sin(ts/1400+e.ph)*.3;
+      if(e.y<-6){ e.y = cv.height+6; e.x = Math.random()*cv.width; }
+      ctx.globalAlpha = .25+.25*Math.sin(ts/700+e.ph);
+      ctx.fillStyle = e.c;
+      ctx.fillRect(e.x, e.y, e.s, e.s);
+    });
+    ctx.globalAlpha = 1;
+    emberRaf = requestAnimationFrame(loop);
+  }
+  emberRaf = requestAnimationFrame(loop);
+}
+startEmbers();
+
+/* ===================== SELETTORE CLASSI ===================== */
+function renderClassPicker(){
+  const host = $("class-picker");
+  if(!host) return;
+  host.innerHTML = "";
+  Object.keys(CLASSES).forEach(key=>{
+    const C = CLASSES[key];
+    const card = document.createElement("div");
+    card.className = "class-card" + (key===chosenClass ? " sel" : "");
+    card.setAttribute("role","button");
+    card.tabIndex = 0;
+    card.innerHTML = `
+      <div class="cls-head"><span class="cls-glyph">${C.glyph}</span><span class="cls-name">${C.nm}</span></div>
+      <div class="cls-desc">${C.desc}</div>
+      <div class="cls-stats"><b>${C.hp}</b> PV · <b>${C.atk}</b> ATK · <b>${C.flasks}</b> fiaschette${C.runes?` · <b>${C.runes}</b> rune`:""}</div>`;
+    const pick = ()=>{ chosenClass = key; renderClassPicker(); sfx("step"); };
+    card.addEventListener("click", pick);
+    card.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(); } });
+    host.appendChild(card);
+  });
+}
+function updateTitleStats(){
+  const st = getStats();
+  const el = $("title-stats");
+  if(!el) return;
+  if((st.wins||0)+(st.deaths||0)===0){ el.textContent = ""; return; }
+  const best = st.bestRolls!=null ? ` · miglior viaggio ${st.bestRolls} tiri` : "";
+  el.textContent = `Vittorie: ${st.wins||0} · Morti totali: ${st.deaths||0}${best}`;
+}
+function refreshContinueBtn(){
+  const b = $("btn-continue");
+  if(!b) return;
+  b.style.display = hasSave() ? "" : "none";
+}
+renderClassPicker();
+updateTitleStats();
+refreshContinueBtn();
+
+function enterGame(){
+  if(emberRaf && typeof cancelAnimationFrame!=="undefined"){ cancelAnimationFrame(emberRaf); emberRaf=0; }
+  const ec = $("title-embers"); if(ec && ec.style) ec.style.display = "none";
+  AudioFX.ensure();
+  $("title-screen").style.display = "none";
+  $("game-screen").style.display = "block";
+}
+
+$("btn-start").addEventListener("click", ()=>{
+  enterGame();
+  sfx("grace");
+  newGame(chosenClass);
+});
+
+$("btn-continue").addEventListener("click", ()=>{
+  if(!loadGame()){ refreshContinueBtn(); return; }
+  enterGame();
+  sfx("grace");
+  const C = CLASSES[player.cls||chosenClass] || CLASSES.vagabondo;
+  $("char-name").textContent = player.name || C.name;
+  renderAll();
+  drawPortrait();
+  log("Riprendi il viaggio dove l'avevi lasciato.","gold");
+  setAction("Il sentiero", "La grazia ti guida ancora. Tira il dado per avanzare.", [["Tira il dado",rollMove],["Medita",showGraceMenu]]);
+});
+
+/* ===================== IMPOSTAZIONI ===================== */
+const SETTINGS_KEY = "terreSpezzate.settings.v1";
+function loadSettings(){
+  let s = {music:60, sfx:100, anim:!SYS_REDUCED};
+  if(storageOk()){
+    try{ const raw = localStorage.getItem(SETTINGS_KEY); if(raw) s = Object.assign(s, JSON.parse(raw)); }catch(e){}
+  }
+  return s;
+}
+function saveSettings(s){
+  if(!storageOk()) return;
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }catch(e){}
+}
+function applySettings(s){
+  Music.vol = s.music/100;
+  Music.setVol(Music.vol);
+  AudioFX.sfxVol = s.sfx/100;
+  AudioFX.setSfxVol(AudioFX.sfxVol);
+  REDUCED = SYS_REDUCED || !s.anim;
+  if(document.body) document.body.classList.toggle("no-anim", !s.anim);
+  $("vol-music").value = s.music; $("vol-music-val").textContent = s.music+"%";
+  $("vol-sfx").value = s.sfx; $("vol-sfx-val").textContent = s.sfx+"%";
+  $("opt-anim").checked = !!s.anim; $("opt-anim-val").textContent = s.anim ? "Attive" : "Spente";
+}
+let settings = loadSettings();
+applySettings(settings);
+
+function openSettings(){
+  const st = getStats();
+  $("settings-records").innerHTML = `<b>Record</b>Vittorie: <b style="color:var(--gold-bright)">${st.wins||0}</b> · Morti totali: <b style="color:#d4847a">${st.deaths||0}</b>${st.bestRolls!=null?` · Miglior viaggio: <b style="color:var(--gold-bright)">${st.bestRolls} tiri</b>`:""}`;
+  $("ov-settings").classList.add("open");
+}
+$("btn-settings").addEventListener("click", openSettings);
+$("settings-close").addEventListener("click", ()=>$("ov-settings").classList.remove("open"));
+$("vol-music").addEventListener("input", e=>{ settings.music=+e.target.value; applySettings(settings); saveSettings(settings); });
+$("vol-sfx").addEventListener("input", e=>{ settings.sfx=+e.target.value; applySettings(settings); saveSettings(settings); });
+$("vol-sfx").addEventListener("change", ()=>{ AudioFX.ensure(); sfx("rune"); });
+$("opt-anim").addEventListener("change", e=>{ settings.anim=e.target.checked; applySettings(settings); saveSettings(settings); });
+</script>
 </body>
 </html>
