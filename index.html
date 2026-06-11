@@ -626,6 +626,7 @@ kbd{
     </div>
     <div class="help-card" style="margin-bottom:.4em"><b>Tastiera</b>Spazio/Invio: azione principale · In combattimento: <kbd style="margin-left:0">A</kbd> attacca, <kbd style="margin-left:0">P</kbd> para, <kbd style="margin-left:0">F</kbd> fiaschetta, <kbd style="margin-left:0">S</kbd> fuggi, <kbd style="margin-left:0">T</kbd> tecnica</div>
     <div class="help-card" style="margin-bottom:.4em"><b>Ardore &amp; Tecnica</b>La barra Ardore si carica attaccando (+12), parando (+22 successo, +6 fallimento) e subendo danni (+10). A 100% sblocchi la tecnica speciale della tua classe, una mossa unica e potente.</div>
+    <div class="help-card" style="margin-bottom:.4em"><b>I quattro Boss</b>Ognuno ha una meccanica unica, sempre annunciata in combattimento. <strong>Sentinella</strong>: scudo rigenerante — rompilo prima di ferirla. <strong>Madre</strong>: invoca un Figlio che intercetta i colpi, distruggilo. <strong>Cavaliere</strong>: assume la posa di parata — non attaccare, contrattacca duro. <strong>Sovrano</strong>: muta aspetto (Vuoto/Fiamma/Gelo), ciascuno resiste a un'azione ed è debole a un'altra — cambia strategia.</div>
     <div class="btnrow"><button id="help-close">Chiudi</button></div>
   </div>
 </div>
@@ -2058,6 +2059,55 @@ function dissolveFighter(f){
   }
   f.dead = true;
 }
+/* riquadro corrente di una sprite (approssimato, per gli overlay di stato) */
+function fighterBox(f){
+  const sz=spriteSize(f.map), px=f.scale;
+  const w=sz.w*px, h=sz.h*px;
+  const bobY=f.dead?0:Math.sin((BS.t/520)+f.bob)*2;
+  const ox=Math.round(f.baseX+f.dx-w/2);
+  const oy=Math.round(f.baseY+f.dy-h+bobY);
+  return {ox,oy,w,h,cx:ox+w/2,cy:oy+h/2};
+}
+function strokeAura(ctx,b,col,pad,lw){
+  ctx.strokeStyle=col; ctx.lineWidth=lw||2;
+  ctx.strokeRect(b.ox-pad,b.oy-pad,b.w+pad*2,b.h+pad*2);
+}
+function hexA(col,a){ return col+Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,"0"); }
+function drawStunStars(ctx,cx,cy){
+  ctx.fillStyle="#ffe040";
+  for(let i=0;i<3;i++){
+    const ang=BS.t/300 + i*2.094;
+    const sx=cx+Math.cos(ang)*15, sy=cy+Math.sin(ang)*5;
+    ctx.fillRect(Math.round(sx)-1,Math.round(sy)-2,3,3);
+    ctx.fillRect(Math.round(sx)-2,Math.round(sy)-1,1,1);
+    ctx.fillRect(Math.round(sx)+2,Math.round(sy)-1,1,1);
+  }
+}
+function drawCombatFx(ctx){
+  if(typeof combat==="undefined" || !combat) return;
+  const E=BS.enemy, H=BS.hero;
+  // Madre: Figlio della Palude (sprite blob ridotto davanti al boss)
+  if(combat.add && combat.add.hp>0 && E && !E.dead){
+    const map=SPRITES.blob, px=3, sz=spriteSize(map);
+    const bx=Math.round(E.baseX-72 - sz.w*px/2);
+    const by=Math.round(E.baseY - sz.h*px + Math.sin(BS.t/300)*2);
+    const pal={a:"#5a9a50",b:"#33493a",e:"#d8ffb0"};
+    for(let r=0;r<sz.h;r++)for(let c=0;c<sz.w;c++){
+      const ch=map[r][c]; if(ch===".")continue;
+      ctx.fillStyle=pal[ch]||"#5a9a50"; ctx.fillRect(bx+c*px,by+r*px,px,px);
+    }
+  }
+  if(E && !E.dead){
+    const b=fighterBox(E);
+    if(combat.guard>0) strokeAura(ctx,b,hexA("#78b4ff",.3+.2*Math.sin(BS.t/180)),5,2);
+    if(combat.parryStance) strokeAura(ctx,b,hexA("#ff9628",.35+.25*Math.sin(BS.t/120)),6,3);
+    if(combat.aspect!=null) strokeAura(ctx,b,hexA(SOVRANO_ASPECTS[combat.aspect].col,.25+.18*Math.sin(BS.t/200)),4,2);
+    if(combat.staggered) drawStunStars(ctx,b.cx,b.oy-6);
+  }
+  if(H && !H.dead && combat.shielded){
+    strokeAura(ctx,fighterBox(H),hexA("#80c8ff",.3+.25*Math.sin(BS.t/150)),5,2);
+  }
+}
 function bsLoop(ts){
   if(!BS.ctx){ BS.raf=0; return; }
   const dt = Math.min(50, ts-BS.lastTs); BS.lastTs = ts; BS.t = ts;
@@ -2130,6 +2180,8 @@ function draw(dt){
   // combattenti
   if(BS.hero && !BS.hero.dead) drawSprite(BS.hero);
   if(BS.enemy && !BS.enemy.dead) drawSprite(BS.enemy);
+  // effetti di stato (scudo, stordimento, posa, aspetto, figlio)
+  drawCombatFx(ctx);
   // fendenti
   BS.slashes = BS.slashes.filter(sl=>{
     sl.life -= dt/260;
@@ -2466,14 +2518,115 @@ function triggerPhase2(bossIdx){
   fx($("ov-combat").querySelector(".modal"), "flash-blood", 900);
 }
 
+/* ===================== MECCANICHE UNICHE DEI BOSS ===================== */
+/* 0 Sentinella: scudo rigenerante · 1 Madre: invoca un figlio ·
+   2 Cavaliere: posa di parata e contrattacco · 3 Sovrano: aspetti mutevoli */
+const SOVRANO_ASPECTS = [
+  {nm:"Vuoto",  col:"#9a5ad0", resist:"attack",  weak:"parry"},
+  {nm:"Fiamma", col:"#ff6a20", resist:"tecnica", weak:"attack"},
+  {nm:"Gelo",   col:"#48b0e0", resist:"parry",   weak:"tecnica"},
+];
+function initBossMech(region){
+  if(region===0){ combat.guardMax = 18; combat.guard = combat.guardMax; }
+  else if(region===1){ combat.addReady = true; combat.add = null; }
+  else if(region===2){ combat.parryStance = false; }
+  else if(region===3){ combat.aspect = 0; combat.aspectTimer = 3; }
+}
+function bossMechBanner(){
+  if(!combat || !combat.isBoss) return "";
+  const r = combat.tile.region;
+  if(r===0 && combat.guard>0) return `🛡 Scudo ${combat.guard}/${combat.guardMax}`;
+  if(r===0 && combat.guardBroken) return `🛡 Scudo infranto!`;
+  if(r===1 && combat.add) return `⊕ Figlio della Palude ${Math.max(0,combat.add.hp)}/${combat.add.maxhp}`;
+  if(r===2 && combat.parryStance) return `⚔ Posa di parata — non attaccare!`;
+  if(r===3 && combat.aspect!=null){ const a=SOVRANO_ASPECTS[combat.aspect]; return `✦ Aspetto del ${a.nm}`; }
+  return "";
+}
+/* applica danno al nemico rispettando scudo / figlio / aspetto */
+function applyEnemyDamage(dmg, source, color){
+  const e = combat.e;
+  // Madre: il figlio intercetta i colpi
+  if(combat.add && combat.add.hp>0){
+    combat.add.hp -= dmg;
+    floatDmg("cb-eside", "-"+dmg, "#8fd49a");
+    if(combat.add.hp<=0){
+      combat.add = null; combat.staggered = true;
+      cbLog(`<span class="heal">Il Figlio della Palude si dissolve nel fango. La Madre è di nuovo esposta!</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX-70, BS.enemy.baseY-26, "#5a9a50", 18, 2.0); BS.shake=Math.max(BS.shake,260); }
+    } else {
+      cbLog(`Colpisci il Figlio della Palude per <strong>${dmg}</strong>.`);
+    }
+    return;
+  }
+  // Sentinella: lo scudo assorbe finché non si rompe
+  if(combat.guard>0){
+    const absorbed = Math.min(combat.guard, dmg);
+    combat.guard -= absorbed;
+    const overflow = dmg - absorbed;
+    if(overflow>0) e.hp -= overflow;
+    floatDmg("cb-eside", "-"+dmg, overflow>0 ? (color||"#ecc857") : "#80c0ff");
+    if(combat.guard<=0 && !combat.guardBroken){
+      combat.guardBroken = true; combat.staggered = true;
+      cbLog(`<span class="heal">Lo scudo della Sentinella va in frantumi! È vulnerabile.</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-34, "#80c0ff", 22, 2.4); BS.enemy.flash=180; BS.shake=Math.max(BS.shake,320); }
+    }
+    return;
+  }
+  // Sovrano: l'aspetto modifica il danno per tipo d'azione
+  if(combat.aspect!=null && source){
+    const a = SOVRANO_ASPECTS[combat.aspect];
+    if(source===a.resist){ dmg = Math.max(1, Math.round(dmg*0.5)); cbLog(`<span class="warn">L'Aspetto del ${a.nm} dimezza il colpo.</span>`); }
+    else if(source===a.weak){ dmg = Math.round(dmg*1.6); cbLog(`<span class="heal">L'Aspetto del ${a.nm} è vulnerabile — danno aumentato!</span>`); }
+  }
+  e.hp -= dmg;
+  floatDmg("cb-eside", "-"+dmg, color||"#ecc857");
+}
+/* hook a inizio turno del giocatore: gestisce posa di parata e ciclo aspetti */
+function bossPreTurn(){
+  if(!combat || !combat.isBoss) return;
+  const r = combat.tile.region;
+  if(r===3 && combat.aspect!=null){
+    combat.aspectTimer--;
+    if(combat.aspectTimer<=0){
+      combat.aspect = (combat.aspect+1) % SOVRANO_ASPECTS.length;
+      combat.aspectTimer = 3;
+      const a = SOVRANO_ASPECTS[combat.aspect];
+      cbLog(`<span class="warn">✦ Il Sovrano muta: Aspetto del ${a.nm}.</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-40, a.col, 20, 2.2); BS.enemy.flash=160; }
+    }
+  }
+}
+/* hook a fine turno nemico: rigenera scudo, invoca figlio, prepara posa */
+function bossPostTurn(){
+  if(!combat || !combat.isBoss || combat.e.hp<=0) return;
+  const r = combat.tile.region;
+  if(r===0 && combat.guard<combat.guardMax && !combat.guardBroken){
+    combat.guard = Math.min(combat.guardMax, combat.guard+4);
+  }
+  if(r===1 && combat.addReady && !combat.add && combat.e.hp<=combat.e.maxhp*0.55){
+    combat.addReady = false;
+    const ahp = 14 + 3*(player.level||1);
+    combat.add = {n:"Figlio della Palude", hp:ahp, maxhp:ahp, atk:Math.max(2,Math.round(combat.e.atk*0.5))};
+    cbLog(`<span class="warn">La Madre partorisce un Figlio della Palude! Distruggilo per colpirla.</span>`);
+    if(BS.ctx){ spawnBurst(BS.enemy.baseX-70, BS.enemy.baseY-30, "#5a9a50", 20, 2.4); BS.shake=Math.max(BS.shake,300); }
+  }
+  if(r===2){
+    // il Cavaliere assume la posa di parata a turni alterni (sfasata dalla carica)
+    combat.parryStance = (combat.turn % 4 === 1);
+    if(combat.parryStance) cbLog(`<span class="warn">Il Cavaliere alza la guardia in posa di parata — attaccare ora è pericoloso.</span>`);
+  }
+}
+
 /* ===================== COMBATTIMENTO ===================== */
 function startCombat(enemy, tile, isBoss, isElite){
   combat = {
     e:{...enemy, maxhp:enemy.hp},
     tile, isBoss, isElite:!!isElite,
     turn:0, charging:false, staggered:false, shielded:false,
+    aspect:null, guard:0, add:null, parryStance:false,
   };
   player.ardore = 0;
+  if(isBoss) initBossMech(tile.region);
   if(isBoss){
     showBossCutscene(tile.region, ()=>openCombatModal(enemy, tile, isBoss, isElite));
   } else {
@@ -2512,9 +2665,15 @@ function renderCombat(){
   $("cb-pstat").textContent = `${Math.max(0,player.hp)} / ${player.maxhp}`;
   $("cb-estat").textContent = `${Math.max(0,e.hp)} / ${e.maxhp}`;
   $("cb-flask").disabled = player.flasks<=0;
-  $("cb-turn").textContent = `Turno ${combat.turn+1} · Fiaschette ${player.flasks}/${player.maxflasks} · Nemico ATK ${e.atk}+d6`;
+  const banner = bossMechBanner();
+  $("cb-turn").textContent = `Turno ${combat.turn+1} · Fiaschette ${player.flasks}/${player.maxflasks} · Nemico ATK ${e.atk}+d6${banner?" · "+banner:""}`;
   const cw = $("charge-warning");
-  if(cw && cw.classList) cw.classList.toggle("show", !!combat.charging);
+  if(cw && cw.classList){
+    const stanceWarn = combat.parryStance;
+    cw.classList.toggle("show", !!combat.charging || stanceWarn);
+    if(stanceWarn && !combat.charging) cw.textContent = "⚔ Posa di parata — NON attaccare, para o usa la Tecnica!";
+    else cw.textContent = "⚠ Colpo devastante in arrivo — para!";
+  }
   renderStats();
 }
 function cbLog(html, cls){
@@ -2554,12 +2713,12 @@ function actTecnica(){
   const key = C.tecnica;
   const tec = TECNICAS[key];
   cbLog(`<span class="warn">${tec.icon} <strong>${tec.nm}</strong> — ${tec.desc}</span>`);
+  bossPreTurn();
   if(key==="lama_spezzata"){
     bsHeroAttack();
     const dmg = (d6()+player.atk)*2;
-    combat.e.hp -= dmg;
-    floatDmg("cb-eside", "-"+dmg, tec.col);
     cbLog(`Lama Spezzata: <strong>${dmg}</strong> danni. Il nemico è stordito!`);
+    applyEnemyDamage(dmg, "tecnica", tec.col);
     combat.staggered = true;
     if(BS.ctx){
       spawnSlash(BS.enemy.baseX-6, BS.enemy.baseY-42, false, "#ffe040");
@@ -2580,13 +2739,12 @@ function actTecnica(){
     let totalDmg=0, totalHeal=0;
     for(let i=0;i<3;i++){
       const dmg = d6()+player.atk;
-      combat.e.hp -= dmg;
       const heal = Math.round(dmg/2);
       player.hp = Math.min(player.maxhp, player.hp+heal);
       totalDmg+=dmg; totalHeal+=heal;
     }
     bsHeroAttack();
-    floatDmg("cb-eside", "-"+totalDmg, tec.col);
+    applyEnemyDamage(totalDmg, "tecnica", tec.col);
     floatDmg("cb-pside", "+"+totalHeal, "#b9d49a");
     cbLog(`<span class="heal">Divorare la Cenere: ${totalDmg} danni, +${totalHeal} curati.</span>`);
     if(BS.ctx){
@@ -2599,9 +2757,8 @@ function actTecnica(){
     bsHeroAttack();
     const mult = (combat.charging||combat.phase2) ? 3 : 1;
     const dmg = (d6()+player.atk)*mult;
-    combat.e.hp -= dmg;
-    floatDmg("cb-eside", "-"+dmg, tec.col);
     cbLog(`Colpo Basso: <strong>${dmg}</strong> danni${mult===3?" (×3!)":""}.`);
+    applyEnemyDamage(dmg, "tecnica", tec.col);
     if(mult===3) combat.charging = false;
     if(BS.ctx){
       spawnBurst(BS.enemy.baseX, BS.enemy.baseY-28, "#c080ff", mult===3?28:14, mult===3?2.6:1.4);
@@ -2629,13 +2786,23 @@ function maybeCharge(){
     cbLog(`<span class="warn">${combat.e.n} si prepara a un colpo devastante... forse è il momento di parare.</span>`);
   }
 }
+/* attacco del Figlio della Palude (add della Madre), se presente */
+function addAttack(){
+  if(!combat.add || combat.add.hp<=0) return;
+  const admg = d6() + combat.add.atk;
+  player.hp -= admg;
+  cbLog(`<span class="hit">Il Figlio della Palude morde per ${admg}.</span>`);
+  floatDmg("cb-pside", "-"+admg, "#8fd49a");
+  if(BS.ctx){ spawnBurst(BS.hero.baseX, BS.hero.baseY-26, "#5a9a50", 8, 1.2); }
+}
 function enemyTurn(skip){
   if(combat.e.hp<=0) return;
-  if(skip){ maybeCharge(); return; }
+  if(skip){ maybeCharge(); bossPostTurn(); return; }
   if(combat.staggered){
     combat.staggered = false;
     cbLog(`<span class="warn">${combat.e.n} è stordito — salta il turno.</span>`);
-    maybeCharge();
+    addAttack();
+    maybeCharge(); bossPostTurn();
     return;
   }
   const wasCharged = combat.charging;
@@ -2644,9 +2811,8 @@ function enemyTurn(skip){
   if(combat.shielded){
     combat.shielded = false;
     const counterDmg = d6()+player.atk;
-    combat.e.hp -= counterDmg;
+    applyEnemyDamage(counterDmg, "tecnica", "#80c0ff");
     cbLog(`<span class="heal">Barriera di Ferro assorbe il colpo! Contrattacchi per ${counterDmg}.</span>`);
-    floatDmg("cb-eside", "-"+counterDmg, "#80c0ff");
     fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
   } else {
     player.hp -= dmg;
@@ -2656,7 +2822,8 @@ function enemyTurn(skip){
     fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
   }
   gainArdore(10);
-  maybeCharge();
+  addAttack();
+  maybeCharge(); bossPostTurn();
 }
 function checkCombatEnd(){
   renderCombat();
@@ -2670,11 +2837,25 @@ function checkCombatEnd(){
 function actAttack(){
   if(combat.over || bsBusy()) return;
   combat.turn++;
+  bossPreTurn();
+  // Cavaliere della Cenere: se è in posa di parata, l'attacco viene punito
+  if(combat.isBoss && combat.tile.region===2 && combat.parryStance){
+    combat.parryStance = false;
+    bsEnemyAttack(true);
+    const counter = d6() + combat.e.atk;
+    player.hp -= counter;
+    cbLog(`<span class="hit">Il Cavaliere para il tuo colpo e contrattacca per ${counter}!</span>`);
+    floatDmg("cb-pside", "-"+counter, "#e07a6e");
+    fx($("ov-combat").querySelector(".modal"), "shake", 450);
+    fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
+    gainArdore(8);
+    checkCombatEnd();
+    return;
+  }
   bsHeroAttack();
   const dmg = d6() + player.atk;
-  combat.e.hp -= dmg;
   cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>.`);
-  floatDmg("cb-eside", "-"+dmg, "#ecc857");
+  applyEnemyDamage(dmg, "attack", "#ecc857");
   gainArdore(12);
   if(combat.e.hp>0) enemyTurn(false);
   checkCombatEnd();
@@ -2682,16 +2863,18 @@ function actAttack(){
 function actParry(){
   if(combat.over || bsBusy()) return;
   combat.turn++;
+  bossPreTurn();
+  // parare annulla la posa del Cavaliere
+  if(combat.parryStance) combat.parryStance = false;
   const roll = d6();
   if(roll>=3){
     bsParry();
     const wasCharging = combat.charging;
     combat.charging = false;
     const dmg = Math.ceil((d6()+player.atk)/2);
-    combat.e.hp -= dmg;
     cbLog(`<span class="heal">Parata riuscita (${roll})${wasCharging?" — il colpo devastante va a vuoto":""}! Contrattacchi per ${dmg}.</span>`);
     fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
-    floatDmg("cb-eside", "-"+dmg, "#ecc857");
+    applyEnemyDamage(dmg, "parry", "#ecc857");
     gainArdore(22);
     enemyTurn(true);
   } else {
@@ -2705,6 +2888,7 @@ function flaskHeal(){ return Math.max(20, Math.round(player.maxhp*0.38)) + (play
 function actFlask(){
   if(combat.over || player.flasks<=0 || bsBusy()) return;
   combat.turn++;
+  bossPreTurn();
   sfx("flask");
   bsFlask();
   player.flasks--;
