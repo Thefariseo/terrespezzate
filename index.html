@@ -527,7 +527,7 @@ kbd{
   <div class="modal">
     <h2 id="cb-name"></h2>
     <p class="sub" id="cb-sub"></p>
-    <canvas id="battle-canvas" width="340" height="150" aria-hidden="true"></canvas>
+    <canvas id="battle-canvas" width="340" height="165" aria-hidden="true"></canvas>
     <div class="combat-row">
       <div class="fighter" id="cb-pside">
         <div class="name">Senza Fiamma</div>
@@ -1290,39 +1290,71 @@ function nf(n){ // "A#2" -> frequenza
 }
 function seq(len, map){ const a=new Array(len).fill(null); for(const k in map) a[+k]=map[k]; return a; }
 
-/* Ogni tema: titolo, bpm, len (passi da sedicesimo), tracce bass/lead/drum */
+/* Ogni tema: titolo, bpm, len (passi da sedicesimo), tracce bass/lead/pad/padHarm/drum */
+/* pad/padHarm → coro di oscillatori triangle detuned (stile From Software) */
 const THEMES = {
-  boss0: { title:"Veglia della Sentinella", bpm:84, len:32, bassType:"triangle",
+  /* ---- menu atmosferico (Il Velo Spezzato) ---- */
+  menu: { title:"Il Velo Spezzato", bpm:46, len:64, bassType:"triangle",
+    bass: seq(64,{0:"A1",8:"A1",16:"C2",24:"C2",32:"G1",40:"G1",48:"E1",56:"E1"}),
+    lead: seq(64,{2:["E4",6],12:["C4",5],20:["D4",4],27:["E4",3],
+                  34:["G4",5],42:["F#4",4],50:["E4",6],58:["A3",5]}),
+    pad:     seq(64,{0:["A3",16],16:["C4",16],32:["B3",16],48:["G3",16]}),
+    padHarm: seq(64,{0:["E4",16],16:["G4",16],32:["D4",16],48:["B3",16]}),
+    drum: seq(64,{0:"k",32:"k",8:"h",40:"h"}),
+  },
+  /* ---- Sentinella Spezzata — come Gundyr ---- */
+  boss0: { title:"Veglia della Sentinella", bpm:104, len:32, bassType:"triangle",
     bass: seq(32,{0:"A2",2:"A2",4:"E2",6:"A2",8:"F2",10:"F2",12:"E2",14:"E2",
                   16:"A2",18:"A2",20:"G2",22:"G2",24:"F2",26:"F2",28:"E2",30:"E2"}),
-    lead: seq(32,{0:["E4",4],6:"D4",8:["C4",4],12:"B3",16:["C4",4],20:"D4",22:["E4",4],28:["B3",3]}),
-    drum: seq(32,{0:"k",4:"h",8:"k",12:"h",16:"k",20:"h",24:"k",26:"k",28:"h"}),
+    lead: seq(32,{0:["E4",4],6:"D4",8:["C4",4],12:"B3",16:["A4",3],20:"G4",22:["E4",4],28:["D4",3]}),
+    pad:     seq(32,{0:["A3",8],8:["F3",8],16:["C4",8],24:["E3",8]}),
+    padHarm: seq(32,{0:["E4",8],8:["C4",8],16:["G4",8],24:["B3",8]}),
+    drum: seq(32,{0:"k",4:"h",8:"k",11:"s",12:"h",16:"k",20:"h",24:"k",26:"s",28:"h"}),
   },
-  boss1: { title:"Ninnananna della Palude", bpm:96, len:32, bassType:"triangle",
-    bass: seq(32,{0:"D2",3:"F2",6:"D2",8:"D2",11:"G#2",14:"D2",
-                  16:"D2",19:"F2",22:"D2",24:"C2",27:"A#1",30:"A1"}),
-    lead: seq(32,{4:["D5",2],7:"C#5",10:["D5",3],16:["F5",3],20:"E5",23:"D#5",26:["D5",4]}),
-    drum: seq(32,{0:"k",6:"h",10:"k",14:"h",16:"k",22:"h",26:"k",30:"h"}),
+  /* ---- Madre della Palude — come Moonlight Butterfly ---- */
+  boss1: { title:"Ninnananna della Palude", bpm:78, len:32, bassType:"triangle",
+    bass: seq(32,{0:"D2",4:"F2",8:"D2",10:"C#2",14:"A1",
+                  16:"D2",20:"F2",24:"C2",28:"A#1",30:"A1"}),
+    lead: seq(32,{1:["D5",3],7:["C5",3],11:["A4",4],17:["F5",3],23:["E5",3],27:["D5",5]}),
+    pad:     seq(32,{0:["D3",8],8:["F3",8],16:["G3",8],24:["A3",8]}),
+    padHarm: seq(32,{0:["A3",8],8:["C4",8],16:["D4",8],24:["E4",8]}),
+    drum: seq(32,{0:"k",8:"h",12:"k",16:"k",24:"h",28:"k"}),
   },
-  boss2: { title:"Galoppo nella Cenere", bpm:148, len:32, bassType:"sawtooth",
-    bass: seq(32,{0:"E2",1:"E2",3:"E2",4:"E2",5:"E2",7:"E2",8:"G2",9:"G2",11:"G2",12:"A2",13:"A2",15:"A2",
-                  16:"E2",17:"E2",19:"E2",20:"E2",21:"E2",23:"E2",24:"C3",25:"C3",27:"C3",28:"B2",29:"B2",31:"B2"}),
-    lead: seq(32,{0:"E4",2:"G4",4:"E4",6:"B4",8:"A4",10:"G4",12:"F#4",14:"G4",
-                  16:"E4",18:"G4",20:"B4",22:"E5",24:"D5",26:"B4",28:"C5",30:"B4"}),
+  /* ---- Cavaliere della Cenere — come Dancer ---- */
+  boss2: { title:"Galoppo nella Cenere", bpm:152, len:32, bassType:"sawtooth",
+    bass: seq(32,{0:"E2",2:"E2",4:"G2",6:"G2",8:"A2",10:"A2",12:"G2",14:"F#2",
+                  16:"E2",18:"E2",20:"B2",22:"B2",24:"C3",26:"C3",28:"B2",30:"A2"}),
+    lead: seq(32,{0:"E4",2:"G4",4:"B4",6:"E5",8:"D5",10:"B4",12:"A4",14:"G4",
+                  16:"E4",18:"F#4",20:"G4",22:"A4",24:"B4",26:"D5",28:"E5",30:"D5"}),
+    pad:     seq(32,{0:["E3",8],8:["A3",8],16:["G3",8],24:["C4",8]}),
+    padHarm: seq(32,{0:["B3",8],8:["E4",8],16:["D4",8],24:["G4",8]}),
     drum: seq(32,{0:"k",2:"h",4:"s",6:"h",8:"k",10:"h",12:"s",14:"h",
                   16:"k",18:"h",20:"s",22:"h",24:"k",26:"h",28:"s",30:"h"}),
   },
-  boss3: { title:"Corona del Senza Nome", bpm:156, len:32, bassType:"sawtooth",
-    bass: seq(32,{0:"A2",2:"A2",4:"A2",6:"A2",8:"F2",10:"F2",12:"F2",14:"F2",
-                  16:"G2",18:"G2",20:"G2",22:"G2",24:"E2",26:"E2",28:"G#2",30:"G#2"}),
-    lead: seq(32,{0:"A4",2:"C5",4:"E5",6:"A5",8:"F4",10:"A4",12:"C5",14:"F5",
-                  16:"G4",18:"B4",20:"D5",22:"G5",24:"E4",26:"G#4",28:"B4",30:"E5"}),
-    drum: seq(32,{0:"k",2:"h",4:"s",6:"h",8:"k",10:"h",12:"s",14:"h",
-                  16:"k",18:"h",20:"s",22:"h",24:"k",25:"k",26:"h",28:"s",30:"h"}),
+  /* ---- Sovrano Senza Nome — come Gwyn / Maliketh ---- */
+  boss3: { title:"Corona del Senza Nome", bpm:138, len:64, bassType:"sawtooth",
+    bass: seq(64,{0:"A2",2:"A2",4:"A2",6:"G2",8:"F2",10:"F2",12:"G2",14:"A2",
+                  16:"E2",18:"E2",20:"F2",22:"G2",24:"A2",26:"G2",28:"F2",30:"E2",
+                  32:"A2",34:"C3",36:"A2",38:"G2",40:"F2",42:"E2",44:"D2",46:"C2",
+                  48:"A1",50:"A1",52:"E2",54:"E2",56:"F2",58:"G2",60:"A2",62:"A2"}),
+    lead: seq(64,{0:["A4",2],2:"C5",4:["E5",2],6:"G5",8:["F5",2],10:"E5",12:["D5",2],14:"C5",
+                  16:["E5",2],18:"D5",20:["C5",2],22:"B4",24:["C5",4],28:["B4",4],
+                  32:["A4",3],36:["G4",2],38:"F4",40:["E4",4],44:["F4",2],46:"G4",
+                  48:["A4",6],56:["E5",3],60:["C5",4]}),
+    pad:     seq(64,{0:["A3",8],8:["F3",8],16:["E3",8],24:["C4",8],
+                     32:["A3",8],40:["F3",8],48:["A2",8],56:["E3",8]}),
+    padHarm: seq(64,{0:["E4",8],8:["C4",8],16:["B3",8],24:["G4",8],
+                     32:["E4",8],40:["C4",8],48:["E3",8],56:["B3",8]}),
+    drum: seq(64,{0:"k",2:"h",4:"s",6:"h",8:"k",10:"h",12:"s",14:"h",
+                  16:"k",18:"h",20:"s",22:"h",24:"k",26:"h",28:"s",30:"h",
+                  32:"k",34:"h",36:"s",38:"h",40:"k",42:"h",44:"s",46:"h",
+                  48:"k",50:"h",52:"k",54:"h",56:"s",58:"h",60:"k",62:"h"}),
   },
-  elite: { title:"Sfida dell'Élite", bpm:128, len:16, bassType:"triangle",
+  elite: { title:"Sfida dell'Élite", bpm:130, len:16, bassType:"triangle",
     bass: seq(16,{0:"A2",2:"A2",4:"G2",6:"A2",8:"F2",10:"F2",12:"E2",14:"E2"}),
-    lead: seq(16,{0:["A4",2],6:"C5",8:["G4",2],14:"E4"}),
+    lead: seq(16,{0:["A4",2],4:"E5",6:"C5",8:["G4",2],12:"F4",14:"E4"}),
+    pad:     seq(16,{0:["A3",8],8:["E3",8]}),
+    padHarm: seq(16,{0:["E4",8],8:["B3",8]}),
     drum: seq(16,{0:"k",4:"h",8:"k",12:"h"}),
   },
 };
@@ -1389,6 +1421,22 @@ const Music = {
     o.connect(g); g.connect(this.gain);
     o.start(t); o.stop(t+dur+0.05);
   },
+  pad(freq, t, dur){
+    /* coro: 3 triangle leggermente detuned — simula strings/voci */
+    const c=AudioFX.ctx;
+    [-7,0,7].forEach((cents,i)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="triangle";
+      o.frequency.setValueAtTime(freq*Math.pow(2,cents/1200), t);
+      const atk=Math.min(0.4, dur*0.25);
+      const vol = i===1 ? 0.052 : 0.024;
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(vol, t+atk);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.connect(g); g.connect(this.gain);
+      o.start(t); o.stop(t+dur+0.12);
+    });
+  },
   drum(kind, t){
     const c=AudioFX.ctx;
     if(kind==="k"){
@@ -1417,8 +1465,13 @@ const Music = {
     if(l){
       const [n,d] = Array.isArray(l) ? l : [l,1];
       this.inst(nf(n), t, spb*d*0.92, "square", 0.062);
-      this.inst(nf(n)*2.003, t, spb*d*0.92, "square", 0.016); // sdoppiamento leggero
+      this.inst(nf(n)*2.003, t, spb*d*0.92, "square", 0.016);
     }
+    /* pad corale (root + armonia) */
+    const p=th.pad && th.pad[st];
+    if(p){ const [n,d]=Array.isArray(p)?p:[p,4]; this.pad(nf(n), t, spb*d*0.93); }
+    const ph=th.padHarm && th.padHarm[st];
+    if(ph){ const [n,d]=Array.isArray(ph)?ph:[ph,4]; this.pad(nf(n), t, spb*d*0.93); }
     const dr=th.drum[st];
     if(dr) this.drum(dr, t);
   },
@@ -1544,6 +1597,70 @@ sovereign:[
 "...bb...bb......",
 "..aaa...aaa.....",
 ],
+sentinella_boss:[
+"...c.c.c........",
+"....aaaaa.......",
+"...aae.aeaa.....",
+"...aaaaaaa......",
+"..b.bbbbb.b.....",
+"...bbbbbbb......",
+"..bb.....bb.....",
+"...bbbbbbb......",
+"..bb.....bb.....",
+"...b.b.b.b......",
+"...b.b.b.b......",
+"..aa.....aa.....",
+"...ww...ww......",
+],
+madre_boss:[
+"....e......e....",
+"..aaaaaaaaaa....",
+".aaeaaaaeaaa....",
+"aaaaaaaaaaaaa...",
+"aaaaabaabaaa....",
+"aaaaaaaaaaaaaa..",
+"aaaaaaaaaaaa....",
+".aaaaaaaaaa.....",
+"..a..aaaa..a....",
+"...a.a..a.a.....",
+"....a....a......",
+"....aa..aa......",
+],
+cenere_boss:[
+"....aaaa........",
+"...aaaeaa.......",
+"...aaaaa........",
+"..b.bbbbb.......",
+".bbbbbbbbbf.....",
+"bbbbbbbbb.ff....",
+"bbbbbbbbb.fff...",
+".bbbbbbbbbff....",
+"..bbbbbbbb.f....",
+"...bbb.bbb.f....",
+"...bb...bb.f....",
+"...bb...bb......",
+"..aaa...aaa.....",
+"...ww...ww......",
+"..f..f..f..f....",
+],
+sovrano_boss:[
+"...c.c.c.c.c....",
+"....ccccccc.....",
+"....aaaaaa......",
+"...aeeeeeaa.....",
+"....aaaaaa......",
+".c.bbbbbbbb.c...",
+"b.bbbbbbbbb.b...",
+"b.bbbbbbbbb.b...",
+"b.bbbbbbbbb.b...",
+".bbbbbbbbbbbb...",
+"..bbb...bbb.....",
+".w.bbbbbbb.w....",
+"...bbb.bbb......",
+"...bb...bb......",
+"...bb...bb......",
+"..aaa...aaa.....",
+],
 };
 const HERO_PAL = {a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"};
 const ENEMY_LOOK = {
@@ -1559,10 +1676,10 @@ const ENEMY_LOOK = {
   "Divoratore della Melma":{sp:"blob", pal:{a:"#5f7a4a",b:"#3a4d2c",e:"#e0ffb0",s:"#999",w:"#ccc"}},
   "Golem di Scorie":   {sp:"golem",    pal:{a:"#7e5a42",b:"#4e3626",e:"#ff9a40",s:"#999",w:"#ccc"}},
   "Araldo della Fine": {sp:"bigknight",pal:{a:"#8a72b8",b:"#52426e",e:"#ff6a5a",s:"#999",w:"#c8b0f0"}},
-  "Sentinella Spezzata":{sp:"bigknight",pal:{a:"#a8b0bd",b:"#646e7d",e:"#ffd87a",s:"#999",w:"#dde2ea"},boss:1},
-  "Madre della Palude":{sp:"blob",     pal:{a:"#6b8a52",b:"#42572f",e:"#f0ffc0",s:"#999",w:"#ccc"},boss:1},
-  "Cavaliere della Cenere":{sp:"bigknight",pal:{a:"#b06a3a",b:"#6e3e20",e:"#ffcf90",s:"#999",w:"#ffb060"},boss:1},
-  "Sovrano Senza Nome":{sp:"sovereign",pal:{a:"#bdb4cf",b:"#5e5478",e:"#ff5a4a",s:"#999",w:"#e8e0ff",c:"#ecc857"},boss:1},
+  "Sentinella Spezzata":{sp:"sentinella_boss",pal:{a:"#9a9fa8",b:"#5a6068",c:"#b8a030",e:"#0a0c12",w:"#e8e4d0",s:"#999"},boss:1},
+  "Madre della Palude":{sp:"madre_boss",    pal:{a:"#4a7a52",b:"#2c5230",e:"#b8ffb0",s:"#adc88a",w:"#ccc"},boss:1},
+  "Cavaliere della Cenere":{sp:"cenere_boss",pal:{a:"#9a8070",b:"#5a3020",e:"#ff5a10",f:"#ff9020",w:"#9a7050",s:"#999"},boss:1},
+  "Sovrano Senza Nome":{sp:"sovrano_boss",  pal:{a:"#b0a890",b:"#1e1530",c:"#ecc857",e:"#050310",w:"#c0b8e8",s:"#999"},boss:1},
 };
 const REGION_BG = [
   {sky0:"#0c1018",sky1:"#1b2434",hill:"#131a26",ground:"#1a2230",line:"#2c3a52",mote:"#8fa8c8",spire:"#0e141e"},
@@ -1592,12 +1709,13 @@ function bsInit(enemyName,region,isBoss,isElite){
     BS.spires.push({x, w:4+Math.floor(rng()*8), h:18+Math.floor(rng()*42)});
   }
   BS.motes=[];
-  for(let i=0;i<16;i++) BS.motes.push({x:Math.random()*340,y:Math.random()*130,v:.08+Math.random()*.25,r:Math.random()>.5?1:2});
-  const groundY = 132;
+  const cvH = BS.cv ? BS.cv.height : 165;
+  for(let i=0;i<18;i++) BS.motes.push({x:Math.random()*340,y:Math.random()*cvH,v:.08+Math.random()*.25,r:Math.random()>.5?1:2});
+  const groundY = isBoss ? 148 : (isElite ? 142 : 138);
   BS.hero = mkFighter(SPRITES.hero, HERO_PAL, 5, 78, groundY, false);
   const look = ENEMY_LOOK[enemyName] || {sp:"humanoid",pal:{a:"#999",b:"#666",e:"#fff",s:"#caa",w:"#ddd"}};
   const scale = isBoss ? 7 : (isElite ? 6 : 5);
-  BS.enemy = mkFighter(SPRITES[look.sp], look.pal, scale, 252, groundY, true);
+  BS.enemy = mkFighter(SPRITES[look.sp], look.pal, scale, isBoss?242:252, groundY, true);
   if(!BS.raf && typeof requestAnimationFrame!=="undefined"){
     BS.lastTs = performance.now();
     BS.raf = requestAnimationFrame(bsLoop);
@@ -1624,12 +1742,18 @@ function drawSprite(f){
       ctx.fillRect(ox+c*px, oy+r*px, px, px);
     }
   }
-  // aura rossa pulsante quando il boss carica il colpo
-  if(f===BS.enemy && typeof combat!=="undefined" && combat && combat.charging && !f.dead){
-    const a = .25+.2*Math.sin(BS.t/130);
-    ctx.strokeStyle = `rgba(220,70,50,${a})`;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(ox-4, oy-4, w+8, h+8);
+  // aura boss: carica (rossa) o fase 2 (colorata per boss)
+  if(f===BS.enemy && typeof combat!=="undefined" && combat && !f.dead){
+    const phase2col = combat.phase2 ? (BOSS_PHASE2_COLOR[combat.tile&&combat.tile.region]||"#ff4040") : null;
+    if(combat.charging || combat.phase2){
+      const a = .28+.22*Math.sin(BS.t/120);
+      ctx.strokeStyle = phase2col ? `${phase2col}${Math.round(a*255).toString(16).padStart(2,"0")}` : `rgba(220,70,50,${a})`;
+      ctx.lineWidth = combat.phase2 ? 4 : 3;
+      ctx.strokeRect(ox-4, oy-4, w+8, h+8);
+      if(combat.phase2 && !REDUCED && Math.random()<.06){
+        spawnBurst(ox+Math.random()*w, oy+Math.random()*h, phase2col, 2, 0.8);
+      }
+    }
   }
 }
 function spawnSlash(x,y,flip,color){
@@ -1679,20 +1803,22 @@ function draw(dt){
   // cielo
   const g = ctx.createLinearGradient(0,0,0,150);
   g.addColorStop(0,bg.sky0); g.addColorStop(1,bg.sky1);
-  ctx.fillStyle=g; ctx.fillRect(-6,-6,352,162);
+  const ch = BS.cv ? BS.cv.height : 165;
+  ctx.fillStyle=g; ctx.fillRect(-6,-6,352,ch+12);
   // luna/bagliore
-  ctx.fillStyle="rgba(236,200,87,.10)"; ctx.beginPath(); ctx.arc(286,26,20,0,7); ctx.fill();
-  ctx.fillStyle="rgba(236,200,87,.16)"; ctx.beginPath(); ctx.arc(286,26,12,0,7); ctx.fill();
+  ctx.fillStyle="rgba(236,200,87,.10)"; ctx.beginPath(); ctx.arc(286,28,22,0,7); ctx.fill();
+  ctx.fillStyle="rgba(236,200,87,.16)"; ctx.beginPath(); ctx.arc(286,28,13,0,7); ctx.fill();
   // guglie in rovina
   ctx.fillStyle=bg.spire;
-  BS.spires.forEach(sp=>{ ctx.fillRect(sp.x, 112-sp.h, sp.w, sp.h); ctx.fillRect(sp.x-2, 112-sp.h+6, sp.w+4, 3); });
+  BS.spires.forEach(sp=>{ ctx.fillRect(sp.x, 116-sp.h, sp.w, sp.h); ctx.fillRect(sp.x-2, 116-sp.h+6, sp.w+4, 3); });
   // collina e terreno
-  ctx.fillStyle=bg.hill; ctx.fillRect(-6,106,352,30);
-  ctx.fillStyle=bg.ground; ctx.fillRect(-6,132,352,24);
-  ctx.fillStyle=bg.line; ctx.fillRect(-6,132,352,2);
+  const gy = BS.hero ? BS.hero.baseY : 138;
+  ctx.fillStyle=bg.hill; ctx.fillRect(-6, gy-32, 352, 38);
+  ctx.fillStyle=bg.ground; ctx.fillRect(-6, gy, 352, ch);
+  ctx.fillStyle=bg.line; ctx.fillRect(-6, gy, 352, 2);
   // pulviscolo ambientale
   BS.motes.forEach(m=>{
-    if(!REDUCED){ m.y-=m.v*dt/16; m.x+=Math.sin((BS.t/900)+m.y)*0.15; if(m.y<-4){m.y=140;m.x=Math.random()*340;} }
+    if(!REDUCED){ m.y-=m.v*dt/16; m.x+=Math.sin((BS.t/900)+m.y)*0.15; if(m.y<-4){m.y=(BS.cv?BS.cv.height:165)+4;m.x=Math.random()*340;} }
     ctx.fillStyle=bg.mote; ctx.globalAlpha=.4; ctx.fillRect(m.x,m.y,m.r,m.r); ctx.globalAlpha=1;
   });
   // combattenti
@@ -1739,16 +1865,21 @@ function bsHeroAttack(){
     }
   }, ()=>{ BS.hero.dx=0; BS.hero._hit=false; BS.enemy.dx=0; });
 }
+const BOSS_SLASH_COL = ["#90c0ff","#70ff90","#ff9040","#c050ff"];
 function bsEnemyAttack(charged){
-  bsPush(charged?720:560, p=>{
+  const bossIdx = combat && combat.isBoss ? combat.tile.region : -1;
+  const baseCol = bossIdx>=0 ? BOSS_SLASH_COL[bossIdx] : (charged?"#ff6a4a":"#d4756b");
+  const burst = bossIdx>=0 ? (charged?22:14) : (charged?16:8);
+  bsPush(charged?750:580, p=>{
     const f=BS.enemy;
     const fwd = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
-    f.dx = -fwd*(charged?130:110);
+    f.dx = -fwd*(charged?140:115);
     if(p>=.42 && p<.5 && !f._hit){ f._hit=true;
       sfx("hurt");
-      spawnSlash(BS.hero.baseX+14, BS.hero.baseY-30, true, charged?"#ff6a4a":"#d4756b");
-      spawnBurst(BS.hero.baseX, BS.hero.baseY-26, charged?"#ff6a4a":"#c46a5e", charged?16:8, charged?2:1.2);
-      BS.hero.flash=110; BS.hero.dx=-10; BS.shake=charged?300:160;
+      spawnSlash(BS.hero.baseX+14, BS.hero.baseY-30, true, baseCol);
+      spawnBurst(BS.hero.baseX, BS.hero.baseY-26, baseCol, burst, charged?2.4:1.4);
+      if(charged) spawnBurst(BS.hero.baseX, BS.hero.baseY-26, "#fff", 8, 1.2);
+      BS.hero.flash=130; BS.hero.dx=-14; BS.shake=charged?360:180;
     }
   }, ()=>{ BS.enemy.dx=0; BS.enemy._hit=false; BS.hero.dx=0; });
 }
@@ -1781,6 +1912,44 @@ function bsHeroDie(){
   bsPush(220, null, ()=>{ dissolveFighter(BS.hero); spawnBurst(BS.hero.baseX, BS.hero.baseY-22, "#9c3a32", 14, 1.6); BS.shake=260; });
 }
 
+/* ---- animazione ingresso boss ---- */
+function bsBossIntro(bossIdx){
+  if(!BS.enemy) return;
+  const destX = BS.enemy.baseX;
+  BS.enemy.baseX = 420;
+  /* fase 1: scivolata da destra (700ms) */
+  bsPush(700, p=>{
+    const ease = 1-Math.pow(1-p,3);
+    BS.enemy.baseX = 420+(destX-420)*ease;
+  }, ()=>{
+    BS.enemy.baseX = destX;
+    BS.enemy.flash = 350;
+    BS.shake = 460;
+    spawnBurst(destX, BS.enemy.baseY-50, "#ecc857", 22, 2.8);
+    spawnBurst(destX, BS.enemy.baseY-50, "#fff", 10, 1.6);
+    const hitColors = ["#c0d8ff","#80ff80","#ff8030","#d060ff"];
+    spawnBurst(destX, BS.enemy.baseY-30, hitColors[bossIdx]||"#ecc857", 16, 2.0);
+    sfx("charge");
+  });
+}
+
+/* ---- fase 2: furia al 50% HP ---- */
+const BOSS_PHASE2_COLOR = ["#6090ff","#50e060","#ff7020","#b040ff"];
+function triggerPhase2(bossIdx){
+  if(!combat || combat.phase2) return;
+  combat.phase2 = true;
+  const col = BOSS_PHASE2_COLOR[bossIdx]||"#ff4040";
+  BS.shake = 700;
+  BS.enemy.flash = 600;
+  spawnBurst(BS.enemy.baseX, BS.enemy.baseY-50, col, 34, 3.2);
+  spawnBurst(BS.enemy.baseX, BS.enemy.baseY-50, "#fff", 14, 1.8);
+  combat.e.atk = Math.round(combat.e.atk * 1.28);
+  combat.charging = true;
+  cbLog(`<span class="warn">⚠ ${combat.e.n} — SECONDA FASE. Furia scatenata!</span>`);
+  sfx("charge");
+  fx($("ov-combat").querySelector(".modal"), "flash-blood", 900);
+}
+
 /* ===================== COMBATTIMENTO ===================== */
 function startCombat(enemy, tile, isBoss, isElite){
   combat = {
@@ -1796,7 +1965,7 @@ function startCombat(enemy, tile, isBoss, isElite){
   renderCombat();
   $("ov-combat").classList.add("open");
   bsInit(enemy.n, tile.region, !!isBoss, !!isElite);
-  if(isBoss){ Music.start("boss"+tile.region); }
+  if(isBoss){ Music.start("boss"+tile.region); bsBossIntro(tile.region); }
   else if(isElite){ Music.start("elite"); }
   const np = $("cb-nowplaying");
   if(np){
@@ -1856,6 +2025,9 @@ function enemyTurn(skip){
 }
 function checkCombatEnd(){
   renderCombat();
+  if(combat.isBoss && !combat.phase2 && combat.e.hp>0 && combat.e.hp<=combat.e.maxhp*0.5){
+    triggerPhase2(combat.tile.region);
+  }
   if(combat.e.hp<=0){ winCombat(); return true; }
   if(player.hp<=0){ die(); return true; }
   return false;
@@ -2021,6 +2193,9 @@ $("victory-restart").addEventListener("click", ()=>{
   renderClassPicker();
   updateTitleStats();
   refreshContinueBtn();
+  // riavvia musica menu
+  menuMusicStarted = false;
+  maybeStartMenuMusic();
 });
 
 /* ===================== INPUT GLOBALI ===================== */
@@ -2160,10 +2335,23 @@ refreshContinueBtn();
 function enterGame(){
   if(emberRaf && typeof cancelAnimationFrame!=="undefined"){ cancelAnimationFrame(emberRaf); emberRaf=0; }
   const ec = $("title-embers"); if(ec && ec.style) ec.style.display = "none";
+  Music.stop();
   AudioFX.ensure();
   $("title-screen").style.display = "none";
   $("game-screen").style.display = "block";
 }
+
+/* musica di menu: parte al primo gesto dell'utente sul title screen */
+let menuMusicStarted = false;
+function maybeStartMenuMusic(){
+  if(menuMusicStarted || !AudioFX.enabled) return;
+  menuMusicStarted = true;
+  if(AudioFX.ensure()){ AudioFX.ctx.resume().then(()=>Music.start("menu")).catch(()=>{}); }
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  const ts = $("title-screen");
+  if(ts) ts.addEventListener("click", maybeStartMenuMusic, {once:true, passive:true});
+}, {once:true});
 
 $("btn-start").addEventListener("click", ()=>{
   enterGame();
