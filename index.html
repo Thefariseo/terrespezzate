@@ -1950,7 +1950,7 @@ const BS = {ctx:null,cv:null,raf:0,t:0,queue:[],cur:null,parts:[],slashes:[],mot
 
 function spriteSize(map){ return {w:map[0].length, h:map.length}; }
 function mkFighter(map,pal,scale,baseX,baseY,flip){
-  return {map,pal,scale,baseX,baseY,flip,dx:0,dy:0,flash:0,dead:false,bob:Math.random()*6};
+  return {map,pal,scale,baseX,baseY,flip,dx:0,dy:0,flash:0,dead:false,bob:Math.random()*6,lean:0,recoil:0};
 }
 function bsInit(enemyName,region,isBoss,isElite){
   const cv = $("battle-canvas");
@@ -1986,18 +1986,38 @@ function bsStop(){
 function bsBusy(){ return !!BS.ctx && (BS.queue.length>0 || !!BS.cur); }
 function bsPush(dur,tick,end){ if(!BS.ctx) return; BS.queue.push({dur:REDUCED?1:dur,tick,end,t0:null}); }
 
+/* Animazione procedurale a fasi: idle (4 fasi) + affondo d'attacco + scatto al colpo.
+   Lavora su tutte le sprite-stringa senza bisogno di mappe-frame separate. */
+const IDLE_SWAY = [0,1,1,0,-1,-1]; // 6 fasi di oscillazione del busto (px)
 function drawSprite(f){
   const ctx = BS.ctx, sz = spriteSize(f.map), px = f.scale;
   const w = sz.w*px, h = sz.h*px;
+  const facing = f.flip ? -1 : 1; // verso in cui guarda
+  // idle a fasi discrete: oscillazione del busto + respiro verticale
+  const phase = f.dead ? 0 : Math.floor((BS.t/200)+f.bob*3)%IDLE_SWAY.length;
+  const sway = f.dead ? 0 : IDLE_SWAY[phase];
+  const breath = f.dead ? 0 : (Math.floor((BS.t/400)+f.bob)%2); // 0/1 squash respiro
   const bobY = f.dead?0:Math.sin((BS.t/520)+f.bob)*2;
+  const lean = f.lean||0;     // affondo d'attacco 0..1
+  const recoil = f.recoil||0; // scatto all'indietro quando colpito 0..1
+  const midRow = sz.h*0.55;   // sopra = busto/braccia, sotto = gambe (ancorate)
   const ox = Math.round(f.baseX + f.dx - w/2);
   const oy = Math.round(f.baseY + f.dy - h + bobY);
   for(let r=0;r<sz.h;r++){
+    const upper = r < midRow;
+    // le gambe restano ancorate, il busto oscilla / affonda / rincula
+    let rowDx = 0, rowDy = 0;
+    if(upper && !f.dead){
+      rowDx += sway;                                   // idle sway
+      rowDx += Math.round(facing*lean*7);              // affondo in avanti
+      rowDx -= Math.round(facing*recoil*6);            // rinculo
+      if(breath && r < midRow*0.5) rowDy += 1;         // respiro: testa scende di 1px
+    }
     for(let c=0;c<sz.w;c++){
       const ch = f.map[r][f.flip ? sz.w-1-c : c];
       if(ch===".") continue;
       ctx.fillStyle = f.flash>0 ? "#ffffff" : (f.pal[ch]||"#f0f");
-      ctx.fillRect(ox+c*px, oy+r*px, px, px);
+      ctx.fillRect(ox+c*px+rowDx, oy+r*px+rowDy, px, px);
     }
   }
   // aura boss: carica (rossa) o fase 2 (colorata per boss)
@@ -2048,8 +2068,11 @@ function bsLoop(ts){
     BS.cur.tick && BS.cur.tick(p);
     if(p>=1){ BS.cur.end && BS.cur.end(); BS.cur=null; }
   }
-  if(BS.hero && BS.hero.flash>0) BS.hero.flash-=dt;
-  if(BS.enemy && BS.enemy.flash>0) BS.enemy.flash-=dt;
+  [BS.hero, BS.enemy].forEach(f=>{
+    if(!f) return;
+    if(f.flash>0) f.flash-=dt;
+    if(f.recoil>0) f.recoil = Math.max(0, f.recoil - dt/180); // rinculo decade in ~180ms
+  });
   if(BS.shake>0) BS.shake-=dt;
   draw(dt);
   BS.raf = requestAnimationFrame(bsLoop);
@@ -2140,13 +2163,14 @@ function bsHeroAttack(){
     const f=BS.hero;
     const fwd = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
     f.dx = fwd*110;
+    f.lean = p<.5 ? p*2 : (1-(p-.5)*2); // affondo del busto in avanti
     if(p>=.42 && p<.5 && !f._hit){ f._hit=true;
       sfx("hit");
       spawnSlash(BS.enemy.baseX-14, BS.enemy.baseY-34, false, "#ecc857");
       spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, "#ecc857", 8, 1.2);
-      BS.enemy.flash=110; BS.enemy.dx=10; BS.shake=160;
+      BS.enemy.flash=110; BS.enemy.dx=10; BS.enemy.recoil=1; BS.shake=160;
     }
-  }, ()=>{ BS.hero.dx=0; BS.hero._hit=false; BS.enemy.dx=0; });
+  }, ()=>{ BS.hero.dx=0; BS.hero.lean=0; BS.hero._hit=false; BS.enemy.dx=0; });
 }
 const BOSS_SLASH_COL = ["#90c0ff","#70ff90","#ff9040","#c050ff"];
 function bsEnemyAttack(charged){
@@ -2157,14 +2181,15 @@ function bsEnemyAttack(charged){
     const f=BS.enemy;
     const fwd = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
     f.dx = -fwd*(charged?140:115);
+    f.lean = p<.5 ? p*2 : (1-(p-.5)*2); // affondo del busto del nemico
     if(p>=.42 && p<.5 && !f._hit){ f._hit=true;
       sfx("hurt");
       spawnSlash(BS.hero.baseX+14, BS.hero.baseY-30, true, baseCol);
       spawnBurst(BS.hero.baseX, BS.hero.baseY-26, baseCol, burst, charged?2.4:1.4);
       if(charged) spawnBurst(BS.hero.baseX, BS.hero.baseY-26, "#fff", 8, 1.2);
-      BS.hero.flash=130; BS.hero.dx=-14; BS.shake=charged?360:180;
+      BS.hero.flash=130; BS.hero.dx=-14; BS.hero.recoil=1; BS.shake=charged?360:180;
     }
-  }, ()=>{ BS.enemy.dx=0; BS.enemy._hit=false; BS.hero.dx=0; });
+  }, ()=>{ BS.enemy.dx=0; BS.enemy.lean=0; BS.enemy._hit=false; BS.hero.dx=0; });
 }
 function bsParry(){
   bsPush(620, p=>{
