@@ -1863,7 +1863,7 @@ const REGION_BG = [
   {sky0:"#0f0a16",sky1:"#1f1434",hill:"#160e26",ground:"#191130",line:"#3c2c5e",mote:"#a98fd8",spire:"#110a1e"},
 ];
 const BS = {ctx:null,cv:null,raf:0,t:0,queue:[],cur:null,parts:[],slashes:[],motes:[],shake:0,
-  hero:null,enemy:null,bg:null,spires:[],lastTs:0};
+  hero:null,enemy:null,bg:null,spires:[],lastTs:0,region:0};
 
 function spriteSize(map){ return {w:map[0].length, h:map.length}; }
 function mkFighter(map,pal,scale,baseX,baseY,flip){
@@ -1874,7 +1874,7 @@ function bsInit(enemyName,region,isBoss,isElite){
   if(!cv || !cv.getContext){ BS.ctx=null; return; }
   BS.cv = cv; BS.ctx = cv.getContext("2d");
   BS.ctx.imageSmoothingEnabled = false;
-  BS.bg = REGION_BG[region];
+  BS.bg = REGION_BG[region]; BS.region = region||0;
   BS.queue=[]; BS.cur=null; BS.parts=[]; BS.slashes=[]; BS.shake=0;
   // guglie di sfondo pseudo-casuali ma stabili per regione
   BS.spires=[];
@@ -1980,9 +1980,15 @@ function draw(dt){
   g.addColorStop(0,bg.sky0); g.addColorStop(1,bg.sky1);
   const ch = BS.cv ? BS.cv.height : 165;
   ctx.fillStyle=g; ctx.fillRect(-6,-6,352,ch+12);
-  // luna/bagliore
-  ctx.fillStyle="rgba(236,200,87,.10)"; ctx.beginPath(); ctx.arc(286,28,22,0,7); ctx.fill();
-  ctx.fillStyle="rgba(236,200,87,.16)"; ctx.beginPath(); ctx.arc(286,28,13,0,7); ctx.fill();
+  // corpo celeste per-regione
+  {const cl=[
+    {c0:"rgba(195,210,232,.10)",c1:"rgba(195,210,232,.16)",x:286,y:28,r0:22,r1:13},
+    {c0:"rgba(55,140,65,.07)", c1:"rgba(70,155,75,.11)", x:52,y:24,r0:32,r1:18},
+    {c0:"rgba(205,65,12,.11)", c1:"rgba(215,75,18,.19)", x:286,y:28,r0:26,r1:14},
+    {c0:"rgba(48,18,88,.12)",  c1:"rgba(68,28,128,.20)",x:170,y:20,r0:42,r1:22},
+  ][BS.region];
+  ctx.fillStyle=cl.c0; ctx.beginPath(); ctx.arc(cl.x,cl.y,cl.r0,0,7); ctx.fill();
+  ctx.fillStyle=cl.c1; ctx.beginPath(); ctx.arc(cl.x,cl.y,cl.r1,0,7); ctx.fill();}
   // guglie in rovina
   ctx.fillStyle=bg.spire;
   BS.spires.forEach(sp=>{ ctx.fillRect(sp.x, 116-sp.h, sp.w, sp.h); ctx.fillRect(sp.x-2, 116-sp.h+6, sp.w+4, 3); });
@@ -1996,6 +2002,25 @@ function draw(dt){
     if(!REDUCED){ m.y-=m.v*dt/16; m.x+=Math.sin((BS.t/900)+m.y)*0.15; if(m.y<-4){m.y=(BS.cv?BS.cv.height:165)+4;m.x=Math.random()*340;} }
     ctx.fillStyle=bg.mote; ctx.globalAlpha=.4; ctx.fillRect(m.x,m.y,m.r,m.r); ctx.globalAlpha=1;
   });
+  // effetti ambientali di regione
+  if(!REDUCED){
+    const rates=[0.03,0.09,0.15,0.07];
+    if(Math.random()<rates[BS.region]){
+      if(BS.region===1) BS.parts.push({x:20+Math.random()*300,y:gy+Math.random()*6,
+        vx:(Math.random()-.5)*.3,vy:-(0.3+Math.random()*.5),c:"#5a9a50",life:.6,g:-.01,sz:2});
+      else if(BS.region===2) BS.parts.push({x:Math.random()*340,y:gy,
+        vx:(Math.random()-.5)*.7,vy:-(0.9+Math.random()*1.4),
+        c:Math.random()>.4?"#e07020":"#ff4010",life:.55,g:-.02,sz:2});
+      else if(BS.region===3) BS.parts.push({x:Math.random()*340,y:Math.random()*(gy-36),
+        vx:(.2+Math.random()*.4)*(Math.random()>.5?1:-1),vy:.08+Math.random()*.14,
+        c:Math.random()>.5?"#7840b0":"#504080",life:.45,g:0,sz:3});
+    }
+    if(BS.region===2 && Math.random()<.28) BS.spires.forEach(sp=>{
+      if(Math.random()<.16) BS.parts.push({x:sp.x+sp.w*.5,y:116-sp.h,
+        vx:(Math.random()-.5)*.5,vy:-(0.4+Math.random()*.7),
+        c:Math.random()>.5?"#e07020":"#ff3010",life:.35,g:-.015,sz:2});
+    });
+  }
   // combattenti
   if(BS.hero && !BS.hero.dead) drawSprite(BS.hero);
   if(BS.enemy && !BS.enemy.dead) drawSprite(BS.enemy);
@@ -2428,9 +2453,21 @@ function actTecnica(){
     floatDmg("cb-eside", "-"+dmg, tec.col);
     cbLog(`Lama Spezzata: <strong>${dmg}</strong> danni. Il nemico è stordito!`);
     combat.staggered = true;
+    if(BS.ctx){
+      spawnSlash(BS.enemy.baseX-6, BS.enemy.baseY-42, false, "#ffe040");
+      spawnSlash(BS.enemy.baseX-16, BS.enemy.baseY-26, false, "#fff7a0");
+      spawnBurst(BS.enemy.baseX, BS.enemy.baseY-32, "#ffe040", 22, 2.4);
+      spawnBurst(BS.enemy.baseX, BS.enemy.baseY-32, "#fffce0", 8, 1.0);
+      if(BS.enemy){ BS.enemy.flash=220; BS.shake=Math.max(BS.shake,360); }
+    }
   } else if(key==="barriera_ferro"){
     combat.shielded = true;
     cbLog(`Barriera di Ferro: il prossimo colpo sarà riflesso.`);
+    if(BS.ctx){
+      spawnBurst(BS.hero.baseX, BS.hero.baseY-30, "#80c0ff", 18, 1.8);
+      spawnBurst(BS.hero.baseX, BS.hero.baseY-30, "#c0e8ff", 8, 0.9);
+      if(BS.hero){ BS.hero.flash=200; BS.shake=Math.max(BS.shake,180); }
+    }
   } else if(key==="divorare_cenere"){
     let totalDmg=0, totalHeal=0;
     for(let i=0;i<3;i++){
@@ -2444,6 +2481,12 @@ function actTecnica(){
     floatDmg("cb-eside", "-"+totalDmg, tec.col);
     floatDmg("cb-pside", "+"+totalHeal, "#b9d49a");
     cbLog(`<span class="heal">Divorare la Cenere: ${totalDmg} danni, +${totalHeal} curati.</span>`);
+    if(BS.ctx){
+      spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, "#ff8040", 20, 2.2);
+      spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, "#ffc080", 8, 1.2);
+      spawnBurst(BS.hero.baseX, BS.hero.baseY-28, "#b9d49a", 12, 1.1);
+      if(BS.enemy){ BS.enemy.flash=160; BS.shake=Math.max(BS.shake,280); }
+    }
   } else if(key==="colpo_basso"){
     bsHeroAttack();
     const mult = (combat.charging||combat.phase2) ? 3 : 1;
@@ -2452,6 +2495,13 @@ function actTecnica(){
     floatDmg("cb-eside", "-"+dmg, tec.col);
     cbLog(`Colpo Basso: <strong>${dmg}</strong> danni${mult===3?" (×3!)":""}.`);
     if(mult===3) combat.charging = false;
+    if(BS.ctx){
+      spawnBurst(BS.enemy.baseX, BS.enemy.baseY-28, "#c080ff", mult===3?28:14, mult===3?2.6:1.4);
+      if(mult===3){
+        spawnBurst(BS.enemy.baseX, BS.enemy.baseY-28, "#e0c0ff", 10, 1.2);
+        if(BS.enemy){ BS.enemy.flash=240; BS.shake=Math.max(BS.shake,420); }
+      }
+    }
   }
   renderArdore();
   if(!checkCombatEnd() && combat.e.hp>0) enemyTurn(false);
