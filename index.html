@@ -786,6 +786,38 @@ const BOSSES = [
 const REGION_PATTERN = ["grace","enemy","event","enemy","treasure","shop","elite","event","boss"];
 const ICONS = {grace:"❋",enemy:"⚔",elite:"☠",boss:"♛",shop:"⚖",treasure:"✦",event:"?",empty:"·"};
 
+/* ===================== FLAVOR ATMOSFERICO (tipo × regione) ===================== */
+const FLAVOR = {
+  path:[
+    ["La polvere delle tombe si posa sui tuoi passi.","Ossa antiche scricchiolano sotto gli stivali.","Un silenzio di sepolcro pesa sull'aria ferma.","Lapidi senza nome ti osservano passare."],
+    ["L'acqua melmosa risucchia ogni passo.","Una nebbia tiepida sa di radici marce.","Qualcosa si muove sotto la superficie e poi tace.","Il fango trattiene i tuoi piedi come dita."],
+    ["La cenere calda turbina a ogni passo.","Braci nascoste pulsano sotto la crosta nera.","L'aria brucia i polmoni come fumo vecchio.","Stendardi inceneriti pendono dalle rovine."],
+    ["Il cielo e la pietra si confondono nel crepuscolo.","Un ronzio senza fonte vibra nelle ossa.","Le ombre qui hanno una densità innaturale.","Frammenti di nomi cancellati fluttuano nell'aria."],
+  ],
+  enemy:[
+    ["Un guardiano del Sepolcreto ti sbarra il passo.","Qualcosa di morto rifiuta di restare immobile."],
+    ["Una sagoma emerge dalla palude, grondante fango.","La nebbia si compatta in una forma ostile."],
+    ["Una figura incandescente avanza tra le braci.","Il giuramento di cenere ti vuole fermo."],
+    ["Un servo del Vuoto si materializza dal nulla.","La pietra stessa sembra partorire un nemico."],
+  ],
+  treasure:[
+    ["Tra le ossa luccica qualcosa di dimenticato.","Un'offerta funebre mai reclamata ti attende."],
+    ["Sepolto nel fango, uno scrigno gocciolante.","Tra le radici brilla un tesoro inghiottito dalla palude."],
+    ["Protetto dalla cenere, un forziere annerito.","Le braci rivelano un baule mezzo fuso."],
+    ["Sospeso nell'aria immota, un reliquiario di luce fredda.","Un dono lasciato da chi non è più tornato."],
+  ],
+  event:[
+    ["Il Sepolcreto trattiene un segreto.","Qualcosa di insolito incrina la quiete delle tombe."],
+    ["La palude sussurra un presagio.","Un'increspatura nell'acqua annuncia l'imprevisto."],
+    ["Il fuoco dell'Altopiano nasconde una sorpresa.","Tra il fumo si delinea qualcosa di inatteso."],
+    ["La Cittadella piega le regole del reale.","Un evento che non dovrebbe accadere, accade."],
+  ],
+};
+function flavor(type, region){
+  const a = FLAVOR[type] && FLAVOR[type][region];
+  return (a && a.length) ? a[rnd(0,a.length-1)] : "";
+}
+
 /* ===================== CLASSI DI PARTENZA ===================== */
 const CLASSES = {
   vagabondo: {
@@ -1218,7 +1250,8 @@ function arriveAt(tile, roll){
     if(lore){ showLorePanel(lore, ()=>arriveAt(tile, roll)); return; }
   }
   if(tile.cleared && tile.type!=="grace" && tile.type!=="shop"){
-    setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. Questo luogo è ormai silenzioso. Prosegui.`, [["Tira il dado",rollMove]]);
+    const fl = flavor("path", tile.region);
+    setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. ${fl} Questo luogo è ormai silenzioso.`, [["Tira il dado",rollMove]]);
     renderStats();
     return;
   }
@@ -1231,7 +1264,7 @@ function arriveAt(tile, roll){
     case "treasure": openTreasure(tile, roll); break;
     case "event": runEvent(tile, roll); break;
     default:
-      setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. Il vento soffia tra le rovine. Nulla accade.`, [["Tira il dado",rollMove]]);
+      setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. ${flavor("path",tile.region)||"Il vento soffia tra le rovine."} Nulla accade.`, [["Tira il dado",rollMove]]);
   }
 }
 
@@ -1248,12 +1281,12 @@ function openTreasure(tile, roll){
   sfx("rune");
   log(`Apri uno scrigno dimenticato: ${amount} rune.`,"gold");
   renderBoard(); renderStats();
-  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. Tra le ossa trovi uno scrigno: <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
+  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. ${flavor("treasure",tile.region)} <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
 }
 
 function runEvent(tile, roll){
   tile.cleared = true;
-  const ev = rnd(1,9);
+  const ev = rnd(1,12);
   let text="";
   if(ev===1){
     const r = rnd(25,55)+tile.region*10;
@@ -1316,7 +1349,7 @@ function runEvent(tile, roll){
     player.hp = Math.min(player.maxhp, player.hp+heal);
     text = `Un eremita ti insegna a distillare meglio: le fiaschette curano <strong style="color:#b9d49a">4 in più</strong> e recuperi ${heal} vitalità.`;
     log("Evento: l'eremita potenzia le fiaschette (+4 cura).","good"); sfx("buy");
-  } else {
+  } else if(ev===9){
     // maledizione/benedizione del caso
     if(d6()>=4){
       player.atk += 1;
@@ -1327,9 +1360,85 @@ function runEvent(tile, roll){
       text = `Sussurri tra le rovine ti guidano a <strong style="color:var(--gold-bright)">${r} rune</strong> nascoste.`;
       log(`Evento: rune nascoste (+${r}).`,"gold"); sfx("rune");
     }
+  } else if(ev===10){
+    // SCELTA MORALE: il Pellegrino Cieco
+    const cost = Math.floor(player.runes/2);
+    const already = player.items.includes("Sigillo del Pellegrino");
+    if(already || cost<10){
+      const r = rnd(20,40)+tile.region*8; player.runes += r;
+      text = `Un pellegrino cieco ti benedice in silenzio e lascia <strong style="color:var(--gold-bright)">${r} rune</strong> nel tuo palmo.`;
+      log(`Evento: il pellegrino ti dona ${r} rune.`,"gold"); sfx("rune");
+    } else {
+      setAction("? Il Pellegrino Cieco",
+        `Un pellegrino senza occhi tende la mano. «Metà di ciò che porti, viandante, e ti insegnerò a leggere le terre.» Cedere <strong>${cost} rune</strong> ti darà il <strong>Sigillo del Pellegrino</strong>: ogni nemico abbattuto frutterà il <strong>15% di rune in più</strong>, per sempre.`,
+        [["Cedi le rune",()=>{
+            player.runes -= cost;
+            player.runeBonus = (player.runeBonus||0) + 0.15;
+            player.items.push("Sigillo del Pellegrino");
+            log("Evento: ottieni il Sigillo del Pellegrino (+15% rune).","gold"); sfx("level");
+            toast("✦ Sigillo del Pellegrino", "gold");
+            renderStats();
+            setAction("? Il Pellegrino Cieco","«Vedrai più lontano di me, ora.» Il pellegrino svanisce. Tira il dado.",[["Tira il dado",rollMove]],"event");
+         }],
+         ["Rifiuta",()=>{ log("Rifiuti il pellegrino.","bad"); setAction("? Evento","Il pellegrino abbassa la mano e si dissolve nella nebbia. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],
+        "event");
+      renderBoard(); renderStats();
+      return;
+    }
+  } else if(ev===11){
+    // SCELTA MORALE: l'Altare del Sacrificio
+    if(player.maxhp<=20){
+      const r = rnd(15,30); player.runes += r;
+      text = `Un altare incrostato di sangue secco resta muto. Tra le offerte trovi <strong style="color:var(--gold-bright)">${r} rune</strong>.`;
+      log(`Evento: rune dall'altare (+${r}).`,"gold"); sfx("rune");
+    } else {
+      setAction("? L'Altare del Sacrificio",
+        `Un altare antico pretende carne in cambio di potere. Sacrifica <strong style="color:#d4847a">10 vitalità massima</strong> per <strong style="color:var(--gold-bright)">+2 attacco permanente</strong>.`,
+        [["Sacrifica",()=>{
+            player.maxhp -= 10; player.hp = Math.min(player.hp, player.maxhp); player.atk += 2;
+            log("Evento: sacrifichi 10 PV max per +2 ATK.","gold"); sfx("hurt");
+            toast("⚔ +2 attacco · −10 PV max","gold");
+            renderStats();
+            setAction("? L'Altare del Sacrificio","L'altare beve e tace. Ti senti più forte, e più fragile. Tira il dado.",[["Tira il dado",rollMove]],"event");
+         }],
+         ["Rifiuta",()=>{ log("Lasci l'altare intatto.","good"); setAction("? Evento","Volti le spalle all'altare. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],
+        "event");
+      renderBoard(); renderStats();
+      return;
+    }
+  } else {
+    // SCELTA MORALE: il Prigioniero (ev 12)
+    const already = player.guardianSoul;
+    if(already){
+      const heal = rnd(8,16); player.hp = Math.min(player.maxhp, player.hp+heal);
+      text = `Una cella vuota, le sbarre divelte. Tra la paglia, <strong style="color:#b9d49a">${heal} vitalità</strong> in un'ampolla dimenticata.`;
+      log(`Evento: recuperi ${heal} PV.`,"good"); sfx("flask");
+    } else {
+      const loot = rnd(40,70)+tile.region*12;
+      setAction("? Il Prigioniero",
+        `Dietro le sbarre, un'anima imprigionata ti implora. Puoi <strong>liberarla</strong> — ti seguirà come <strong>Anima Riconoscente</strong> e una volta, alla tua morte, ti riporterà in vita con 1 PV — oppure <strong>saccheggiare</strong> la cella per <strong style="color:var(--gold-bright)">${loot} rune</strong>.`,
+        [["Libera l'anima",()=>{
+            player.guardianSoul = true;
+            player.items.push("Anima Riconoscente");
+            log("Evento: liberi l'anima — ti proteggerà una volta dalla morte.","gold"); sfx("grace");
+            toast("☥ Anima Riconoscente","gold");
+            renderStats();
+            setAction("? Il Prigioniero","L'anima si scioglie in luce e ti avvolge come un mantello tiepido. Tira il dado.",[["Tira il dado",rollMove]],"event");
+         }],
+         ["Saccheggia",()=>{
+            player.runes += loot;
+            log(`Evento: saccheggi la cella (+${loot} rune).`,"gold"); sfx("rune");
+            toast(`⟐ +${loot} rune`,"gold");
+            renderStats();
+            setAction("? Il Prigioniero","L'anima si spegne con un sospiro mentre raccogli le rune. Tira il dado.",[["Tira il dado",rollMove]],"event");
+         }]],
+        "event");
+      renderBoard(); renderStats();
+      return;
+    }
   }
   renderBoard(); renderStats();
-  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${text}`, [["Tira il dado",rollMove]], "event");
+  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${flavor("event",tile.region)} ${text}`, [["Tira il dado",rollMove]], "event");
 }
 
 /* ===================== GRAZIA ===================== */
@@ -1404,6 +1513,11 @@ const SHOP_BASE = [
   {id:"heart", icon:"♥", nm:"Cuore di pietra", d:"+10 vitalità massima", price:100, repeat:true},
   {id:"vial",  icon:"✦", nm:"Fiala potenziata", d:"Le fiaschette curano 10 in più", price:110, repeat:false},
   {id:"charm", icon:"☽", nm:"Talismano del recupero", d:"Alla morte conservi metà delle rune", price:140, repeat:false},
+  // reliquie con compromesso: potere in cambio di una debolezza
+  {id:"ring_agony", icon:"◉", nm:"Anello dell'Agonia", d:"+3 attacco, ma −12 vitalità massima", price:130, repeat:false, relic:true},
+  {id:"glass_heart",icon:"♡", nm:"Cuore di Vetro", d:"+20 vitalità massima, ma −1 attacco", price:120, repeat:false, relic:true},
+  {id:"hunger",     icon:"☠", nm:"Patto della Fame", d:"+25% rune dai nemici, ma −1 fiaschetta massima", price:150, repeat:false, relic:true},
+  {id:"berserk",    icon:"⚡", nm:"Sigillo del Furore", d:"L'Ardore si carica più in fretta, ma subisci +15% danni", price:160, repeat:false, relic:true},
 ];
 let shopBought = {};
 function openShop(tile){
@@ -1441,8 +1555,13 @@ function applyItem(item){
   if(item.id==="heart"){ player.maxhp += 10; player.hp += 10; }
   if(item.id==="vial"){ player.flaskBonus += 10; player.items.push("Fiala potenziata"); }
   if(item.id==="charm"){ player.items.push("Talismano del recupero"); }
+  // reliquie con compromesso
+  if(item.id==="ring_agony"){ player.atk += 3; player.maxhp = Math.max(10, player.maxhp-12); player.hp = Math.min(player.hp, player.maxhp); player.items.push("Anello dell'Agonia"); }
+  if(item.id==="glass_heart"){ player.maxhp += 20; player.hp += 20; player.atk = Math.max(1, player.atk-1); player.items.push("Cuore di Vetro"); }
+  if(item.id==="hunger"){ player.runeBonus = (player.runeBonus||0)+0.25; player.maxflasks = Math.max(0, player.maxflasks-1); player.flasks = Math.min(player.flasks, player.maxflasks); player.items.push("Patto della Fame"); }
+  if(item.id==="berserk"){ player.ardoreMult = (player.ardoreMult||1)+0.4; player.damageTaken = (player.damageTaken||1)+0.15; player.items.push("Sigillo del Furore"); }
   log(`Acquisti: ${item.nm}.`,"gold");
-  toast(`✦ ${item.nm}`, "gold");
+  toast(`✦ ${item.nm}`, item.relic?"":"gold");
   sfx("buy");
 }
 $("shop-leave").addEventListener("click", ()=>{
@@ -2686,8 +2805,14 @@ function cbLog(html, cls){
 }
 function gainArdore(n){
   if(!player) return;
-  player.ardore = Math.min(100, (player.ardore||0)+n);
+  player.ardore = Math.min(100, (player.ardore||0) + Math.round(n*(player.ardoreMult||1)));
   renderArdore();
+}
+/* danno subito dal giocatore, modulato dalle reliquie (Sigillo del Furore) */
+function playerHurt(dmg){
+  const real = Math.round(dmg*(player.damageTaken||1));
+  player.hp -= real;
+  return real;
 }
 function renderArdore(){
   if(!player) return;
@@ -2789,8 +2914,7 @@ function maybeCharge(){
 /* attacco del Figlio della Palude (add della Madre), se presente */
 function addAttack(){
   if(!combat.add || combat.add.hp<=0) return;
-  const admg = d6() + combat.add.atk;
-  player.hp -= admg;
+  const admg = playerHurt(d6() + combat.add.atk);
   cbLog(`<span class="hit">Il Figlio della Palude morde per ${admg}.</span>`);
   floatDmg("cb-pside", "-"+admg, "#8fd49a");
   if(BS.ctx){ spawnBurst(BS.hero.baseX, BS.hero.baseY-26, "#5a9a50", 8, 1.2); }
@@ -2815,9 +2939,9 @@ function enemyTurn(skip){
     cbLog(`<span class="heal">Barriera di Ferro assorbe il colpo! Contrattacchi per ${counterDmg}.</span>`);
     fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
   } else {
-    player.hp -= dmg;
-    cbLog(`<span class="hit">${combat.e.n} ti colpisce per ${dmg}.</span>`);
-    floatDmg("cb-pside", "-"+dmg, "#e07a6e");
+    const real = playerHurt(dmg);
+    cbLog(`<span class="hit">${combat.e.n} ti colpisce per ${real}.</span>`);
+    floatDmg("cb-pside", "-"+real, "#e07a6e");
     fx($("ov-combat").querySelector(".modal"), "shake", 450);
     fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
   }
@@ -2842,8 +2966,7 @@ function actAttack(){
   if(combat.isBoss && combat.tile.region===2 && combat.parryStance){
     combat.parryStance = false;
     bsEnemyAttack(true);
-    const counter = d6() + combat.e.atk;
-    player.hp -= counter;
+    const counter = playerHurt(d6() + combat.e.atk);
     cbLog(`<span class="hit">Il Cavaliere para il tuo colpo e contrattacca per ${counter}!</span>`);
     floatDmg("cb-pside", "-"+counter, "#e07a6e");
     fx($("ov-combat").querySelector(".modal"), "shake", 450);
@@ -2927,7 +3050,8 @@ function winCombat(){
   combat.over = true;
   player.ardore = 0;
   const e = combat.e;
-  const reward = rnd(e.r[0], e.r[1] || e.r[0]);
+  let reward = rnd(e.r[0], e.r[1] || e.r[0]);
+  if(player.runeBonus) reward = Math.round(reward*(1+player.runeBonus)); // Sigillo del Pellegrino
   player.runes += reward;
   combat.tile.cleared = true;
   log(`${e.n} cade. Ottieni ${reward} rune.`,"gold");
@@ -2958,6 +3082,22 @@ function winCombat(){
 /* ===================== MORTE E VITTORIA ===================== */
 let runesDropAmount = 0;
 function die(){
+  // Anima Riconoscente: una volta per run, riporta in vita a 1 PV invece di morire
+  if(player.guardianSoul){
+    player.guardianSoul = false;
+    player.items = player.items.filter(i=>i!=="Anima Riconoscente");
+    player.hp = Math.max(1, Math.round(player.maxhp*0.35));
+    player.ardore = 0;
+    if(combat){ combat.staggered = true; }
+    cbLog && combat && cbLog(`<span class="heal">☥ L'Anima Riconoscente si sacrifica per te! Torni in vita.</span>`);
+    log("L'Anima Riconoscente ti riporta in vita.","gold");
+    toast("☥ Riportato in vita!","good");
+    sfx("grace");
+    if(BS.ctx){ spawnBurst(BS.hero.baseX, BS.hero.baseY-26, "#ffe0a0", 24, 2.4); BS.hero.flash=300; }
+    renderCombat && combat && renderCombat();
+    renderStats();
+    return;
+  }
   player.ardore = 0;
   bsHeroDie();
   Music.stop();
