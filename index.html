@@ -379,6 +379,45 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 .region-row[data-region="2"]{background:linear-gradient(180deg,rgba(72,40,20,.12),transparent)}
 .region-row[data-region="3"]{background:linear-gradient(180deg,rgba(50,30,80,.14),transparent)}
 .region-row.active-region{border-color:var(--edge);box-shadow:inset 0 0 0 1px rgba(201,162,39,.18),0 0 14px rgba(0,0,0,.4)}
+.region-row.collapsed{
+  padding:5px 10px;cursor:default;
+  display:flex;align-items:center;justify-content:space-between;
+  opacity:0.55;transition:opacity .3s;
+}
+.region-row.collapsed:hover{ opacity:0.75; }
+.region-row.collapsed .region-label{ font-size:.50rem; }
+.region-row.expanded{ border-color:rgba(201,162,39,.25); }
+.scene-name{
+  font-family:var(--f-pixel);font-size:.58rem;color:var(--gold);
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 0 6px;border-bottom:1px solid #2a2010;margin-bottom:6px;
+}
+.scene-name::before{ content:"▸ "; color:var(--faded); }
+/* single-region focus: collapsed non-current regions */
+.region-row.collapsed{
+  flex-direction:row;align-items:center;justify-content:space-between;
+  padding:5px 10px;opacity:.52;transition:opacity .3s,border-color .3s;
+  min-height:0;
+}
+.region-row.collapsed:hover{ opacity:.72; }
+.region-row.expanded{
+  border-color:rgba(201,162,39,.22);
+  box-shadow:inset 0 0 0 1px rgba(201,162,39,.12),0 0 20px rgba(0,0,0,.45);
+}
+.scene-name{
+  font-family:var(--f-pixel);font-size:.55rem;color:var(--gold);
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 0 7px;border-bottom:1px solid #2a2010;margin-bottom:6px;
+  display:flex;align-items:center;gap:.5em;
+}
+.scene-name::before{content:"▸";color:var(--faded);}
+.tile .tilename{
+  display:block;font-size:.32rem;font-family:var(--f-pixel);letter-spacing:.02em;
+  color:rgba(133,133,122,.7);line-height:1.2;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+  margin-top:1px;
+}
+.tile.current .tilename,.tile.boss .tilename{color:currentColor;opacity:.8;}
 .region-label{
   display:flex;justify-content:space-between;align-items:center;
   font-family:var(--f-pixel);font-size:.52rem;letter-spacing:.02em;line-height:1.5;text-transform:uppercase;
@@ -768,6 +807,7 @@ kbd{
       <span class="set-val" id="opt-anim-val">Attive</span>
     </div>
     <div id="settings-records" class="help-card" style="margin-top:.6em"></div>
+    <p style="font-size:.55rem;color:#5b4f38;margin-top:1rem">Musiche: Kevin MacLeod (incompetech.com) — licenza CC BY 4.0</p>
     <div class="btnrow"><button id="settings-close">Chiudi</button></div>
   </div>
 </div>
@@ -804,6 +844,7 @@ kbd{
     <div class="btnrow" id="tecnica-row">
       <button id="cb-tecnica" disabled><span id="tecnica-label">Tecnica</span> <kbd>T</kbd></button>
     </div>
+    <div id="cb-type" style="text-align:center;font-size:.72rem;letter-spacing:.06em;margin-top:.2em;font-family:var(--f-pixel)"></div>
     <div id="cb-turn"></div>
     <div id="cb-nowplaying" style="text-align:center;font-size:.72rem;color:#6b5c3c;letter-spacing:.12em;margin-top:.25em;font-style:italic"></div>
   </div>
@@ -916,38 +957,55 @@ kbd{
   </div>
 </div>
 
-<!-- campioni orchestrali FluidR3_GM (MIT) per il motore musicale ibrido -->
-<script src="samples.js" defer onerror="window.__noSamples=1"></script>
 <script>
 "use strict";
 /* ===================== DATI ===================== */
 const REGIONS = ["Sepolcreto dei Primi", "Palude del Vespro", "Altopiano Cinereo", "Cittadella del Crepuscolo"];
 
 const ENEMIES = [
-  [{n:"Soldato Errante",hp:13,atk:2,r:[28,45]},{n:"Segugio di Tomba",hp:11,atk:3,r:[28,45]}],
-  [{n:"Spettro di Fango",hp:19,atk:4,r:[55,80]},{n:"Strega di Palude",hp:17,atk:4,r:[55,80]}],
-  [{n:"Cavaliere di Brace",hp:27,atk:5,r:[90,130]},{n:"Arciere di Cenere",hp:24,atk:6,r:[90,130]}],
-  [{n:"Guardia Crepuscolare",hp:34,atk:7,r:[140,190]},{n:"Accolito del Vuoto",hp:30,atk:8,r:[140,190]}],
+  [{n:"Soldato Errante",hp:13,atk:2,r:[28,45],type:"pietra"},{n:"Segugio di Tomba",hp:11,atk:3,r:[28,45],type:"ombra"}],
+  [{n:"Spettro di Fango",hp:19,atk:4,r:[55,80],type:"natura"},{n:"Strega di Palude",hp:17,atk:4,r:[55,80],type:"ombra"}],
+  [{n:"Cavaliere di Brace",hp:27,atk:5,r:[90,130],type:"fiamma"},{n:"Arciere di Cenere",hp:24,atk:6,r:[90,130],type:"pietra"},{n:"Golem di Scorie",hp:44,atk:7,r:[250,310],type:"pietra"}],
+  [{n:"Guardia Crepuscolare",hp:34,atk:7,r:[140,190],type:"luce"},{n:"Accolito del Vuoto",hp:30,atk:8,r:[140,190],type:"ombra"},{n:"Araldo della Fine",hp:58,atk:9,r:[360,440],type:"ombra"},{n:"Campione Caduto",hp:34,atk:7,r:[140,190],type:"pietra"}],
 ];
 const ELITES = [
-  {n:"Campione Caduto",hp:24,atk:3,r:[110,140]},
-  {n:"Divoratore della Melma",hp:33,atk:5,r:[170,210]},
-  {n:"Golem di Scorie",hp:44,atk:7,r:[250,310]},
-  {n:"Araldo della Fine",hp:58,atk:9,r:[360,440]},
+  {n:"Campione Caduto",hp:24,atk:3,r:[110,140],type:"pietra"},
+  {n:"Divoratore della Melma",hp:33,atk:5,r:[170,210],type:"natura"},
+  {n:"Golem di Scorie",hp:44,atk:7,r:[250,310],type:"pietra"},
+  {n:"Araldo della Fine",hp:58,atk:9,r:[360,440],type:"ombra"},
 ];
+/* Tipi elementali: Fiamma→Natura→Pietra→Ombra→Luce→Fiamma (ciclo di 5) */
+const TYPES = {
+  fiamma: { nm:"Fiamma", ic:"🔥", clr:"#e86030" },
+  natura: { nm:"Natura", ic:"🌿", clr:"#40a050" },
+  pietra: { nm:"Pietra", ic:"⛰",  clr:"#a08060" },
+  ombra:  { nm:"Ombra",  ic:"🌑", clr:"#6040a0" },
+  luce:   { nm:"Luce",   ic:"✦",  clr:"#e0c040" },
+};
+/* multiplier lookup: EFFECTIVENESS[atk][def] */
+const EFFECTIVENESS = {
+  fiamma:{ fiamma:1, natura:2, pietra:0.5, ombra:1, luce:0.5 },
+  natura:{ fiamma:0.5, natura:1, pietra:2, ombra:0.5, luce:1  },
+  pietra:{ fiamma:2,  natura:0.5, pietra:1, ombra:2, luce:0.5  },
+  ombra: { fiamma:1,  natura:2, pietra:0.5, ombra:1, luce:2   },
+  luce:  { fiamma:2,  natura:0.5, pietra:2, ombra:0.5, luce:1 },
+};
+function typeMultiplier(atkType, defType){ return (EFFECTIVENESS[atkType]&&EFFECTIVENESS[atkType][defType])||1; }
+function playerType(){ return {vagabondo:"luce",cavaliere:"pietra",asceta:"fiamma",mendico:"natura"}[player.cls]||"pietra"; }
+
 /* Ogni regione ha un PASSATO di possibili guardiani: a inizio run se ne sorteggia uno.
    La stessa terra, un custode diverso — la mappa cambia, e con essa il nemico finale. */
 const BOSSES_V0 = [
-  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:42,atk:4,r:[180,180]},
-  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:58,atk:6,r:[320,320]},
-  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:76,atk:8,r:[520,520]},
-  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:110,atk:10,r:[1100,1100]},
+  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:42,atk:4,r:[180,180],type:"pietra"},
+  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:58,atk:6,r:[320,320],type:"natura"},
+  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:76,atk:8,r:[520,520],type:"fiamma"},
+  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:110,atk:10,r:[1100,1100],type:"ombra"},
 ];
 const BOSSES_V1 = [
-  {n:"Coro d'Ossa",sub:"Mille morti, una sola voce",hp:46,atk:4,r:[190,190]},
-  {n:"L'Annegato",sub:"Chi entrò e non tornò",hp:62,atk:6,r:[330,330]},
-  {n:"Boia di Cenere",sub:"L'ultimo a deporre la lama",hp:80,atk:8,r:[540,540]},
-  {n:"Regina Cancellata",sub:"Il nome che il Sovrano divorò",hp:116,atk:10,r:[1120,1120]},
+  {n:"Coro d'Ossa",sub:"Mille morti, una sola voce",hp:46,atk:4,r:[190,190],type:"pietra"},
+  {n:"L'Annegato",sub:"Chi entrò e non tornò",hp:62,atk:6,r:[330,330],type:"natura"},
+  {n:"Boia di Cenere",sub:"L'ultimo a deporre la lama",hp:80,atk:8,r:[540,540],type:"fiamma"},
+  {n:"Regina Cancellata",sub:"Il nome che il Sovrano divorò",hp:116,atk:10,r:[1120,1120],type:"ombra"},
 ];
 let BOSSES = [];
 
@@ -1394,34 +1452,54 @@ function recordDeath(){
 
 /* ===================== RENDER ===================== */
 const TILE_TITLES = {grace:"Sito di grazia: riposo, cure e livelli", enemy:"Nemico", elite:"Nemico élite", boss:"Boss della regione", shop:"Mercante errante", treasure:"Tesoro", event:"Evento misterioso", empty:"Sentiero"};
+/* Nomi di luogo immersivi per ogni tipo di casella × regione */
+const TILE_SCENES = [
+  { grace:"Cripta della Grazia",    enemy:"Galleria Sepolcrale",    elite:"Guardiano del Cimitero",  boss:"Sepolcro del Primo",          shop:"Mercante delle Ombre",     treasure:"Urna Dimenticata",       event:"Crocevia dei Morti"      },
+  { grace:"Fonte del Vespro",       enemy:"Sentiero Allagato",      elite:"Cacciatore della Palude", boss:"Cuore della Melma",           shop:"Barcaiolo Silenzioso",     treasure:"Relitti Sommersi",       event:"Nebbia Parlante"         },
+  { grace:"Altare delle Ceneri",    enemy:"Campo di Battaglie",     elite:"Guardaboschi di Brace",   boss:"Fortezza dell'Ultimo Fuoco",  shop:"Forgiatore Nomade",        treasure:"Arsenale Sepolto",       event:"Spirito della Polvere"   },
+  { grace:"Soglia del Crepuscolo",  enemy:"Corridoio del Vuoto",    elite:"Custode dell'Abisso",     boss:"Trono Spezzato",              shop:"Portale del Contrabb.",     treasure:"Cripta dei Signori",     event:"Fessura tra i Mondi"     },
+];
+function tileName(t){ return (TILE_SCENES[t.region]&&TILE_SCENES[t.region][t.type]) || TILE_TITLES[t.type] || t.type; }
+
 function buildBoard(){
   const b = $("board");
   b.innerHTML = "";
+  const curRegion = tiles && player ? tiles[player.pos].region : 0;
   for(let row=0; row<4; row++){
+    const beaten = tiles[row*9+8].cleared;
+    const isActive = row===curRegion;
     const wrap = document.createElement("div");
-    wrap.className = "region-row";
+    wrap.className = "region-row" + (isActive?" expanded":" collapsed");
     wrap.id = "rrow-"+row;
     wrap.dataset.region = row;
     const lbl = document.createElement("div");
-    lbl.className = "region-label";
+    lbl.className = "region-label" + (isActive?" active":"");
     lbl.id = "rlabel-"+row;
-    const beaten = tiles[row*9+8].cleared;
     lbl.innerHTML = `<span>${String(row+1).padStart(2,"0")} · ${REGIONS[row]}</span><span class="bossname">${beaten?"☑":"♛"} ${BOSSES[row].n}</span>`;
     wrap.appendChild(lbl);
-    const grid = document.createElement("div");
-    grid.className = "tiles-row";
-    for(let col=0; col<9; col++){
-      // serpentina: righe dispari da destra a sinistra
-      const idx = row*9 + (row%2===0 ? col : 8-col);
-      const t = tiles[idx];
-      const div = document.createElement("div");
-      div.className = "tile " + t.type;
-      div.id = "tile-"+idx;
-      div.title = (t.type==="boss" ? BOSSES[t.region].n : TILE_TITLES[t.type]) + ` — casella ${idx+1}`;
-      div.innerHTML = `<span class="num">${idx+1}</span><span class="icon">${ICONS[t.type]}</span>`;
-      grid.appendChild(div);
+    if(isActive){
+      // scene description for current tile
+      const curTile = tiles[player.pos];
+      const sname = document.createElement("div");
+      sname.className = "scene-name";
+      sname.id = "scene-name-cur";
+      sname.textContent = tileName(curTile);
+      wrap.appendChild(sname);
+      // full tile grid
+      const grid = document.createElement("div");
+      grid.className = "tiles-row";
+      for(let col=0; col<9; col++){
+        const idx = row*9 + (row%2===0 ? col : 8-col);
+        const t = tiles[idx];
+        const div = document.createElement("div");
+        div.className = "tile " + t.type;
+        div.id = "tile-"+idx;
+        div.title = tileName(t) + (t.type==="boss" ? ` — ${BOSSES[t.region].n}` : "") + ` (casella ${idx+1})`;
+        div.innerHTML = `<span class="num">${idx+1}</span><span class="icon">${ICONS[t.type]}</span><span class="tilename">${tileName(t)}</span>`;
+        grid.appendChild(div);
+      }
+      wrap.appendChild(grid);
     }
-    wrap.appendChild(grid);
     b.appendChild(wrap);
   }
 }
@@ -1676,7 +1754,7 @@ function runEvent(tile, roll){
   tile.cleared = true;
   // a volte la casella evento nasconde un incontro con un personaggio
   if(Math.random() < 0.42){ return runNPCEvent(tile, roll); }
-  const ev = rnd(1,12);
+  const ev = rnd(1,22);
   let text="";
   if(ev===1){
     const r = rnd(25,55)+tile.region*10;
@@ -1796,6 +1874,49 @@ function runEvent(tile, roll){
       renderBoard(); renderStats();
       return;
     }
+  } else if(ev===13){
+    const r=rnd(50,100)+tile.region*20; player.runes+=r;
+    text=`Un pellegrino caduto stringe ancora il suo bottino: <strong style="color:var(--gold-bright)">${r} rune</strong>.`;
+    log(`Trovi ${r} rune su un corpo.`,"gold"); sfx("rune");
+  } else if(ev===14){
+    player.atk+=1;
+    text=`Un coltello antico tra le pietre. <strong>ATK permanente +1</strong>.`;
+    log("Trovi un'arma dimenticata: ATK +1.","good"); sfx("level");
+  } else if(ev===15){
+    const dmg=rnd(6,12)+tile.region*2; player.hp=Math.max(1,player.hp-dmg);
+    text=`Vapori tossici escono dalle crepe. Perdi <strong style="color:#d4847a">${dmg} vitalità</strong>.`;
+    log(`Vapori tossici: -${dmg} PV.`,"bad"); sfx("hurt");
+  } else if(ev===16){
+    player.maxhp+=8; player.hp=Math.min(player.maxhp,player.hp+8);
+    text=`Una fonte di grazia nascosta ti rigenera. <strong style="color:#b9d49a">Vitalità massima +8</strong>.`;
+    log("Fonte nascosta: max PV +8.","good"); sfx("grace");
+  } else if(ev===17){
+    text=`Un nemico si avventa da un'ombra!`;
+    renderBoard(); renderStats();
+    setAction("? Evento",text,[],"enemy");
+    setTimeout(()=>startCombat({...ELITES[tile.region]},tile,false,true),600);
+    return;
+  } else if(ev===18){
+    const r=rnd(30,60); player.runes=Math.max(0,player.runes-r);
+    text=`Una mano nell'ombra ti alleggerisce di <strong style="color:#d4847a">${r} rune</strong>. Un ladro si dà alla fuga.`;
+    log(`Borseggiato: -${r} rune.`,"bad"); sfx("hurt");
+  } else if(ev===19){
+    player.flasks=Math.min(player.maxflasks,player.flasks+1);
+    text=`Una fiaschetta intatta tra i detriti. <strong style="color:#b9d49a">+1 fiaschetta</strong>.`;
+    log("Trovi una fiaschetta.","good"); sfx("flask");
+  } else if(ev===20){
+    const r=rnd(20,40)+tile.region*8; const h=rnd(5,10);
+    player.runes+=r; player.hp=Math.min(player.maxhp,player.hp+h);
+    text=`Un accampamento abbandonato: razioni e qualche runa. <strong>+${h} PV · +${r} rune</strong>.`;
+    log(`Campo abbandonato: +${h} PV, +${r} rune.`,"good"); sfx("rune");
+  } else if(ev===21){
+    const n=pickEnemy(tile.region);
+    text=`Un rituale oscuro potenzia i nemici della regione. Il prossimo incontro sarà più duro.`;
+    log("Rituale oscuro: nemici potenziati.","bad"); sfx("hurt");
+  } else if(ev===22){
+    player.ardore=Math.min(100,player.ardore+40);
+    text=`Un frammento di stelle caduto vibra tra le tue mani. <strong style="color:#e0c040">Ardore +40</strong>.`;
+    log("Frammento stellare: ardore +40.","good"); sfx("level");
   } else {
     // SCELTA MORALE: il Prigioniero (ev 12)
     const already = player.guardianSoul;
@@ -2192,78 +2313,6 @@ function sfx(n){
   }
 }
 
-/* ===================== SAMPLER ORCHESTRALE (IBRIDO) =====================
-   Campioni reali FluidR3_GM (coro, violoncello, archi tremolo, timpani,
-   trombone) decodificati a runtime e ripitchati via playbackRate.
-   Se i campioni non sono disponibili, il motore musicale ricade sul synth. */
-const Sampler = {
-  ready:false, loading:false, buffers:{}, anchors:{},
-  NOTE:{C:0,"C#":1,D:2,"D#":3,E:4,"E#":5,F:5,"F#":6,G:7,"G#":8,A:9,"A#":10,B:11},
-  midi(note){ const m=/^([A-G]#?)(-?\d)$/.exec(note); if(!m) return 60; return this.NOTE[m[1]] + (parseInt(m[2],10)+1)*12; },
-  freqMidi(f){ return 69 + 12*Math.log2(f/440); },
-  load(){
-    if(this.loading || this.ready) return;
-    if(typeof window==="undefined" || !window.GAME_SAMPLES) return;
-    if(!AudioFX.ensure()) return;
-    const c=AudioFX.ctx;
-    if(typeof c.decodeAudioData!=="function") return; // ambienti senza decoder (test)
-    this.loading=true;
-    const S=window.GAME_SAMPLES; let pending=0, done=0;
-    const finish=()=>{ done++; if(done>=pending){ this.ready=true; this.loading=false; } };
-    for(const inst in S){
-      this.buffers[inst]={}; this.anchors[inst]=[];
-      for(const note in S[inst]){
-        pending++;
-        try{
-          const b64=S[inst][note].split(",")[1];
-          const bin=atob(b64), n=bin.length, u8=new Uint8Array(n);
-          for(let i=0;i<n;i++) u8[i]=bin.charCodeAt(i);
-          const inst_=inst, note_=note;
-          const p=c.decodeAudioData(u8.buffer, buf=>{
-            this.buffers[inst_][note_]=buf;
-            this.anchors[inst_].push({note:note_, midi:this.midi(note_)});
-            this.anchors[inst_].sort((a,b)=>a.midi-b.midi);
-            finish();
-          }, finish);
-          if(p && p.then) p.then(buf=>{ if(buf){ this.buffers[inst_][note_]=buf;
-            if(!this.anchors[inst_].some(a=>a.note===note_)){ this.anchors[inst_].push({note:note_,midi:this.midi(note_)}); this.anchors[inst_].sort((a,b)=>a.midi-b.midi); }
-          } }).catch(()=>{});
-        }catch(e){ finish(); }
-      }
-    }
-    if(pending===0){ this.loading=false; }
-  },
-  has(inst){ return this.ready && this.anchors[inst] && this.anchors[inst].length>0; },
-  /* seleziona il campione più vicino e il fattore di pitch */
-  pick(inst, freq){
-    if(!this.has(inst)) return null;
-    const midi=this.freqMidi(freq), an=this.anchors[inst];
-    let best=an[0];
-    for(let i=1;i<an.length;i++) if(Math.abs(an[i].midi-midi)<Math.abs(best.midi-midi)) best=an[i];
-    const buf=this.buffers[inst][best.note];
-    if(!buf) return null;
-    return {buf, rate:Math.pow(2,(midi-best.midi)/12)};
-  },
-  /* riproduce una nota campionata; dest = bus, rev = nodo reverb, revLvl = mandata wet */
-  play(inst, freq, t, dur, vol, dest, rev, revLvl){
-    const pk=this.pick(inst, freq);
-    if(!pk) return false;
-    const c=AudioFX.ctx;
-    const src=c.createBufferSource(); src.buffer=pk.buf;
-    src.playbackRate.value=pk.rate;
-    const g=c.createGain();
-    const atk=Math.min(0.10, dur*0.30), rel=Math.min(0.30, dur*0.40);
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001,vol), t+atk);
-    g.gain.setValueAtTime(Math.max(0.0001,vol), Math.max(t+atk+0.001, t+dur-rel));
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-    src.connect(g); g.connect(dest||c.destination);
-    if(rev && revLvl){ const rs=c.createGain(); rs.gain.value=revLvl; g.connect(rs); rs.connect(rev); }
-    src.start(t); src.stop(t+dur+0.12);
-    return true;
-  },
-};
-
 /* ===================== AMBIENZA SONORA PER REGIONE ===================== */
 /* drone continuo + eventi sparsi (gocce, scintille, ping) generati a runtime.
    Suona durante l'esplorazione; si ferma in combattimento e ai menù. */
@@ -2501,476 +2550,56 @@ function animNumber(el, to){
 }
 
 
-/* ===================== MUSICA: ORCHESTRALE GOTICO-SINFONICO IBRIDO =====================
-   Motore "through-composed": ogni tema è una sequenza di SEZIONI che si
-   evolvono (Tensione strisciante → Terrore e Rabbia → Climax apocalittico),
-   poi il corpo caotico va in loop. Tracce instradate al Sampler (campioni
-   reali FluidR3) con ricaduta sul synth. Tutti i boss in 7/8 (14 sedicesimi
-   = 1 battuta). Pulsazione 16° = 60 / BPM / 4. */
-function nf(n){
-  const m = /^([A-G]#?)(-?\d)$/.exec(n);
-  const ix = {C:0,"C#":1,D:2,"D#":3,E:4,F:5,"F#":6,G:7,"G#":8,A:9,"A#":10,B:11}[m[1]];
-  return 440*Math.pow(2,(ix-9)/12 + (parseInt(m[2],10)-4));
-}
-function seq(len, map){ const a=new Array(len).fill(null); for(const k in map) a[+k]=map[k]; return a; }
+/* ===================== MUSICA: HTML5 Audio (Kevin MacLeod) ===================== */
+const MUSIC_URLS = {
+  menu:   "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Ossuary%205%20-%20Rest.mp3",
+  enemy:  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Investigations.mp3",
+  elite:  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Unrelenting.mp3",
+  boss0:  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Anguish.mp3",
+  boss1:  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Ossuary%206%20-%20Air.mp3",
+  boss2:  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Darkest%20Child.mp3",
+  boss3:  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Final%20Battle%20of%20the%20Dark%20Wizards.mp3",
+};
 
-/* ── SEZIONI ──────────────────────────────────────────────────────────────────
-   Ogni sezione: { bpm, len, bass, cello, swell, choir, brass, timp, drum }.
-   bass   : sub sintetico (nota singola).
-   cello  : violoncello campionato — ostinato in 16°/crome (nota o [nota,dur]).
-   swell  : archi tremolo campionati — cluster dissonanti sostenuti [nota,dur].
-   choir  : coro "aahs" campionato — urla/lamenti sostenuti [nota,dur].
-   brass  : trombone campionato + distorsione waveshaper — stab aggressivi.
-   timp   : timpani campionato (nota → intonato).
-   drum   : synth k/s/h/t, combinazioni con "|". */
-
+/* metadata for UI / smoke tests */
 const THEMES = {
-  /* ── MENU: "Il Velo Spezzato" — dark gotico lento, coro e archi sospesi ── */
-  menu: {
-    title:"Il Velo Spezzato", dark:true, loopFrom:0,
-    sections:[
-      { bpm:30, len:28,
-        bass:  seq(28,{ 0:"A1", 14:"F1" }),
-        swell: seq(28,{ 0:["A2",16], 4:["A#2",12], 16:["G2",12], 20:["A2",8] }),
-        choir: seq(28,{ 2:["A3",14,"a"], 16:["F3",10,"o"] }),
-        cello: seq(28,{ 0:["A1",10], 14:["D2",8] }),
-        drum:  seq(28,{}),
-      },
-    ],
-  },
-
-  /* ── NEMICI COMUNI: "Caccia tra le Rovine" — tensione motoria che incalza ──
-     Per gli scontri ordinari. Ostinato di violoncello, archi inquieti,
-     ottoni radi. Cresce ma non esplode: il pericolo del viaggio. */
-  enemy: {
-    title:"Caccia tra le Rovine", dread:true, loopFrom:0,
-    sections:[
-      { bpm:104, len:28,
-        bass:  seq(28,{ 0:"D2", 6:"D2", 10:"C2", 14:"D2", 20:"A1", 24:"A#1" }),
-        cello: seq(28,{
-           0:"D3", 2:"F3",  4:"D3",  6:"C3",  8:"D3", 10:"E3", 12:"F3",
-          14:"D3",16:"C3", 18:"A#2",20:"C3", 22:"D3", 24:"F3", 26:"E3",
-        }),
-        swell: seq(28,{ 0:["A3",10], 14:["G3",8], 22:["A#3",6] }),
-        brass: seq(28,{ 0:["D3",2], 6:["A2",2], 14:["F2",2] }),
-        drum:  seq(28,{ 0:"k", 4:"s", 6:"k", 10:"k", 12:"s", 14:"k", 18:"s", 20:"k", 24:"k", 26:"s" }),
-      },
-    ],
-  },
-
-  /* ── ÉLITE: "Sfida" — breve e brutale, 4/4 serrato ── */
-  elite: {
-    title:"Sfida dell'Élite", dread:true, loopFrom:0,
-    sections:[
-      { bpm:140, len:16,
-        bass:  seq(16,{ 0:"E2",2:"F2",4:"E2",6:"G2",8:"E2",10:"D2",12:"E2",14:"F2" }),
-        cello: seq(16,{
-          0:"E3",1:"F3",2:"G3",3:"E3",4:"D3",5:"E3",6:"F3",7:"G3",
-          8:"E3",9:"D3",10:"C3",11:"D3",12:"E3",13:"F3",14:"G3",15:"E3",
-        }),
-        swell: seq(16,{ 0:["B4",8], 8:["A4",6] }),
-        choir: seq(16,{ 0:["E4",5,"e"], 8:["B4",5,"e"] }),
-        brass: seq(16,{ 0:["E3",2],4:["G3",2],8:["E3",2],12:["D3",2] }),
-        timp:  seq(16,{ 0:"E2", 8:"E2" }),
-        drum:  seq(16,{ 0:"k",2:"h",3:"s",4:"k",6:"k",7:"s",8:"k",10:"h",11:"s",12:"k",14:"k",15:"s" }),
-      },
-    ],
-  },
-
-  /* ── BOSS 0: "Frantumazione" — A frigio · custode di pietra del Sepolcreto ──
-     Sez.0 tensione granitica · Sez.1 (loop) rabbia marcata. */
-  boss0: {
-    title:"Frantumazione", dread:true, loopFrom:1,
-    sections:[
-      // CREEPING TENSION
-      { bpm:96, len:28,
-        bass:  seq(28,{ 0:"A1", 14:"A#1" }),
-        cello: seq(28,{
-           0:"A2", 2:"A2", 4:"A2",  6:"A2",  8:"A#2",10:"A2", 12:"G2",
-          14:"A2",16:"A2",18:"A2", 20:"A2", 22:"F2", 24:"G2", 26:"A2",
-        }),
-        swell: seq(28,{ 0:["A3",16], 8:["A#3",10], 16:["A3",12] }),
-        choir: seq(28,{ 4:["A3",12,"o"] }),
-        drum:  seq(28,{ 0:"k", 14:"k" }),
-      },
-      // TERROR & RAGE (loop)
-      { bpm:118, len:28,
-        bass:  seq(28,{ 0:"A1", 6:"A1", 10:"G1", 14:"A1", 20:"A1", 24:"F1" }),
-        cello: seq(28,{
-           0:"A2", 2:"A#2", 4:"A2",  6:"G2",  8:"A2", 10:"F2", 12:"G2",
-          14:"A2",16:"A#2",18:"G2", 20:"A2", 22:"F2", 24:"E2", 26:"A2",
-        }),
-        swell: seq(28,{ 0:["A4",7], 6:["A#4",4], 10:["G4",4], 14:["A4",7], 20:["F4",4], 24:["G4",4] }),
-        choir: seq(28,{ 0:["A4",6,"a"], 6:["F4",4,"e"], 14:["A4",6,"a"], 20:["G4",4,"e"] }),
-        brass: seq(28,{ 0:["A3",2], 6:["G3",2], 10:["F3",2], 14:["A3",2], 20:["A#3",2], 24:["G3",2] }),
-        timp:  seq(28,{ 0:"A2", 14:"A2" }),
-        drum:  seq(28,{ 0:"k|t", 2:"h", 4:"s", 6:"k", 8:"h", 10:"k", 12:"s", 14:"k|t", 16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s" }),
-      },
-    ],
-  },
-
-  /* ── BOSS 1: "Nenia del Fango" — D frigio · l'Annegata della palude ──
-     Dominato dal coro; lentissimo, soffocante. Sez.1 (loop) ninnananna
-     d'incubo sott'acqua: pochi tamburi, archi tremolo che ondeggiano. */
-  boss1: {
-    title:"Nenia del Fango", dread:true, loopFrom:1,
-    sections:[
-      // CREEPING
-      { bpm:66, len:28,
-        bass:  seq(28,{ 0:"D1", 14:"A0" }),
-        swell: seq(28,{ 0:["D3",16], 6:["E3",10], 16:["D#3",12] }),
-        choir: seq(28,{ 0:["D3",14,"o"], 14:["A2",12,"o"] }),
-        cello: seq(28,{ 0:["D2",12], 14:["A1",10] }),
-        drum:  seq(28,{}),
-      },
-      // RAGE (loop) — il fango ribolle
-      { bpm:84, len:28,
-        bass:  seq(28,{ 0:"D2", 6:"D2", 10:"C2", 14:"A1", 20:"A#1", 24:"D2" }),
-        cello: seq(28,{
-           0:"D3", 2:"D3", 4:"C3",  6:"D3",  8:"D#3",10:"C3", 12:"D3",
-          14:"A2",16:"A#2",18:"C3", 20:"D3", 22:"C3", 24:"D3", 26:"E3",
-        }),
-        swell: seq(28,{ 0:["D4",10], 8:["E4",6], 14:["A#3",10], 22:["G3",6] }),
-        choir: seq(28,{ 0:["D4",10,"o"], 10:["F4",6,"a"], 14:["A3",10,"o"], 24:["D4",4,"e"] }),
-        brass: seq(28,{ 0:["D3",3], 14:["A2",3] }),
-        timp:  seq(28,{ 0:"D2", 14:"A1" }),
-        drum:  seq(28,{ 0:"k", 6:"k", 10:"s", 14:"k|t", 20:"k", 24:"s" }),
-      },
-    ],
-  },
-
-  /* ── BOSS 2: "Galop della Fine" — E frigio · il Boia di Cenere ──
-     Il più aggressivo: metal sinfonico. Galoppo frenetico, violoncello in
-     16°, ottoni distorti su ogni downbeat, coro che urla "e". Sez.0 carica
-     breve · Sez.1 (loop) caos apocalittico. */
-  boss2: {
-    title:"Galop della Fine", dread:true, loopFrom:1,
-    sections:[
-      // CHARGE
-      { bpm:150, len:14,
-        bass:  seq(14,{ 0:"E2", 6:"E2", 10:"E2" }),
-        cello: seq(14,{ 0:"E3",1:"E3",2:"E3",3:"E3",4:"F3",5:"E3",6:"D3",7:"E3",8:"E3",9:"E3",10:"E3",11:"E3",12:"F3",13:"G3" }),
-        swell: seq(14,{ 0:["E5",14] }),
-        brass: seq(14,{ 0:["E3",2], 6:["E3",2], 10:["E3",2] }),
-        drum:  seq(14,{ 0:"k",2:"h",4:"h",6:"k",8:"h",10:"k",12:"h" }),
-      },
-      // APOCALYPTIC CHAOS (loop)
-      { bpm:158, len:28,
-        bass:  seq(28,{ 0:"E1", 4:"E1", 6:"E1", 10:"E1", 14:"E1", 18:"D1", 20:"E1", 24:"F1", 26:"E1" }),
-        cello: seq(28,{
-           0:"E3", 1:"F3",  2:"G3",  3:"E3",  4:"D3",  5:"E3",  6:"F3",
-           7:"G3", 8:"E3",  9:"D3", 10:"E3", 11:"F3", 12:"G3", 13:"A3",
-          14:"E3",15:"D3", 16:"E3", 17:"F3", 18:"D3", 19:"E3", 20:"G3",
-          21:"F3",22:"E3", 23:"D3", 24:"E3", 25:"F3", 26:"G3", 27:"A3",
-        }),
-        swell: seq(28,{
-           0:"B5", 1:"A5", 2:"G5",  4:"E5",  6:"G5",  8:"B5", 10:"A5", 12:"G5",
-          14:"E5",16:"F5", 18:"G5", 20:"B5", 22:"C6", 24:"B5", 26:"G5",
-        }),
-        choir: seq(28,{
-           0:["E4",4,"e"],  4:["B4",3,"e"],  7:["G4",3,"e"], 10:["A4",3,"e"],
-          14:["E4",4,"e"], 18:["G4",3,"e"], 21:["B4",3,"e"], 24:["E5",4,"e"],
-        }),
-        brass: seq(28,{
-           0:["E3",2],  4:["F3",2],  6:["E3",2],  8:["D3",1], 10:["E3",2], 12:["G3",1],
-          14:["E3",2], 16:["D3",1], 18:["E3",2], 20:["G3",2], 24:["E3",2], 26:["F3",1],
-        }),
-        timp:  seq(28,{ 0:"E2", 6:"E2", 10:"E2", 14:"E2", 20:"E2", 24:"E2" }),
-        drum:  seq(28,{
-           0:"k|t", 1:"h", 2:"h", 3:"s", 4:"k", 5:"h", 6:"k", 7:"h", 8:"s", 9:"h",
-          10:"k", 11:"h", 12:"k", 13:"s", 14:"k|t",15:"h",16:"h",17:"s",18:"k",19:"h",
-          20:"k", 21:"h", 22:"s", 23:"h", 24:"k", 25:"h", 26:"k", 27:"s",
-        }),
-      },
-    ],
-  },
-
-  /* ── BOSS 3: "Morte del Primo Nome" — A frigio · il Sovrano Senza Nome ──
-     L'opera completa in tre atti: Tensione strisciante (sez.0) → Rabbia
-     (sez.1) → Climax apocalittico con timpani e coro in delirio (sez.2).
-     Il loop riparte dalla rabbia: l'orrore non si placa. */
-  boss3: {
-    title:"Morte del Primo Nome", dread:true, loopFrom:1,
-    sections:[
-      // ATTO I — CREEPING TENSION
-      { bpm:88, len:28,
-        bass:  seq(28,{ 0:"A1", 14:"F1" }),
-        cello: seq(28,{
-           0:"A2", 4:"A2",  8:"A2", 12:"A#2",
-          14:"A2",18:"A2", 22:"G2", 26:"A2",
-        }),
-        swell: seq(28,{ 0:["A3",16], 8:["A#3",10], 16:["G3",12], 22:["A3",6] }),
-        choir: seq(28,{ 4:["A3",12,"o"], 18:["F3",8,"o"] }),
-        drum:  seq(28,{ 0:"t", 14:"t" }),
-      },
-      // ATTO II — TERROR & RAGE (loop)
-      { bpm:128, len:28,
-        bass:  seq(28,{ 0:"A1", 6:"G1", 10:"A#1", 14:"F1", 20:"A1", 24:"G1" }),
-        cello: seq(28,{
-           0:"A2", 2:"A#2", 4:"A2",  6:"G2",  8:"A2", 10:"A#2",12:"A2",
-          14:"F2",16:"G2", 18:"A2", 20:"G#2",22:"A2", 24:"G2", 26:"A#2",
-        }),
-        swell: seq(28,{
-           0:"A5", 2:"G5", 4:"F5",  6:"A#4", 8:"A4", 10:"G4", 12:"F4",
-          14:"E4",16:"F4",18:"G4", 20:"A4", 24:"A#4", 26:"C5",
-        }),
-        choir: seq(28,{ 0:["A4",7,"a"], 6:["G4",3,"e"], 14:["F4",6,"o"], 20:["A4",4,"e"] }),
-        brass: seq(28,{ 0:["A3",3], 6:["G3",2], 10:["A#3",2], 14:["F3",3], 20:["A3",2], 24:["G3",2] }),
-        timp:  seq(28,{ 0:"A2", 14:"F2" }),
-        drum:  seq(28,{ 0:"k|t", 2:"h", 4:"s", 6:"k", 8:"h", 10:"k", 12:"s", 14:"k|t", 16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s" }),
-      },
-      // ATTO III — APOCALYPTIC CLIMAX
-      { bpm:132, len:28,
-        bass:  seq(28,{ 0:"A1", 2:"A1", 4:"A#1", 6:"A1", 8:"G1", 10:"A1", 12:"F1", 14:"A1", 18:"A#1", 22:"A1", 26:"E1" }),
-        cello: seq(28,{
-           0:"A2", 1:"A2", 2:"A#2", 3:"A2",  4:"G2",  5:"A2",  6:"F2",
-           7:"A2", 8:"A2", 9:"A#2",10:"A2", 11:"G2", 12:"F2", 13:"A2",
-          14:"A2",15:"A2",16:"A#2",17:"A2", 18:"G2", 19:"A2", 20:"F2",
-          21:"A2",22:"A2",23:"A#2",24:"A2", 25:"G2", 26:"F2", 27:"A2",
-        }),
-        swell: seq(28,{ 0:["A5",14], 2:["A#5",12], 14:["G5",14], 16:["F5",12] }),
-        choir: seq(28,{
-           0:["A4",6,"e"],  4:["C5",4,"e"],  8:["A4",4,"e"], 12:["F4",3,"e"],
-          14:["A4",6,"e"], 18:["A#4",4,"e"],22:["A4",4,"e"], 26:["E5",2,"e"],
-        }),
-        brass: seq(28,{
-           0:["A3",2], 2:["A#3",1], 4:["G3",2], 6:["A3",2], 8:["F3",1], 10:["A3",2], 12:["G3",1],
-          14:["A3",2],16:["A#3",1],18:["G3",2],20:["A3",2],22:["F3",1],24:["A3",2],26:["G3",1],
-        }),
-        timp:  seq(28,{ 0:"A2", 4:"A2", 8:"A2", 12:"A2", 14:"A2", 18:"A2", 22:"A2", 26:"A2" }),
-        drum:  seq(28,{
-           0:"k|t", 2:"s", 4:"k|t", 6:"s", 8:"k|t", 10:"s", 12:"k|t",
-          14:"k|t",16:"s",18:"k|t",20:"s",22:"k|t",24:"s",26:"k|t",
-        }),
-      },
-    ],
-  },
+  menu:  { title:"Ossuary — Rest",                    dark:true,  dread:false },
+  enemy: { title:"Investigations",                     dark:false, dread:true  },
+  elite: { title:"Unrelenting",                        dark:false, dread:true  },
+  boss0: { title:"Anguish",                            dark:false, dread:true  },
+  boss1: { title:"Ossuary — Air",                      dark:false, dread:true  },
+  boss2: { title:"Darkest Child",                      dark:false, dread:true  },
+  boss3: { title:"Final Battle of the Dark Wizards",   dark:false, dread:true  },
 };
 
 const Music = {
-  timer:0, sec:0, step:0, nextTime:0, spb:0.12, theme:null, gain:null, vol:0.6,
-  bedNodes:[], reverbIn:null, distCurve:null,
-  makeDist(k){ const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/n*2-1; c[i]=Math.tanh(x*k); } return c; },
-  ensure(){
-    if(!AudioFX.ensure()) return false;
-    if(!this.gain){
-      const c=AudioFX.ctx;
-      this.gain = c.createGain();
-      this.gain.gain.value = this.vol;
-      this.gain.connect(c.destination);
-      // cattedrale Bloodborne: convolution reverb bus (segnale wet)
-      try{
-        const conv=c.createConvolver();
-        conv.buffer=makeIR(c,4.8,2.0);
-        const rg=c.createGain(); rg.gain.value=0.46;
-        conv.connect(rg); rg.connect(c.destination);
-        this.reverbIn=conv;
-      }catch(e){ this.reverbIn=null; }
-      this.distCurve = this.makeDist(8);
+  theme: null, vol: 0.6, _cur: null, _pool: {},
+  start(name){
+    if(!AudioFX.enabled) return;
+    this.stop();
+    const url = MUSIC_URLS[name];
+    if(!url) return;
+    this.theme = THEMES[name] || null;
+    if(!this._pool[name]){
+      const a = new Audio(url);
+      a.loop = true;
+      a.preload = "none";
+      this._pool[name] = a;
     }
-    return true;
+    const a = this._pool[name];
+    a.volume = this.vol;
+    this._cur = a;
+    try{ const p = a.play(); if(p && p.catch) p.catch(()=>{}); }catch(e){}
+  },
+  stop(){
+    if(this._cur){ try{ this._cur.pause(); this._cur.currentTime=0; }catch(e){} this._cur=null; }
+    this.theme = null;
   },
   setVol(v){
     this.vol = Math.max(0,Math.min(1,v));
-    if(this.gain && this.theme && AudioFX.ctx){
-      const t = AudioFX.ctx.currentTime;
-      this.gain.gain.cancelScheduledValues(t);
-      this.gain.gain.setValueAtTime(Math.max(0.0001,this.vol), t);
-    }
+    Object.values(this._pool).forEach(a=>{ try{ a.volume=this.vol; }catch(e){} });
   },
-  curSec(){ return this.theme ? this.theme.sections[this.sec] : null; },
-  applyTempo(){ const s=this.curSec(); if(s) this.spb = 60/s.bpm/4; },
-  start(name){
-    if(!AudioFX.enabled || !this.ensure()) return;
-    this.stop();
-    const th = THEMES[name];
-    if(!th) return;
-    if(AudioFX.ctx.state==="suspended") AudioFX.ctx.resume();
-    Sampler.load(); // decodifica i campioni (idempotente)
-    this.theme = th;
-    this.sec = 0; this.step = 0;
-    this.applyTempo();
-    this.nextTime = AudioFX.ctx.currentTime + 0.10;
-    this.gain.gain.cancelScheduledValues(AudioFX.ctx.currentTime);
-    this.gain.gain.setValueAtTime(0.0001, AudioFX.ctx.currentTime);
-    this.gain.gain.exponentialRampToValueAtTime(Math.max(0.0001,this.vol), AudioFX.ctx.currentTime+0.6);
-    this.startBed();
-    this.timer = setInterval(()=>this.schedule(), 30);
-  },
-  /* letto di terrore sotto i temi: sub-drone profondi e detunati */
-  startBed(){
-    this.stopBed();
-    if(!this.theme || !(this.theme.dark || this.theme.dread) || !AudioFX.ctx) return;
-    const c=AudioFX.ctx, now=c.currentTime;
-    const base = this.theme.dark ? 27.5 : 32.7;
-    const peak = this.theme.dark ? 0.10 : 0.05;
-    [0, 0.6].forEach((det)=>{
-      const o=c.createOscillator(), g=c.createGain();
-      o.type="sine"; o.frequency.value = base*(1+det*0.012);
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(peak, now+2.2);
-      o.connect(g); g.connect(this.gain); o.start(now);
-      this.bedNodes.push(o,g);
-    });
-  },
-  stopBed(){
-    if(!AudioFX.ctx){ this.bedNodes=[]; return; }
-    const t=AudioFX.ctx.currentTime;
-    this.bedNodes.forEach(n=>{ try{ if(n.stop) n.stop(t+0.7); else if(n.gain){ n.gain.cancelScheduledValues(t); n.gain.exponentialRampToValueAtTime(0.0001,t+0.6); } }catch(e){} });
-    this.bedNodes=[];
-  },
-  stop(){
-    this.stopBed();
-    if(this.timer){ clearInterval(this.timer); this.timer=0; }
-    if(this.theme && this.gain && AudioFX.ctx){
-      const t = AudioFX.ctx.currentTime;
-      this.gain.gain.cancelScheduledValues(t);
-      this.gain.gain.setValueAtTime(this.gain.gain.value, t);
-      this.gain.gain.exponentialRampToValueAtTime(0.0001, t+0.35);
-    }
-    this.theme = null;
-  },
-  schedule(){
-    if(!this.theme || !AudioFX.enabled){ this.stop(); return; }
-    const c = AudioFX.ctx;
-    while(this.nextTime < c.currentTime + 0.15){
-      const s = this.curSec();
-      if(!s){ this.stop(); return; }
-      this.playStep(s, this.step, this.nextTime);
-      const th=this.theme;
-      if(th.dark){ // menu: dark ambient pieno
-        if(Math.random()<.04) dreadScrape(this.gain, this.nextTime, 0.7+Math.random()*0.8, 0.014);
-        if(Math.random()<.03) dreadWhisper(this.gain, this.nextTime, 0.9+Math.random()*0.6, 0.010);
-        if(Math.random()<.015) dreadSwell(this.gain, 110, this.nextTime, 3+Math.random()*2, 0.018);
-        if(Math.random()<.012) dreadChime(this.gain, 160+Math.random()*40, this.nextTime, 6+Math.random()*3, 0.026);
-      } else if(th.dread){ // scontri: effetti oscuri per tensione
-        if(Math.random()<.008) dreadScrape(this.gain, this.nextTime, 0.5+Math.random()*0.4, 0.010);
-        if(Math.random()<.005) dreadChime(this.gain, 80+Math.random()*40, this.nextTime, 4+Math.random()*2, 0.016);
-      }
-      this.nextTime += this.spb;
-      this.step++;
-      if(this.step >= s.len){
-        this.step = 0;
-        this.sec++;
-        if(this.sec >= this.theme.sections.length) this.sec = this.theme.loopFrom||0;
-        this.applyTempo();
-      }
-    }
-  },
-  /* ── SUB BASSO SINTETICO ── */
-  subBass(freq, t, dur){
-    const c=AudioFX.ctx, o=c.createOscillator(), g=c.createGain();
-    o.type="triangle"; o.frequency.setValueAtTime(freq,t);
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(0.10,t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    o.connect(g); g.connect(this.gain);
-    o.start(t); o.stop(t+dur+0.05);
-  },
-  /* ── OTTONE CAMPIONATO + DISTORSIONE (aggressivo) ── */
-  brassSample(freq, t, dur, vol){
-    const pk=Sampler.pick("trombone", freq);
-    if(!pk) return false;
-    const c=AudioFX.ctx;
-    const src=c.createBufferSource(); src.buffer=pk.buf; src.playbackRate.value=pk.rate;
-    let node=src;
-    if(typeof c.createWaveShaper==="function" && this.distCurve){
-      const ws=c.createWaveShaper(); ws.curve=this.distCurve;
-      try{ ws.oversample="2x"; }catch(e){}
-      src.connect(ws); node=ws;
-    }
-    const lp=c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2600; lp.Q.value=1.1;
-    node.connect(lp);
-    const g=c.createGain();
-    const atk=Math.min(0.04, dur*0.25);
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol,t+atk);
-    g.gain.setValueAtTime(vol*0.8, Math.max(t+atk+0.001, t+dur-0.06));
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-    lp.connect(g); g.connect(this.gain);
-    if(this.reverbIn){ const rs=c.createGain(); rs.gain.value=0.12; g.connect(rs); rs.connect(this.reverbIn); }
-    src.start(t); src.stop(t+dur+0.1);
-    return true;
-  },
-  /* ── FALLBACK SINTETICI (se i campioni non sono pronti) ── */
-  synthVoice(freq, t, dur, vol, type, cutoff, fast){
-    const c=AudioFX.ctx;
-    if(!c.createBiquadFilter) return;
-    const atk = fast ? 0.012 : Math.min(0.5, dur*0.28);
-    [-9,0,8].forEach((cents,i)=>{
-      const o=c.createOscillator(); o.type=type;
-      o.frequency.setValueAtTime(freq*Math.pow(2,cents/1200), t);
-      const lp=c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=cutoff; lp.Q.value=0.6;
-      const g=c.createGain(); const vk=Math.max(0.0001, vol*(i===1?1:0.42));
-      g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(vk, t+atk);
-      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-      o.connect(lp); lp.connect(g); g.connect(this.gain);
-      if(this.reverbIn && this.theme && this.theme.dread){ const rs=c.createGain(); rs.gain.value=0.3; g.connect(rs); rs.connect(this.reverbIn); }
-      o.start(t); o.stop(t+dur+0.12);
-    });
-  },
-  drum(kind, t){
-    const c=AudioFX.ctx;
-    if(kind==="k"){
-      const o=c.createOscillator(), g=c.createGain();
-      o.type="sine"; o.frequency.setValueAtTime(105,t); o.frequency.exponentialRampToValueAtTime(30,t+0.18);
-      g.gain.setValueAtTime(0.40,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
-      o.connect(g); g.connect(this.gain); o.start(t); o.stop(t+0.26);
-      const ck=c.createOscillator(), ckg=c.createGain();
-      ck.type="square"; ck.frequency.value=210;
-      ckg.gain.setValueAtTime(0.10,t); ckg.gain.exponentialRampToValueAtTime(0.0001,t+0.025);
-      ck.connect(ckg); ckg.connect(this.gain); ck.start(t); ck.stop(t+0.03);
-    } else if(kind==="t"){ // timpani synth (fallback se campione assente)
-      const o=c.createOscillator(), g=c.createGain();
-      o.type="sine"; o.frequency.setValueAtTime(82,t); o.frequency.exponentialRampToValueAtTime(50,t+0.45);
-      g.gain.setValueAtTime(0.28,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
-      o.connect(g); g.connect(this.gain); o.start(t); o.stop(t+0.62);
-    } else {
-      const dur = kind==="s" ? 0.1 : 0.03;
-      const n = Math.floor(c.sampleRate*dur);
-      const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
-      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
-      const src=c.createBufferSource(); src.buffer=buf;
-      const g=c.createGain(); g.gain.value = kind==="s" ? 0.18 : 0.07;
-      src.connect(g); g.connect(this.gain); src.start(t);
-    }
-  },
-  playStep(s, st, t){
-    const spb=this.spb, rv=this.reverbIn;
-    // BASSO (sub sintetico)
-    const b=s.bass&&s.bass[st];
-    if(b) this.subBass(nf(b), t, spb*1.9);
-    // VIOLONCELLO (ostinato campionato)
-    const ce=s.cello&&s.cello[st];
-    if(ce){ const [n,d]=Array.isArray(ce)?ce:[ce,1.6]; const f=nf(n);
-      if(!Sampler.play("cello", f, t, spb*d*0.95, 0.17, this.gain, rv, 0.18))
-        this.synthVoice(f, t, spb*d*0.9, 0.085, "sawtooth", 2200, true); }
-    // ARCHI TREMOLO (swell dissonanti)
-    const sw=s.swell&&s.swell[st];
-    if(sw){ const [n,d]=Array.isArray(sw)?sw:[sw,1]; const f=nf(n);
-      const isSus=Array.isArray(sw);
-      if(!Sampler.play("tremolo_strings", f, t, spb*(typeof d==="number"?d:1)*0.95, 0.105, this.gain, rv, 0.45))
-        this.synthVoice(f, t, spb*(typeof d==="number"?d:1)*0.9, 0.06, "sawtooth", isSus?1600:3200, !isSus); }
-    // CORO (urla/lamenti campionati)
-    const ch=s.choir&&s.choir[st];
-    if(ch){ const [n,d]=Array.isArray(ch)?ch:[ch,6]; const f=nf(n);
-      if(!Sampler.play("choir_aahs", f, t, spb*(typeof d==="number"?d:6)*0.95, 0.13, this.gain, rv, 0.7))
-        this.synthVoice(f, t, spb*(typeof d==="number"?d:6)*0.9, 0.05, "sawtooth", 1400, false); }
-    // OTTONI (trombone distorto)
-    const br=s.brass&&s.brass[st];
-    if(br){ const [n,d]=Array.isArray(br)?br:[br,2]; const f=nf(n);
-      if(!this.brassSample(f, t, spb*(typeof d==="number"?d:2)*0.92, 0.15))
-        this.synthVoice(f, t, spb*(typeof d==="number"?d:2)*0.9, 0.07, "sawtooth", 1500, true); }
-    // TIMPANI (campionato, intonato)
-    const tp=s.timp&&s.timp[st];
-    if(tp){ const f=nf(tp);
-      if(!Sampler.play("timpani", f, t, spb*1.6, 0.55, this.gain, rv, 0.3))
-        this.drum("t", t); }
-    // PERCUSSIONI (synth, combinazioni con "|")
-    const dr=s.drum&&s.drum[st];
-    if(dr) dr.split("|").forEach(k=>this.drum(k,t));
-  },
+  schedule(){}, // no-op: HTMLAudio handles looping natively
 };
 
 /* ===================== SCENA DI BATTAGLIA RETRÒ ===================== */
@@ -4033,6 +3662,15 @@ function renderCombat(){
   $("cb-flask").disabled = player.flasks<=0;
   const banner = bossMechBanner();
   $("cb-turn").textContent = `Turno ${combat.turn+1} · Fiaschette ${player.flasks}/${player.maxflasks} · Nemico ATK ${e.atk}+d6${banner?" · "+banner:""}`;
+  const etype = combat.e.type;
+  const ptype = playerType();
+  const mult = typeMultiplier(ptype, etype);
+  const typeEl = $("cb-type");
+  if(typeEl && etype && TYPES[etype]){
+    const effStr = mult===2 ? " ⚡ Efficace!" : mult===0.5 ? " 🛡 Resistente" : "";
+    typeEl.textContent = TYPES[etype].ic+" "+TYPES[etype].nm + effStr;
+    typeEl.style.color = TYPES[etype].clr;
+  }
   const cw = $("charge-warning");
   if(cw && cw.classList){
     const stanceWarn = combat.parryStance;
@@ -4238,6 +3876,13 @@ function actAttack(){
   let dmg = d6() + player.atk + vendettaBonus();
   let crit = false;
   if(hasSynergy("furia") && Math.random()<0.25){ dmg *= 2; crit = true; }
+  // Type effectiveness
+  const tMult = typeMultiplier(playerType(), combat.e.type||"pietra");
+  if(tMult !== 1){
+    dmg = Math.round(dmg * tMult);
+    if(tMult > 1) cbLog(`<span class="heal">⚡ Tipo efficace! (×${tMult})</span>`);
+    else cbLog(`<span style="color:#888">🛡 Resistente (×${tMult})</span>`);
+  }
   cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>${crit?' <span class="warn">— CRITICO!</span>':''}.`);
   applyEnemyDamage(dmg, "attack", crit?"#ff6a6a":"#ecc857");
   if(hasPassive("vampiro") && dmg>0){
@@ -4941,7 +4586,6 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
     music(){ return Music; },
     ambient(){ return Ambient; },
     audio(){ return AudioFX; },
-    sampler(){ return Sampler; },
     newGame(c){ return newGame(c); },
     setNoBattleCanvas(){ if(typeof BS!=="undefined") BS.ctx=null; },
   };
