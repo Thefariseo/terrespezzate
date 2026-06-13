@@ -541,6 +541,64 @@ kbd{
 .vmedal.fresh{animation:medalpop .6s ease-out;border-color:var(--gold-bright);box-shadow:0 0 14px rgba(236,200,87,.4)}
 @keyframes medalpop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1)}}
 .vmedal .vm-ic{font-size:1.1rem}
+
+/* ---------- abilità passive (grazia) ---------- */
+#grace-passives{margin-top:.6em;border-top:1px dotted #2c2415;padding-top:.6em}
+#grace-passives .ph{font-family:var(--f-pixel);font-size:.5rem;letter-spacing:.06em;text-transform:uppercase;color:#7e6f4d;margin-bottom:.5em}
+.passive-item{display:flex;justify-content:space-between;align-items:center;gap:.8rem;border-bottom:1px dotted #2c2415;padding:.45em 0}
+.passive-item.owned{opacity:.6}
+.passive-item .pn{color:var(--parchment);font-size:.96rem}
+.passive-item .pd{font-size:.82rem;color:var(--faded);line-height:1.25}
+.passive-item .ptag{font-family:var(--f-pixel);font-size:.5rem;color:#7ba35a;letter-spacing:.04em}
+
+/* ---------- NG+ toggle (titolo) ---------- */
+#ngplus-row{display:none;align-items:center;justify-content:center;gap:.6rem;position:relative;z-index:2;
+  border:1px solid #5a3030;background:rgba(60,20,20,.3);padding:.5em 1em;margin-top:.2rem}
+#ngplus-row.show{display:flex}
+#ngplus-row label{font-family:var(--f-pixel);font-size:.56rem;letter-spacing:.03em;text-transform:uppercase;color:#d4847a;cursor:pointer}
+#ngplus-row input{width:18px;height:18px;accent-color:#9c3a32}
+#ngplus-row .ngdesc{font-size:.86rem;color:#9a6f6a}
+
+/* ---------- save slots ---------- */
+#slot-list{display:flex;flex-direction:column;gap:.6rem;padding:1rem 1.2rem}
+.slot-card{display:flex;align-items:center;gap:.9rem;border:1px solid var(--edge);background:rgba(22,17,12,.7);
+  padding:.7em .9em;text-align:left;cursor:pointer;transition:border-color .2s,background .2s}
+.slot-card:hover{border-color:var(--gold);background:rgba(36,28,15,.8)}
+.slot-card .si{font-size:1.5rem;color:var(--gold-bright);min-width:1.4em;text-align:center}
+.slot-card .sbody{flex:1;min-width:0}
+.slot-card .stt{font-family:var(--f-pixel);font-size:.56rem;letter-spacing:.02em;color:var(--parchment);text-transform:uppercase;line-height:1.4}
+.slot-card .ssub{font-size:.86rem;color:var(--faded);margin-top:.2em}
+.slot-card.empty .stt{color:#5b4f38}
+.slot-card .sdel{font-size:.9rem;color:#7e4038;border:1px solid #5a3030;background:rgba(60,20,20,.3);padding:.3em .55em;flex:none}
+.slot-card .sdel:hover{border-color:#9c3a32;color:#d4847a}
+
+/* ---------- NPC dialogo ---------- */
+#ov-npc{background:rgba(6,5,3,.94);z-index:120}
+#ov-npc .modal{width:min(540px,100%)}
+.npc-head{display:flex;gap:1rem;align-items:center;margin-bottom:.8em}
+#npc-portrait{width:72px;height:72px;image-rendering:pixelated;border:1px solid var(--edge);background:#0a0810;flex:none;box-shadow:0 0 18px rgba(0,0,0,.7)}
+.npc-head .npc-who h2{text-align:left;margin-bottom:.2em}
+.npc-head .npc-who .npc-role{font-size:.92rem;color:var(--faded);font-style:italic}
+#npc-text{font-family:var(--f-body);font-size:1.12rem;line-height:1.6;color:#d0c4a0;min-height:4.5em;margin:.4em 0 1em;font-style:italic}
+#npc-choices{display:flex;flex-direction:column;gap:.5rem}
+#npc-choices button{text-align:left;text-transform:none;font-family:var(--f-body);font-size:1.02rem;letter-spacing:0;line-height:1.3;padding:.6em .9em}
+
+/* ---------- cutscene d'apertura ---------- */
+#ov-intro{background:#000;z-index:500;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
+#intro-canvas{width:min(640px,96vw);height:auto;image-rendering:pixelated;display:block;border:1px solid #141018;box-shadow:0 0 60px rgba(0,0,0,.9)}
+#intro-text{font-family:var(--f-body);font-style:italic;font-size:1.18rem;line-height:1.7;color:#c8b88a;text-align:center;max-width:560px;min-height:5.2em;margin-top:1.1rem;text-shadow:0 0 22px rgba(200,160,80,.18)}
+#intro-skip{margin-top:1rem}
+
+/* ---------- mobile ---------- */
+@media (max-width:480px){
+  #ov-combat .btnrow button{flex:1 1 44%;font-size:.7rem;padding:1em .6em;min-height:3.2em}
+  #cb-tecnica{width:100%}
+  .modal{padding:1.1rem 1rem}
+  #board{padding:8px}
+  .region-label{font-size:.46rem}
+  .slot-card .stt{font-size:.5rem}
+  #action-buttons button{flex:1 1 100%}
+}
 </style>
 </head>
 <body>
@@ -576,6 +634,12 @@ kbd{
   <div class="title-frame">
     <div class="frame-head"><span>Scegli la tua Classe</span></div>
     <div id="class-picker" aria-label="Scegli la tua classe"></div>
+  </div>
+
+  <div id="ngplus-row">
+    <input type="checkbox" id="ngplus-check">
+    <label for="ngplus-check">☠ Ciclo del Ritorno (NG+)</label>
+    <span class="ngdesc">Nemici +40% PV, boss con affissi, un Boss segreto ti attende.</span>
   </div>
 
   <div class="title-actions">
@@ -659,6 +723,7 @@ kbd{
     </div>
     <div class="help-card" style="margin-bottom:.4em"><b>Tastiera</b>Spazio/Invio: azione principale · In combattimento: <kbd style="margin-left:0">A</kbd> attacca, <kbd style="margin-left:0">P</kbd> para, <kbd style="margin-left:0">F</kbd> fiaschetta, <kbd style="margin-left:0">S</kbd> fuggi, <kbd style="margin-left:0">T</kbd> tecnica</div>
     <div class="help-card" style="margin-bottom:.4em"><b>Ardore &amp; Tecnica</b>La barra Ardore si carica attaccando (+12), parando (+22 successo, +6 fallimento) e subendo danni (+10). A 100% sblocchi la tecnica speciale della tua classe, una mossa unica e potente.</div>
+    <div class="help-card" style="margin-bottom:.4em"><b>Abilità, Sinergie &amp; Ciclo</b>Ai siti di grazia puoi sbloccare <strong>abilità passive</strong> uniche per la tua classe. Alcune <strong>reliquie</strong> del mercante, possedute in coppia, attivano <strong>sinergie</strong> potenti. Completato il viaggio si sblocca il <strong>Ciclo del Ritorno (NG+)</strong>: nemici più forti, boss con affissi e un <strong>Boss segreto</strong>. Ogni partita genera un <strong>tabellone diverso</strong>; puoi salvare fino a <strong>3 viaggi</strong>.</div>
     <div class="help-card" style="margin-bottom:.4em"><b>I quattro Boss</b>Ognuno ha una meccanica unica, sempre annunciata in combattimento. <strong>Sentinella</strong>: scudo rigenerante — rompilo prima di ferirla. <strong>Madre</strong>: invoca un Figlio che intercetta i colpi, distruggilo. <strong>Cavaliere</strong>: assume la posa di parata — non attaccare, contrattacca duro. <strong>Sovrano</strong>: muta aspetto (Vuoto/Fiamma/Gelo), ciascuno resiste a un'azione ed è debole a un'altra — cambia strategia.</div>
     <div class="btnrow"><button id="help-close">Chiudi</button></div>
   </div>
@@ -791,6 +856,38 @@ kbd{
     <div class="runstats" id="victory-stats"></div>
     <div class="btnrow"><button id="victory-restart">Nuovo viaggio</button></div>
   </div>
+</div>
+
+<!-- ============ NPC DIALOGO ============ -->
+<div class="overlay" id="ov-npc">
+  <div class="modal">
+    <div class="npc-head">
+      <canvas id="npc-portrait" width="24" height="24" aria-hidden="true"></canvas>
+      <div class="npc-who">
+        <h2 id="npc-name"></h2>
+        <div class="npc-role" id="npc-role"></div>
+      </div>
+    </div>
+    <div id="npc-text"></div>
+    <div id="npc-choices"></div>
+  </div>
+</div>
+
+<!-- ============ SLOT SALVATAGGIO ============ -->
+<div class="overlay" id="ov-slots">
+  <div class="modal" style="width:min(480px,100%)">
+    <h2>▶ Riprendi un viaggio</h2>
+    <p class="sub">Scegli un cammino già intrapreso, o avvia un nuovo viaggio in uno slot.</p>
+    <div id="slot-list"></div>
+    <div class="btnrow"><button id="slots-close">Indietro</button></div>
+  </div>
+</div>
+
+<!-- ============ CUTSCENE D'APERTURA ============ -->
+<div class="overlay" id="ov-intro">
+  <canvas id="intro-canvas" width="320" height="160" aria-hidden="true"></canvas>
+  <div id="intro-text"></div>
+  <div class="btnrow"><button id="intro-skip">Salta l'introduzione <kbd>Esc</kbd></button></div>
 </div>
 
 <!-- ============ TRANSIZIONE DI REGIONE ============ -->
@@ -942,16 +1039,102 @@ const TECNICAS = {
   colpo_basso:    { nm:"Colpo Basso",     icon:"🗡", col:"#c080ff", desc:"Danno base, o triplicato se il nemico sta caricando un colpo devastante." },
 };
 let chosenClass = "vagabondo";
+let ngPlusSelected = false;
+
+/* ===================== ABILITÀ PASSIVE (per classe) ===================== */
+/* sbloccabili ai siti di grazia spendendo rune. Effetti permanenti per la run. */
+const PASSIVES = {
+  vagabondo:[
+    {id:"riposta",  nm:"Riposta",        ic:"⚔", desc:"Quando subisci un colpo, rifletti il 20% del danno sul nemico.", cost:130},
+    {id:"seconda",  nm:"Seconda Pelle",  ic:"♥", desc:"+25 vitalità massima, subito.",                                  cost:170},
+  ],
+  cavaliere:[
+    {id:"muro",     nm:"Muro di Scudi",  ic:"🛡", desc:"Le parate riescono con 2+ invece di 3+.",                        cost:150},
+    {id:"vendetta", nm:"Vendetta",       ic:"⚔", desc:"+1 attacco per ogni boss già abbattuto.",                         cost:160},
+  ],
+  asceta:[
+    {id:"vampiro",  nm:"Sete di Cenere", ic:"🩸", desc:"Ogni attacco a segno ti cura del 15% del danno inflitto.",       cost:160},
+    {id:"frenesia", nm:"Frenesia",       ic:"🔥", desc:"L'Ardore si carica del 50% più in fretta.",                      cost:140},
+  ],
+  mendico:[
+    {id:"fortuna",  nm:"Fortuna Spezzata",ic:"⚱", desc:"Le rune dai nemici élite sono raddoppiate.",                     cost:150},
+    {id:"ostina",   nm:"Ostinazione",    ic:"🧪", desc:"+1 fiaschetta massima (e ricarica).",                            cost:130},
+  ],
+};
+function classPassives(){ return PASSIVES[player.cls||"vagabondo"]||[]; }
+function hasPassive(id){ return player && player.passives && player.passives.includes(id); }
+function unlockPassive(p){
+  if(player.runes < p.cost || hasPassive(p.id)) return;
+  player.runes -= p.cost;
+  player.passives.push(p.id);
+  // effetti immediati
+  if(p.id==="seconda"){ player.maxhp += 25; player.hp += 25; }
+  if(p.id==="vendetta"){ /* calcolato dinamicamente in attacco */ }
+  if(p.id==="frenesia"){ player.ardoreMult = (player.ardoreMult||1)+0.5; }
+  if(p.id==="ostina"){ player.maxflasks++; player.flasks = player.maxflasks; }
+  log(`Abilità sbloccata: ${p.nm}.`,"gold");
+  toast(`${p.ic} ${p.nm}`,"gold");
+  sfx("level");
+  renderStats(); renderGraceMenu();
+}
+function vendettaBonus(){ return hasPassive("vendetta") ? tiles.filter(t=>t.type==="boss"&&t.cleared).length : 0; }
+
+/* ===================== SINERGIE TRA RELIQUIE ===================== */
+/* possedere entrambe le reliquie di una coppia sblocca un effetto combinato. */
+const SYNERGIES = [
+  {id:"furia",  need:["Anello dell'Agonia","Sigillo del Furore"], nm:"Furia Sanguinaria",
+   desc:"I tuoi attacchi hanno il 25% di probabilità di infliggere danno doppio.", ic:"🩸"},
+  {id:"colosso",need:["Cuore di Vetro","Patto della Fame"],       nm:"Colosso Affamato",
+   desc:"Curi 8 vitalità ogni volta che abbatti un nemico.", ic:"⛰"},
+];
+function ownsItem(nm){ return player && player.items && player.items.includes(nm); }
+function checkSynergies(){
+  if(!player) return;
+  player.synergies = player.synergies||[];
+  SYNERGIES.forEach(s=>{
+    if(player.synergies.includes(s.id)) return;
+    if(s.need.every(ownsItem)){
+      player.synergies.push(s.id);
+      log(`Sinergia: ${s.nm} — ${s.desc}`,"gold");
+      toast(`${s.ic} ${s.nm}`,"gold");
+      sfx("level");
+    }
+  });
+}
+function hasSynergy(id){ return player && player.synergies && player.synergies.includes(id); }
+
+/* ===================== BOSS SEGRETO (NG+ / tutti i titoli) ===================== */
+const BOSS5 = {n:"L'Eco del Primo", sub:"Ciò che resta quando ogni nome è speso", hp:170, atk:13, r:[2500,2500]};
+
+/* affissi NG+ per i boss */
+const NG_AFFIXES = [
+  {id:"rigen",  nm:"Rigenerante", desc:"recupera vitalità ogni turno"},
+  {id:"doppio", nm:"Furia Gemella", desc:"attacca due volte"},
+  {id:"scudo",  nm:"Egida", desc:"si protegge ciclicamente"},
+];
 
 /* ===================== STATO ===================== */
 let tiles, player, combat, runesDropTile;
 
+/* Generazione procedurale della regione: la grazia resta in testa (0) e il boss
+   in coda (8); le 7 caselle centrali vengono composte e mescolate a ogni partita,
+   così il tabellone è diverso a ogni viaggio. */
+function genRegionTiles(){
+  // garantite: due nemici, un'élite, un evento, un tesoro, un mercante
+  const mids = ["enemy","enemy","elite","event","treasure","shop"];
+  // una settima casella variabile (più nemici/eventi rendono la regione più ostile)
+  const extra = ["enemy","event","event","treasure","empty"];
+  mids.push(extra[Math.floor(Math.random()*extra.length)]);
+  // Fisher–Yates
+  for(let i=mids.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=mids[i]; mids[i]=mids[j]; mids[j]=t; }
+  return ["grace", ...mids, "boss"];
+}
 function newGame(cls){
   chosenClass = cls || chosenClass || "vagabondo";
   const C = CLASSES[chosenClass];
   tiles = [];
   for(let r=0;r<4;r++){
-    REGION_PATTERN.forEach((t,i)=>{
+    genRegionTiles().forEach((t,i)=>{
       tiles.push({type:t, region:r, cleared:false, idx:r*9+i});
     });
   }
@@ -963,7 +1146,12 @@ function newGame(cls){
     items:[...C.items], canMove:true, deaths:0,
     rolls:0, runesEarned:C.runes, startedAt:Date.now(),
     ardore:0, visitedRegions:[0], lastRegionSeen:0,
+    passives:[], synergies:[], ng:false, ngScale:1, secretSeen:false,
   };
+  // Ciclo del Ritorno (NG+): nemici più forti, boss con affissi, boss segreto
+  if(ngPlusSelected && getMedals().includes("finisher")){
+    player.ng = true; player.ngScale = 1.4;
+  }
   // piccolo bonus permanente: +8 rune iniziali per ogni titolo ottenuto
   const medalBonus = getMedals().length * 8;
   if(medalBonus){ player.runes += medalBonus; player.runesEarned += medalBonus; }
@@ -1021,27 +1209,42 @@ function log(msg, cls){
 }
 function logClear(){ $("log").innerHTML = ""; }
 
-/* ===================== SALVATAGGIO ===================== */
+/* ===================== SALVATAGGIO (3 slot) ===================== */
 const SAVE_KEY = "terreSpezzate.save.v1";
 const STATS_KEY = "terreSpezzate.stats.v1";
+const SLOT_COUNT = 3;
+let currentSlot = 1;
 let saveAvailable = false;
 function storageOk(){
   try{ const k="__ts_test__"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }
   catch(e){ return false; }
 }
+function slotKey(n){ return SAVE_KEY + ".slot" + n; }
+function migrateLegacySave(){
+  // converte il vecchio salvataggio singolo nello slot 1
+  if(!storageOk()) return;
+  try{
+    const old = localStorage.getItem(SAVE_KEY);
+    if(old && !localStorage.getItem(slotKey(1))){
+      localStorage.setItem(slotKey(1), old);
+      localStorage.removeItem(SAVE_KEY);
+    }
+  }catch(e){}
+}
 function saveGame(){
   if(!storageOk() || !player) return;
   try{
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
+    localStorage.setItem(slotKey(currentSlot), JSON.stringify({
       v:1, player, tiles, shopBought, chosenClass, runesDropTile, runesDropAmount,
+      savedAt: Date.now(),
     }));
     saveAvailable = true;
   }catch(e){ /* spazio esaurito: ignora */ }
 }
-function loadGame(){
+function loadSlot(n){
   if(!storageOk()) return false;
   try{
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(slotKey(n));
     if(!raw) return false;
     const s = JSON.parse(raw);
     if(!s || !s.player || !s.tiles) return false;
@@ -1050,19 +1253,38 @@ function loadGame(){
     chosenClass = s.chosenClass || "vagabondo";
     runesDropTile = s.runesDropTile ?? null;
     runesDropAmount = s.runesDropAmount || 0;
-    combat = null;
+    combat = null; currentSlot = n;
+    // retro-compatibilità: campi introdotti dopo
+    player.passives = player.passives || [];
+    player.synergies = player.synergies || [];
+    player.ng = player.ng || false;
+    player.ngScale = player.ngScale || 1;
+    if(player.secretSeen===undefined) player.secretSeen = false;
     return true;
   }catch(e){ return false; }
 }
-function clearSave(){
+function loadGame(){ return loadSlot(currentSlot); } // compat
+function clearSave(){ clearSlot(currentSlot); }
+function clearSlot(n){
   if(!storageOk()) return;
-  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  try{ localStorage.removeItem(slotKey(n)); }catch(e){}
   saveAvailable = false;
 }
-function hasSave(){
-  if(!storageOk()) return false;
-  try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; }
+function slotPreview(n){
+  if(!storageOk()) return null;
+  try{
+    const raw = localStorage.getItem(slotKey(n));
+    if(!raw) return null;
+    const s = JSON.parse(raw); if(!s || !s.player) return null;
+    const p = s.player;
+    const reg = (s.tiles && s.tiles[p.pos]) ? s.tiles[p.pos].region : 0;
+    const bosses = (s.tiles||[]).filter(t=>t.type==="boss"&&t.cleared).length;
+    return {cls:(CLASSES[p.cls]||{}).nm||"Viandante", level:p.level||1, region:reg, bosses, ng:!!p.ng};
+  }catch(e){ return null; }
 }
+function anySave(){ for(let n=1;n<=SLOT_COUNT;n++) if(slotPreview(n)) return true; return false; }
+function firstEmptySlot(){ for(let n=1;n<=SLOT_COUNT;n++) if(!slotPreview(n)) return n; return 0; }
+function hasSave(){ return anySave(); }
 /* record personali */
 function getStats(){
   const def = {wins:0, deaths:0, bestRolls:null, bestLevel:0, medals:[]};
@@ -1160,9 +1382,10 @@ function renderStats(){
   for(let i=0;i<player.maxflasks;i++) pips += `<div class="pip${i<player.flasks?" full":""}"></div>`;
   $("flask-pips").innerHTML = pips;
   animNumber($("rune-num"), player.runes);
-  $("inv").innerHTML = player.items.length
+  const synLines = (player.synergies||[]).map(id=>{ const s=SYNERGIES.find(x=>x.id===id); return s?`<li style="color:#d4847a">${s.ic} ${s.nm}</li>`:""; }).join("");
+  $("inv").innerHTML = (player.items.length
     ? player.items.map(i=>`<li>${i}</li>`).join("")
-    : `<li style="opacity:.5">Solo stracci e una spada smussata.</li>`;
+    : `<li style="opacity:.5">Solo stracci e una spada smussata.</li>`) + synLines;
   $("btn-flask-out").disabled = player.flasks<=0 || player.hp>=player.maxhp || !!combat;
   const tecEl = $("tecnica-stat");
   if(tecEl){
@@ -1347,6 +1570,8 @@ function openTreasure(tile, roll){
 
 function runEvent(tile, roll){
   tile.cleared = true;
+  // a volte la casella evento nasconde un incontro con un personaggio
+  if(Math.random() < 0.42){ return runNPCEvent(tile, roll); }
   const ev = rnd(1,12);
   let text="";
   if(ev===1){
@@ -1502,6 +1727,143 @@ function runEvent(tile, roll){
   setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${flavor("event",tile.region)} ${text}`, [["Tira il dado",rollMove]], "event");
 }
 
+/* ===================== NPC CON DIALOGO RAMIFICATO ===================== */
+const NPCS = {
+  mercante:{ nm:"Mercante Randagio", role:"Un vagabondo con troppe tasche",
+    pal:{hood:"#4a3a1e",skin:"#caa27a",eye:"#1a1208",accent:"#c9a227",shadow:"#2a1c0a"} },
+  pellegrino:{ nm:"Pellegrino Cieco", role:"Cammina dove gli altri non osano",
+    pal:{hood:"#3a4452",skin:"#b8a48a",eye:"#8aa0c0",accent:"#7a8aaa",shadow:"#1a2028"} },
+  rinnegato:{ nm:"Cavaliere Rinnegato", role:"Ha gettato via il suo stendardo",
+    pal:{hood:"#5a2c22",skin:"#caa27a",eye:"#ff7a40",accent:"#9c3a32",shadow:"#2a120a"} },
+};
+function npcMet(key){ const st=getStats(); return (st.npc&&st.npc[key])||0; }
+function npcMeet(key){ const st=getStats(); st.npc=st.npc||{}; st.npc[key]=(st.npc[key]||0)+1; saveStats(st); }
+function npcDrawPortrait(npc){
+  const cv = $("npc-portrait"); if(!cv || !cv.getContext) return;
+  const W=24,H=24; cv.width=W; cv.height=H;
+  const ctx=cv.getContext("2d"); ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,W,H);
+  const cx=12, p=npc.pal;
+  const oval=(col,ox,oy,rx,ry)=>{ ctx.fillStyle=col;
+    for(let y=-ry;y<=ry;y++)for(let x=-rx;x<=rx;x++){ if((x*x)/(rx*rx)+(y*y)/(ry*ry)<=1) ctx.fillRect(ox+x,oy+y,1,1); } };
+  oval(p.hood, cx,13,10,11);          // cappuccio
+  oval(p.shadow||"#0a0a0a", cx,15,7,8); // ombra interna
+  oval(p.skin, cx,14,5,6);            // volto
+  ctx.fillStyle=p.eye; ctx.fillRect(cx-3,13,2,2); ctx.fillRect(cx+1,13,2,2); // occhi
+  ctx.fillStyle=p.shadow||"#0a0a0a"; ctx.fillRect(cx-2,17,4,1);              // bocca
+  ctx.fillStyle=p.accent; ctx.fillRect(cx-9,21,18,2);                        // banda mantello
+}
+let npcResume = null;
+function showNPC(npc){
+  npcDrawPortrait(npc);
+  $("npc-name").textContent = npc.nm;
+  $("npc-role").textContent = npc.role;
+  sfx("step");
+  $("ov-npc").classList.add("open");
+}
+function npcNode(text, choices){
+  $("npc-text").textContent = text;
+  const box = $("npc-choices");
+  box.innerHTML = "";
+  choices.forEach(([label, fn])=>{
+    const b=document.createElement("button");
+    b.textContent = label;
+    b.addEventListener("click", fn);
+    box.appendChild(b);
+  });
+}
+function closeNPC(){
+  $("ov-npc").classList.remove("open");
+  renderStats();
+  const r = npcResume; npcResume = null;
+  if(r) r();
+}
+function runNPCEvent(tile, roll){
+  const region = tile.region;
+  npcResume = ()=>setAction("? Incontro", `${flavor("event",region)||"Il sentiero torna deserto."} Tira il dado per proseguire.`, [["Tira il dado",rollMove]], "event");
+  const which = ["mercante","pellegrino","rinnegato"][rnd(0,2)];
+  renderBoard(); renderStats();
+  if(which==="mercante") npcMercante(region);
+  else if(which==="pellegrino") npcPellegrino(region);
+  else npcRinnegato(region, tile);
+}
+function npcMercante(region){
+  const npc = NPCS.mercante; const met = npcMet("mercante"); npcMeet("mercante");
+  showNPC(npc);
+  const greet = met>0
+    ? `«Ancora tu, ${player.name}? Le mie tasche ti riconoscono.» Sorride senza mostrare i denti.`
+    : `«Fermo lì, viandante. Ho cose che non troverai nei mercati onesti — perché di onesto non hanno nulla.»`;
+  npcNode(greet, [
+    ["«Mostrami la merce.»", ()=>{
+      const price = 40 + region*15;
+      const can = player.runes>=price;
+      npcNode(`Estrae un'ampolla torbida. «Olio di lucciola spenta. Le tue fiaschette cureranno 6 in più, per sempre. ${price} rune.»`, [
+        [can?`Compra (${price} rune)`:`Non hai ${price} rune`, ()=>{
+          if(player.runes<price){ npcNode("«Torna quando avrai di che pagare.»",[["Congedati",closeNPC]]); return; }
+          player.runes-=price; player.flaskBonus+=6;
+          log("Mercante: olio di lucciola (+6 cura fiaschette).","gold"); sfx("buy");
+          npcNode("«Affare fatto. Che le tue ferite siano meno profonde delle mie.»",[["Congedati",closeNPC]]);
+        }],
+        ["«Un'altra volta.»", closeNPC],
+      ]);
+    }],
+    ["«Solo una storia.»", ()=>{
+      const r = rnd(15,30)+region*6; player.runes+=r;
+      log(`Mercante: una storia e ${r} rune.`,"gold"); sfx("rune");
+      npcNode(`Racconta del Sovrano che comprò il proprio nome e non poté più rivenderlo. Alla fine ti lascia ${r} rune. «Per il disturbo.»`,[["Congedati",closeNPC]]);
+    }],
+    ["«Vattene.»", ()=>{ npcNode("«Maleducato. Ma vivo, per ora.» Si dissolve tra le rovine.",[["Prosegui",closeNPC]]); }],
+  ]);
+}
+function npcPellegrino(region){
+  const npc = NPCS.pellegrino; npcMeet("pellegrino");
+  showNPC(npc);
+  npcNode(`Un pellegrino senza occhi volge il viso verso di te. «Sento il peso delle rune che porti. E sento qualcosa di più pesante: la tua strada.»`, [
+    ["«Benedicimi.»", ()=>{
+      if(d6()>=3){
+        player.maxhp+=6; player.hp+=6;
+        log("Pellegrino: benedizione (+6 PV max).","good"); sfx("grace");
+        npcNode("Posa una mano fredda sulla tua fronte. Senti qualcosa rinsaldarsi dentro. «Reggerai un colpo in più.»",[["Ringrazia",closeNPC]]);
+      } else {
+        const h=rnd(8,16); player.hp=Math.min(player.maxhp,player.hp+h);
+        log(`Pellegrino: cura (+${h} PV).`,"good"); sfx("flask");
+        npcNode(`«La tua carne è stanca.» Le tue ferite si chiudono di ${h}.`,[["Ringrazia",closeNPC]]);
+      }
+    }],
+    ["«Dimmi della via.»", ()=>{
+      const r=rnd(20,40)+region*8; player.runes+=r;
+      log(`Pellegrino: indica rune nascoste (+${r}).`,"gold"); sfx("rune");
+      npcNode(`«Tre passi a est, sotto la pietra che piange.» Trovi ${r} rune esattamente dove ha indicato. Non sbaglia mai.`,[["Prosegui",closeNPC]]);
+    }],
+    ["«Lasciami in pace.»", closeNPC],
+  ]);
+}
+function npcRinnegato(region, tile){
+  const npc = NPCS.rinnegato; npcMeet("rinnegato");
+  showNPC(npc);
+  npcNode(`Un cavaliere senza stendardo affila la lama su una pietra. «Ho giurato a un re che non esiste più. Tu per cosa combatti, esattamente?»`, [
+    ["«Insegnami a combattere.»", ()=>{
+      npcNode(`«La forza ha un prezzo di sangue.» Ti offre +2 attacco permanente in cambio di 8 vitalità massima.`,[
+        ["Accetta il patto", ()=>{
+          player.maxhp=Math.max(10,player.maxhp-8); player.hp=Math.min(player.hp,player.maxhp); player.atk+=2;
+          log("Rinnegato: +2 ATK, −8 PV max.","gold"); sfx("hurt");
+          npcNode("«Ora colpisci come chi non ha più nulla da perdere.» Si rimette in cammino.",[["Prosegui",closeNPC]]);
+        }],
+        ["Rifiuta", closeNPC],
+      ]);
+    }],
+    ["«Sfidami a duello.»", ()=>{
+      $("ov-npc").classList.remove("open");
+      npcResume = null;
+      log("Accetti la sfida del Cavaliere Rinnegato.","bad");
+      const foe = {n:"Cavaliere Rinnegato", hp:22+region*10, atk:4+region, r:[120+region*60, 160+region*60]};
+      setAction("⚔ Duello", "Il Cavaliere Rinnegato sguaina la lama.", [], "elite");
+      setTimeout(()=>startCombat(foe, tile, false, true), 500);
+    }],
+    ["«Non oggi.»", ()=>{ npcNode("«Codardo, o saggio. Lo scoprirai.» Torna alla sua pietra.",[["Prosegui",closeNPC]]); }],
+  ]);
+}
+
 /* ===================== GRAZIA ===================== */
 function respawnEnemies(){
   tiles.forEach(t=>{ if((t.type==="enemy"||t.type==="elite") && t.cleared) t.cleared=false; });
@@ -1548,9 +1910,29 @@ function renderGraceMenu(){
     <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">♥</span><div><span class="nm">Vigore</span><div class="d">+10 vitalità massima (e cura completa)</div></div></div>
       <button id="lv-vig" ${can?"":"disabled"}>⟐ ${cost}</button></div>
     <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">⚔</span><div><span class="nm">Forza</span><div class="d">+1 attacco permanente</div></div></div>
-      <button id="lv-for" ${can?"":"disabled"}>⟐ ${cost}</button></div>`;
+      <button id="lv-for" ${can?"":"disabled"}>⟐ ${cost}</button></div>`
+    + renderPassivesHTML();
   $("lv-vig").addEventListener("click", ()=>levelUp("vig"));
   $("lv-for").addEventListener("click", ()=>levelUp("for"));
+  classPassives().forEach(p=>{
+    const btn = $("pa-"+p.id);
+    if(btn) btn.addEventListener("click", ()=>unlockPassive(p));
+  });
+}
+function renderPassivesHTML(){
+  const list = classPassives();
+  if(!list.length) return "";
+  let html = `<div id="grace-passives"><div class="ph">Abilità della tua via</div>`;
+  list.forEach(p=>{
+    const owned = hasPassive(p.id);
+    const can = player.runes >= p.cost;
+    html += `<div class="passive-item${owned?" owned":""}">
+      <div style="min-width:0"><span class="pn">${p.ic} ${p.nm}</span><div class="pd">${p.desc}</div></div>
+      ${owned ? `<span class="ptag">★ ATTIVA</span>` : `<button id="pa-${p.id}" ${can?"":"disabled"}>⟐ ${p.cost}</button>`}
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
 }
 function levelUp(which){
   const cost = levelCost();
@@ -1624,6 +2006,7 @@ function applyItem(item){
   log(`Acquisti: ${item.nm}.`,"gold");
   toast(`✦ ${item.nm}`, item.relic?"":"gold");
   sfx("buy");
+  checkSynergies();
 }
 $("shop-leave").addEventListener("click", ()=>{
   $("ov-shop").classList.remove("open");
@@ -1692,7 +2075,18 @@ const AudioFX = {
     }
   }
 };
-function sfx(n){ AudioFX.play(n); }
+function sfx(n){
+  AudioFX.play(n);
+  // feedback aptico su mobile
+  if(typeof navigator!=="undefined" && navigator.vibrate){
+    try{
+      if(n==="hurt") navigator.vibrate(45);
+      else if(n==="hit"||n==="parry") navigator.vibrate(18);
+      else if(n==="boss"||n==="death") navigator.vibrate([55,35,55]);
+      else if(n==="charge") navigator.vibrate(90);
+    }catch(e){}
+  }
+}
 
 /* ===================== AMBIENZA SONORA PER REGIONE ===================== */
 /* drone continuo + eventi sparsi (gocce, scintille, ping) generati a runtime.
@@ -2219,6 +2613,7 @@ const ENEMY_LOOK = {
   "Madre della Palude":{sp:"madre_boss",    pal:{a:"#4a7a52",b:"#2c5230",e:"#b8ffb0",s:"#adc88a",w:"#ccc"},boss:1},
   "Cavaliere della Cenere":{sp:"cenere_boss",pal:{a:"#9a8070",b:"#5a3020",e:"#ff5a10",f:"#ff9020",w:"#9a7050",s:"#999"},boss:1},
   "Sovrano Senza Nome":{sp:"sovrano_boss",  pal:{a:"#b0a890",b:"#1e1530",c:"#ecc857",e:"#050310",w:"#c0b8e8",s:"#999"},boss:1},
+  "L'Eco del Primo":   {sp:"sovrano_boss",  pal:{a:"#e8e4d8",b:"#403858",c:"#fff0a0",e:"#100818",w:"#fff",s:"#ccc"},boss:1},
 };
 const REGION_BG = [
   {sky0:"#0c1018",sky1:"#1b2434",hill:"#131a26",ground:"#1a2230",line:"#2c3a52",mote:"#8fa8c8",spire:"#0e141e"},
@@ -2279,9 +2674,15 @@ function drawSprite(f){
   const sway = f.dead ? 0 : IDLE_SWAY[phase];
   const breath = f.dead ? 0 : (Math.floor((BS.t/400)+f.bob)%2); // 0/1 squash respiro
   const bobY = f.dead?0:Math.sin((BS.t/520)+f.bob)*2;
-  const lean = f.lean||0;     // affondo d'attacco 0..1
+  const lean = f.lean||0;     // affondo d'attacco -1..1 (negativo = windup)
   const recoil = f.recoil||0; // scatto all'indietro quando colpito 0..1
   const midRow = sz.h*0.55;   // sopra = busto/braccia, sotto = gambe (ancorate)
+  // telegrafo: quando il boss carica un colpo, il busto si solleva e freme
+  let chargeRaise = 0, chargeSway = 0;
+  if(f===BS.enemy && typeof combat!=="undefined" && combat && combat.charging && !f.dead && Math.abs(lean)<0.02){
+    chargeRaise = -Math.round(2 + 1.5*Math.sin(BS.t/130));
+    chargeSway  = Math.round(2*Math.sin(BS.t/90));
+  }
   const ox = Math.round(f.baseX + f.dx - w/2);
   const oy = Math.round(f.baseY + f.dy - h + bobY);
   for(let r=0;r<sz.h;r++){
@@ -2289,9 +2690,10 @@ function drawSprite(f){
     // le gambe restano ancorate, il busto oscilla / affonda / rincula
     let rowDx = 0, rowDy = 0;
     if(upper && !f.dead){
-      rowDx += sway;                                   // idle sway
-      rowDx += Math.round(facing*lean*7);              // affondo in avanti
+      rowDx += sway + chargeSway;                      // idle sway + fremito di carica
+      rowDx += Math.round(facing*lean*7);              // affondo in avanti / windup
       rowDx -= Math.round(facing*recoil*6);            // rinculo
+      rowDy += chargeRaise;                            // sollevamento da carica
       if(breath && r < midRow*0.5) rowDy += 1;         // respiro: testa scende di 1px
     }
     for(let c=0;c<sz.w;c++){
@@ -2507,14 +2909,24 @@ function bsHeroAttack(){
 const BOSS_SLASH_COL = ["#90c0ff","#70ff90","#ff9040","#c050ff"];
 function bsEnemyAttack(charged){
   const bossIdx = combat && combat.isBoss ? combat.tile.region : -1;
-  const baseCol = bossIdx>=0 ? BOSS_SLASH_COL[bossIdx] : (charged?"#ff6a4a":"#d4756b");
-  const burst = bossIdx>=0 ? (charged?22:14) : (charged?16:8);
-  bsPush(charged?750:580, p=>{
+  const isBoss = bossIdx>=0;
+  const baseCol = isBoss ? BOSS_SLASH_COL[bossIdx] : (charged?"#ff6a4a":"#d4756b");
+  const burst = isBoss ? (charged?22:14) : (charged?16:8);
+  const hitAt = isBoss ? .58 : .44; // i boss colpiscono dopo un'anticipazione
+  bsPush(charged?(isBoss?900:750):(isBoss?700:580), p=>{
     const f=BS.enemy;
-    const fwd = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
+    let fwd, lean;
+    if(isBoss){
+      // fase 1: windup (il busto si carica all'indietro); fase 2: affondo
+      if(p<.32){ const wnd=p/.32; fwd=-wnd*0.34; lean=-wnd; }
+      else { const q=(p-.32)/.68; const a=q<.5?easeOutBack(q*2):(1-(q-.5)*2); fwd=a; lean=q<.5?q*2:(1-(q-.5)*2); }
+    } else {
+      fwd  = p<.5 ? easeOutBack(p*2) : (1-(p-.5)*2);
+      lean = p<.5 ? p*2 : (1-(p-.5)*2);
+    }
     f.dx = -fwd*(charged?140:115);
-    f.lean = p<.5 ? p*2 : (1-(p-.5)*2); // affondo del busto del nemico
-    if(p>=.42 && p<.5 && !f._hit){ f._hit=true;
+    f.lean = lean;
+    if(p>=hitAt && p<hitAt+.07 && !f._hit){ f._hit=true;
       sfx("hurt");
       spawnSlash(BS.hero.baseX+14, BS.hero.baseY-30, true, baseCol);
       spawnBurst(BS.hero.baseX, BS.hero.baseY-26, baseCol, burst, charged?2.4:1.4);
@@ -2835,6 +3247,7 @@ function bossMechBanner(){
   if(r===1 && combat.add) return `⊕ Figlio della Palude ${Math.max(0,combat.add.hp)}/${combat.add.maxhp}`;
   if(r===2 && combat.parryStance) return `⚔ Posa di parata — non attaccare!`;
   if(r===3 && combat.aspect!=null){ const a=SOVRANO_ASPECTS[combat.aspect]; return `✦ Aspetto del ${a.nm}`; }
+  if(combat.affix){ const af=NG_AFFIXES.find(x=>x.id===combat.affix); if(af) return `☠ ${af.nm}`; }
   return "";
 }
 /* applica danno al nemico rispettando scudo / figlio / aspetto */
@@ -2895,6 +3308,18 @@ function bossPreTurn(){
 function bossPostTurn(){
   if(!combat || !combat.isBoss || combat.e.hp<=0) return;
   const r = combat.tile.region;
+  // affissi del Ciclo del Ritorno
+  if(combat.affix==="rigen" && combat.e.hp<combat.e.maxhp){
+    const h = Math.max(1, Math.round(combat.e.maxhp*0.03));
+    combat.e.hp = Math.min(combat.e.maxhp, combat.e.hp+h);
+    floatDmg("cb-eside","+"+h,"#8fd49a");
+  }
+  if(combat.affix==="scudo" && combat.turn%4===3 && combat.guard<=0){
+    combat.guardMax = combat.guardMax || Math.round(combat.e.maxhp*0.12);
+    combat.guard = combat.guardMax; combat.guardBroken = false;
+    cbLog(`<span class="warn">${combat.e.n} evoca un'egida protettiva.</span>`);
+    if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-32, "#78b4ff", 16, 1.8); }
+  }
   if(r===0 && combat.guard<combat.guardMax && !combat.guardBroken){
     combat.guard = Math.min(combat.guardMax, combat.guard+4);
   }
@@ -2914,13 +3339,23 @@ function bossPostTurn(){
 
 /* ===================== COMBATTIMENTO ===================== */
 function startCombat(enemy, tile, isBoss, isElite){
+  // Ciclo del Ritorno: i nemici diventano più temibili
+  if(player.ng && enemy.r){
+    enemy.hp = Math.round(enemy.hp * player.ngScale);
+    enemy.atk += 2;
+    enemy.r = [Math.round(enemy.r[0]*1.3), Math.round((enemy.r[1]||enemy.r[0])*1.3)];
+  }
   combat = {
     e:{...enemy, maxhp:enemy.hp},
     tile, isBoss, isElite:!!isElite,
     turn:0, charging:false, staggered:false, shielded:false,
-    aspect:null, guard:0, add:null, parryStance:false,
+    aspect:null, guard:0, add:null, parryStance:false, affix:null,
   };
   player.ardore = 0;
+  // affisso casuale per i boss in NG+
+  if(isBoss && player.ng){
+    combat.affix = NG_AFFIXES[Math.floor(Math.random()*NG_AFFIXES.length)].id;
+  }
   if(isBoss) initBossMech(tile.region);
   if(isBoss){
     showBossCutscene(tile.region, ()=>openCombatModal(enemy, tile, isBoss, isElite));
@@ -3121,6 +3556,18 @@ function enemyTurn(skip){
     floatDmg("cb-pside", "-"+real, "#e07a6e");
     fx($("ov-combat").querySelector(".modal"), "shake", 450);
     fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
+    // Riposta (Vagabondo): rifletti parte del danno
+    if(hasPassive("riposta") && combat.e.hp>0){
+      const back = Math.max(1, Math.round(real*0.2));
+      applyEnemyDamage(back, "attack", "#ffd0a0");
+      cbLog(`<span class="heal">Riposta: rifletti ${back} danni.</span>`);
+    }
+    // Furia Gemella (affisso NG+): secondo colpo
+    if(combat.affix==="doppio" && combat.e.hp>0 && player.hp>0){
+      const d2 = playerHurt(d6()+Math.round(combat.e.atk*0.6));
+      cbLog(`<span class="hit">Furia Gemella: secondo colpo per ${d2}.</span>`);
+      floatDmg("cb-pside","-"+d2,"#e07a6e");
+    }
   }
   gainArdore(10);
   addAttack();
@@ -3153,9 +3600,16 @@ function actAttack(){
     return;
   }
   bsHeroAttack();
-  const dmg = d6() + player.atk;
-  cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>.`);
-  applyEnemyDamage(dmg, "attack", "#ecc857");
+  let dmg = d6() + player.atk + vendettaBonus();
+  let crit = false;
+  if(hasSynergy("furia") && Math.random()<0.25){ dmg *= 2; crit = true; }
+  cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>${crit?' <span class="warn">— CRITICO!</span>':''}.`);
+  applyEnemyDamage(dmg, "attack", crit?"#ff6a6a":"#ecc857");
+  if(hasPassive("vampiro") && dmg>0){
+    const h = Math.max(1, Math.round(dmg*0.15));
+    player.hp = Math.min(player.maxhp, player.hp+h);
+    floatDmg("cb-pside", "+"+h, "#b9d49a");
+  }
   gainArdore(12);
   if(combat.e.hp>0) enemyTurn(false);
   checkCombatEnd();
@@ -3167,7 +3621,8 @@ function actParry(){
   // parare annulla la posa del Cavaliere
   if(combat.parryStance) combat.parryStance = false;
   const roll = d6();
-  if(roll>=3){
+  const need = hasPassive("muro") ? 2 : 3;
+  if(roll>=need){
     bsParry();
     const wasCharging = combat.charging;
     combat.charging = false;
@@ -3230,7 +3685,10 @@ function winCombat(){
   const e = combat.e;
   let reward = rnd(e.r[0], e.r[1] || e.r[0]);
   if(player.runeBonus) reward = Math.round(reward*(1+player.runeBonus)); // Sigillo del Pellegrino
+  if(hasPassive("fortuna") && combat.isElite) reward *= 2; // Fortuna Spezzata
   player.runes += reward;
+  // Colosso Affamato (sinergia): cura alla vittoria
+  if(hasSynergy("colosso")){ player.hp = Math.min(player.maxhp, player.hp+8); }
   combat.tile.cleared = true;
   log(`${e.n} cade. Ottieni ${reward} rune.`,"gold");
   cbLog(`<span class="heal"><strong>NEMICO ABBATTUTO</strong> — ${reward} rune.</span>`);
@@ -3239,6 +3697,7 @@ function winCombat(){
   sfx(combat.isBoss ? "boss" : "kill");
   if(reward>0) toast(`⟐ +${reward} rune`, "gold");
   const wasBoss = combat.isBoss;
+  const wasSecret = combat.isSecret;
   const wasFinal = combat.tile.idx === tiles.length-1;
   const bossRegion = combat.tile.region;
   setTimeout(()=>{
@@ -3246,7 +3705,11 @@ function winCombat(){
     $("ov-combat").classList.remove("open");
     combat = null;
     renderAll();
-    if(wasFinal){ victory(); return; }
+    if(wasSecret){ victory(true); return; }
+    if(wasFinal){
+      if(allBaseMedals() && !player.secretSeen){ player.secretSeen = true; startSecretBoss(); return; }
+      victory(); return;
+    }
     resumeAmbient();
     if(wasBoss){
       const epi = BOSS_EPILOGUE[bossRegion];
@@ -3373,8 +3836,28 @@ const MEDALS = [
   {id:"flawless", ic:"☀", nm:"Imbattuto",       desc:"Vinci senza mai morire",         test:()=>(player.deaths||0)===0},
   {id:"swift",    ic:"⚡", nm:"Fulmineo",         desc:"Vinci in meno di 45 tiri",       test:()=>(player.rolls||0)<45},
   {id:"beggar",   ic:"⚱", nm:"Mendico Asceso",  desc:"Vinci nei panni del Mendico",    test:()=>(player.cls||chosenClass)==="mendico"},
+  {id:"echo",     ic:"☼", nm:"Voce del Primo",  desc:"Sconfiggi il Boss segreto",      test:()=>!!(player&&player.secretSeen)},
 ];
+const BASE_MEDALS = ["finisher","flawless","swift","beggar"];
+function allBaseMedals(){ const m=getMedals(); return BASE_MEDALS.every(id=>m.includes(id)); }
 function getMedals(){ const st=getStats(); return st.medals||[]; }
+/* avvia il combattimento con il Boss segreto dopo la caduta del Sovrano */
+function startSecretBoss(){
+  log("Il Sovrano è caduto... ma qualcosa di più antico si desta.","bad");
+  showLorePanel({title:"L'Eco del Primo", text:"Dove il Sovrano si dissolve, l'aria si incrina. Una figura di luce fredda prende forma — l'Eco di colui che per primo spezzò le Terre. L'ultima, vera prova."}, ()=>{
+    const e = {...BOSS5};
+    if(player.ng){ e.hp = Math.round(e.hp*player.ngScale); e.atk += 2; }
+    combat = {
+      e:{...e, maxhp:e.hp}, tile:{region:3, idx:tiles.length-1}, isBoss:true, isSecret:true,
+      turn:0, charging:false, staggered:false, shielded:false,
+      aspect:0, aspectTimer:3, guard:0, add:null, parryStance:false,
+      affix: player.ng ? "rigen" : null,
+    };
+    player.ardore = 0;
+    Ambient.stop(true);
+    openCombatModal(e, combat.tile, true, false);
+  });
+}
 function unlockMedals(){
   const st = getStats();
   const owned = st.medals || [];
@@ -3397,14 +3880,19 @@ function renderTitleMedals(){
   const ids = getMedals();
   host.innerHTML = ids.map(id=>{ const m=MEDALS.find(x=>x.id===id); return m?`<span class="medal" title="${m.nm}: ${m.desc}">${m.ic}</span>`:""; }).join("");
 }
-function victory(){
+function victory(secret){
   sfx("victory");
   recordVictory();
   const fresh = unlockMedals();
   clearSave();
   const st = getStats();
   const best = st.bestRolls!=null ? `${st.bestRolls} tiri` : "—";
-  $("victory-sub").innerHTML = `Il Sovrano Senza Nome è caduto. Le Terre Spezzate conoscono di nuovo l'alba.<br><span style="font-size:.85rem;color:#6b5c3c">Classe: ${CLASSES[player.cls||chosenClass].nm} · Miglior viaggio: ${best}</span>`;
+  const tag = (secret?"☼ Eco abbattuta · ":"") + (player.ng?"Ciclo del Ritorno · ":"");
+  $("victory-text").textContent = secret ? "L'Eco tace" : "Le Terre sono tue";
+  $("victory-sub").innerHTML = (secret
+      ? `Hai messo a tacere l'Eco del Primo. Nelle Terre Spezzate non resta più nessun nome da spezzare, tranne il tuo.`
+      : `Il Sovrano Senza Nome è caduto. Le Terre Spezzate conoscono di nuovo l'alba.`)
+    + `<br><span style="font-size:.85rem;color:#6b5c3c">${tag}Classe: ${CLASSES[player.cls||chosenClass].nm} · Miglior viaggio: ${best}</span>`;
   const medals = getMedals();
   $("victory-medals").innerHTML = medals.length
     ? `<div style="font-size:.78rem;color:#6b5c3c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3em;font-family:var(--f-pixel)">Titoli ottenuti${fresh.length?" · "+fresh.length+" nuovo!":""}</div>`+medalHTML(medals, fresh)
@@ -3430,6 +3918,7 @@ $("victory-restart").addEventListener("click", ()=>{
   updateTitleStats();
   renderTitleMedals();
   refreshContinueBtn();
+  updateNgRow();
   // riavvia musica menu
   menuMusicStarted = false;
   maybeStartMenuMusic();
@@ -3476,7 +3965,11 @@ if(document.addEventListener){
   document.addEventListener("keydown", (e)=>{
     if(e.repeat) return;
     const k = (e.key||"").toLowerCase();
-    if(k==="escape"){ $("ov-help").classList.remove("open"); $("ov-settings").classList.remove("open"); return; }
+    if(k==="escape"){
+      if($("ov-intro").classList.contains("open")){ endIntro(); return; }
+      $("ov-help").classList.remove("open"); $("ov-settings").classList.remove("open"); $("ov-slots").classList.remove("open");
+      return;
+    }
     const combatOpen = $("ov-combat").classList.contains("open");
     if(combatOpen && combat){
       if(k==="a") actAttack();
@@ -3497,6 +3990,25 @@ if(document.addEventListener){
     }
   });
 }
+
+/* ===================== TOCCO: SWIPE PER AVANZARE (mobile) ===================== */
+(function(){
+  const gs = $("game-screen");
+  if(!gs || !gs.addEventListener) return;
+  let sx=0, sy=0, st=0;
+  gs.addEventListener("touchstart", e=>{ const t=e.changedTouches[0]; sx=t.clientX; sy=t.clientY; st=Date.now(); }, {passive:true});
+  gs.addEventListener("touchend", e=>{
+    if(document.querySelector && document.querySelector(".overlay.open")) return;
+    if(moving || combat) return;
+    const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy, dt=Date.now()-st;
+    // swipe orizzontale rapido = azione principale (tira il dado)
+    if(dt<600 && Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.4){
+      const box=$("action-buttons");
+      const b=(box.querySelector&&(box.querySelector("button.primary:not(:disabled)")||box.querySelector("button:not(:disabled)")))||null;
+      if(b) b.click();
+    }
+  }, {passive:true});
+})();
 
 /* ===================== BRACI DEL TITOLO ===================== */
 let emberRaf = 0;
@@ -3571,10 +4083,66 @@ function refreshContinueBtn(){
   if(!b) return;
   b.style.display = hasSave() ? "" : "none";
 }
+migrateLegacySave();
 renderClassPicker();
 updateTitleStats();
 renderTitleMedals();
 refreshContinueBtn();
+updateNgRow();
+
+/* ===================== CUTSCENE D'APERTURA (primo avvio) ===================== */
+const INTRO_KEY = "terreSpezzate.introSeen.v1";
+const INTRO_PANELS = [
+  "Un tempo le Terre avevano un nome. Ogni collina, ogni fiume, ogni re.",
+  "Poi venne Colui che spezza i nomi. Dove passava, il mondo dimenticava sé stesso.",
+  "I re caddero. Le mappe si svuotarono. Restarono solo i siti di grazia: fiammelle ostinate nel buio.",
+  "Tu non hai nome. Forse è per questo che puoi ancora camminare dove tutto è stato spezzato.",
+  "Alzati, Senza Fiamma. Le Terre Spezzate ti aspettano.",
+];
+let _introRaf=0, _introTimer=0;
+function playIntro(){
+  const ov=$("ov-intro"); if(!ov) return;
+  ov.classList.add("open");
+  const cv=$("intro-canvas"), txt=$("intro-text");
+  let idx=0;
+  function showPanel(){
+    if(idx>=INTRO_PANELS.length){ endIntro(); return; }
+    if(txt) txt.textContent = INTRO_PANELS[idx];
+    idx++;
+    _introTimer = setTimeout(showPanel, 4200);
+  }
+  if(cv && cv.getContext && typeof requestAnimationFrame!=="undefined" && !REDUCED){
+    const ctx=cv.getContext("2d"); ctx.imageSmoothingEnabled=false;
+    const W=cv.width,H=cv.height;
+    const ash=[]; for(let i=0;i<60;i++) ash.push({x:Math.random()*W,y:Math.random()*H,v:.1+Math.random()*.4,s:Math.random()>.5?1:2,c:Math.random()<.5?"#c9a227":"#5a4a2a"});
+    let last=performance.now();
+    function loop(ts){
+      const dt=Math.min(50,ts-last); last=ts;
+      ctx.fillStyle="#05040a"; ctx.fillRect(0,0,W,H);
+      const cx=W/2,cy=H/2, a=.25+.2*Math.sin(ts/700);
+      ctx.strokeStyle=`rgba(201,162,39,${a})`; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(cx,cy,42,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx,cy,30,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,cy-20); ctx.lineTo(cx,cy+20); ctx.stroke();
+      ash.forEach(p=>{ p.y-=p.v*dt/16; if(p.y<0){p.y=H;p.x=Math.random()*W;} ctx.globalAlpha=.5; ctx.fillStyle=p.c; ctx.fillRect(p.x,p.y,p.s,p.s); });
+      ctx.globalAlpha=1;
+      _introRaf=requestAnimationFrame(loop);
+    }
+    _introRaf=requestAnimationFrame(loop);
+  }
+  showPanel();
+}
+function endIntro(){
+  if(_introTimer){ clearTimeout(_introTimer); _introTimer=0; }
+  if(_introRaf && typeof cancelAnimationFrame!=="undefined"){ cancelAnimationFrame(_introRaf); _introRaf=0; }
+  const ov=$("ov-intro"); if(ov) ov.classList.remove("open");
+  try{ localStorage.setItem(INTRO_KEY,"1"); }catch(e){}
+}
+$("intro-skip").addEventListener("click", endIntro);
+(function maybePlayIntro(){
+  let seen=false; try{ seen=!!localStorage.getItem(INTRO_KEY); }catch(e){}
+  if(!seen && !REDUCED) playIntro();
+})();
 
 function enterGame(){
   if(emberRaf && typeof cancelAnimationFrame!=="undefined"){ cancelAnimationFrame(emberRaf); emberRaf=0; }
@@ -3597,14 +4165,17 @@ document.addEventListener("DOMContentLoaded", ()=>{
   if(ts) ts.addEventListener("click", maybeStartMenuMusic, {once:true, passive:true});
 }, {once:true});
 
-$("btn-start").addEventListener("click", ()=>{
+function beginNewGameInSlot(n){
+  currentSlot = n;
+  ngPlusSelected = !!($("ngplus-check") && $("ngplus-check").checked && getMedals().includes("finisher"));
+  $("ov-slots").classList.remove("open");
   enterGame();
   sfx("grace");
   newGame(chosenClass);
-});
-
-$("btn-continue").addEventListener("click", ()=>{
-  if(!loadGame()){ refreshContinueBtn(); return; }
+}
+function resumeSlot(n){
+  if(!loadSlot(n)){ renderSlots(); return; }
+  $("ov-slots").classList.remove("open");
   enterGame();
   sfx("grace");
   const C = CLASSES[player.cls||chosenClass] || CLASSES.vagabondo;
@@ -3615,7 +4186,53 @@ $("btn-continue").addEventListener("click", ()=>{
   resumeAmbient();
   log("Riprendi il viaggio dove l'avevi lasciato.","gold");
   setAction("Il sentiero", "La grazia ti guida ancora. Tira il dado per avanzare.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
+}
+function renderSlots(){
+  const host = $("slot-list");
+  if(!host) return;
+  host.innerHTML = "";
+  for(let n=1;n<=SLOT_COUNT;n++){
+    const pv = slotPreview(n);
+    const card = document.createElement("div");
+    card.className = "slot-card" + (pv?"":" empty");
+    card.setAttribute("role","button"); card.tabIndex = 0;
+    if(pv){
+      card.innerHTML = `<span class="si">${pv.ng?"☠":"♦"}</span>
+        <div class="sbody"><div class="stt">Slot ${n} · ${pv.cls}${pv.ng?" · NG+":""}</div>
+        <div class="ssub">Livello ${pv.level} · ${REGIONS[pv.region]} · ${pv.bosses}/4 boss</div></div>`;
+      const del = document.createElement("button");
+      del.className = "sdel"; del.textContent = "✕"; del.title = "Cancella questo viaggio";
+      del.addEventListener("click", e=>{ e.stopPropagation();
+        if(typeof confirm!=="function" || confirm("Cancellare definitivamente questo viaggio?")){ clearSlot(n); renderSlots(); refreshContinueBtn(); }
+      });
+      card.appendChild(del);
+      card.addEventListener("click", ()=>resumeSlot(n));
+    } else {
+      card.innerHTML = `<span class="si">+</span>
+        <div class="sbody"><div class="stt">Slot ${n} · Vuoto</div>
+        <div class="ssub">Inizia qui un nuovo viaggio${ngPlusReady()?" (NG+ disponibile)":""}</div></div>`;
+      card.addEventListener("click", ()=>beginNewGameInSlot(n));
+    }
+    card.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); card.click(); } });
+    host.appendChild(card);
+  }
+}
+function ngPlusReady(){ return getMedals().includes("finisher"); }
+function openSlots(){ renderSlots(); $("ov-slots").classList.add("open"); }
+$("slots-close").addEventListener("click", ()=>$("ov-slots").classList.remove("open"));
+
+$("btn-start").addEventListener("click", ()=>{
+  const empty = firstEmptySlot();
+  if(empty){ beginNewGameInSlot(empty); }
+  else { openSlots(); } // tutti gli slot pieni: scegli quale viaggio gestire
 });
+
+$("btn-continue").addEventListener("click", openSlots);
+
+function updateNgRow(){
+  const row = $("ngplus-row");
+  if(row) row.classList.toggle("show", ngPlusReady());
+}
 
 /* ===================== IMPOSTAZIONI ===================== */
 const SETTINGS_KEY = "terreSpezzate.settings.v1";
@@ -3655,6 +4272,16 @@ $("vol-music").addEventListener("input", e=>{ settings.music=+e.target.value; ap
 $("vol-sfx").addEventListener("input", e=>{ settings.sfx=+e.target.value; applySettings(settings); saveSettings(settings); });
 $("vol-sfx").addEventListener("change", ()=>{ AudioFX.ensure(); sfx("rune"); });
 $("opt-anim").addEventListener("change", e=>{ settings.anim=e.target.checked; applySettings(settings); saveSettings(settings); });
+
+/* hook diagnostico (attivo solo se window.__TS_DEBUG è impostato prima del caricamento) */
+if(typeof window!=="undefined" && window.__TS_DEBUG){
+  window.__game = {
+    get player(){ return player; },
+    get tiles(){ return tiles; },
+    get combat(){ return combat; },
+    setNoBattleCanvas(){ if(typeof BS!=="undefined") BS.ctx=null; },
+  };
+}
 </script>
 </body>
 </html>
