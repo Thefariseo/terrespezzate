@@ -916,6 +916,8 @@ kbd{
   </div>
 </div>
 
+<!-- campioni orchestrali FluidR3_GM (MIT) per il motore musicale ibrido -->
+<script src="samples.js" defer onerror="window.__noSamples=1"></script>
 <script>
 "use strict";
 /* ===================== DATI ===================== */
@@ -2190,6 +2192,78 @@ function sfx(n){
   }
 }
 
+/* ===================== SAMPLER ORCHESTRALE (IBRIDO) =====================
+   Campioni reali FluidR3_GM (coro, violoncello, archi tremolo, timpani,
+   trombone) decodificati a runtime e ripitchati via playbackRate.
+   Se i campioni non sono disponibili, il motore musicale ricade sul synth. */
+const Sampler = {
+  ready:false, loading:false, buffers:{}, anchors:{},
+  NOTE:{C:0,"C#":1,D:2,"D#":3,E:4,"E#":5,F:5,"F#":6,G:7,"G#":8,A:9,"A#":10,B:11},
+  midi(note){ const m=/^([A-G]#?)(-?\d)$/.exec(note); if(!m) return 60; return this.NOTE[m[1]] + (parseInt(m[2],10)+1)*12; },
+  freqMidi(f){ return 69 + 12*Math.log2(f/440); },
+  load(){
+    if(this.loading || this.ready) return;
+    if(typeof window==="undefined" || !window.GAME_SAMPLES) return;
+    if(!AudioFX.ensure()) return;
+    const c=AudioFX.ctx;
+    if(typeof c.decodeAudioData!=="function") return; // ambienti senza decoder (test)
+    this.loading=true;
+    const S=window.GAME_SAMPLES; let pending=0, done=0;
+    const finish=()=>{ done++; if(done>=pending){ this.ready=true; this.loading=false; } };
+    for(const inst in S){
+      this.buffers[inst]={}; this.anchors[inst]=[];
+      for(const note in S[inst]){
+        pending++;
+        try{
+          const b64=S[inst][note].split(",")[1];
+          const bin=atob(b64), n=bin.length, u8=new Uint8Array(n);
+          for(let i=0;i<n;i++) u8[i]=bin.charCodeAt(i);
+          const inst_=inst, note_=note;
+          const p=c.decodeAudioData(u8.buffer, buf=>{
+            this.buffers[inst_][note_]=buf;
+            this.anchors[inst_].push({note:note_, midi:this.midi(note_)});
+            this.anchors[inst_].sort((a,b)=>a.midi-b.midi);
+            finish();
+          }, finish);
+          if(p && p.then) p.then(buf=>{ if(buf){ this.buffers[inst_][note_]=buf;
+            if(!this.anchors[inst_].some(a=>a.note===note_)){ this.anchors[inst_].push({note:note_,midi:this.midi(note_)}); this.anchors[inst_].sort((a,b)=>a.midi-b.midi); }
+          } }).catch(()=>{});
+        }catch(e){ finish(); }
+      }
+    }
+    if(pending===0){ this.loading=false; }
+  },
+  has(inst){ return this.ready && this.anchors[inst] && this.anchors[inst].length>0; },
+  /* seleziona il campione più vicino e il fattore di pitch */
+  pick(inst, freq){
+    if(!this.has(inst)) return null;
+    const midi=this.freqMidi(freq), an=this.anchors[inst];
+    let best=an[0];
+    for(let i=1;i<an.length;i++) if(Math.abs(an[i].midi-midi)<Math.abs(best.midi-midi)) best=an[i];
+    const buf=this.buffers[inst][best.note];
+    if(!buf) return null;
+    return {buf, rate:Math.pow(2,(midi-best.midi)/12)};
+  },
+  /* riproduce una nota campionata; dest = bus, rev = nodo reverb, revLvl = mandata wet */
+  play(inst, freq, t, dur, vol, dest, rev, revLvl){
+    const pk=this.pick(inst, freq);
+    if(!pk) return false;
+    const c=AudioFX.ctx;
+    const src=c.createBufferSource(); src.buffer=pk.buf;
+    src.playbackRate.value=pk.rate;
+    const g=c.createGain();
+    const atk=Math.min(0.10, dur*0.30), rel=Math.min(0.30, dur*0.40);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001,vol), t+atk);
+    g.gain.setValueAtTime(Math.max(0.0001,vol), Math.max(t+atk+0.001, t+dur-rel));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(g); g.connect(dest||c.destination);
+    if(rev && revLvl){ const rs=c.createGain(); rs.gain.value=revLvl; g.connect(rs); rs.connect(rev); }
+    src.start(t); src.stop(t+dur+0.12);
+    return true;
+  },
+};
+
 /* ===================== AMBIENZA SONORA PER REGIONE ===================== */
 /* drone continuo + eventi sparsi (gocce, scintille, ping) generati a runtime.
    Suona durante l'esplorazione; si ferma in combattimento e ai menù. */
@@ -2427,10 +2501,12 @@ function animNumber(el, to){
 }
 
 
-/* ===================== MUSICA: ORCHESTRALE GOTICO-SINFONICO ===================== */
-/* Temi composti per archi (vibrato reale), coro (filtri formantici), ottoni.
-   Tutti i boss usano 7/8 (14 sedicesimi = 1 battuta, len:28 = 2 battute).
-   Pulsazioni per 16° = 60 / BPM / 4. */
+/* ===================== MUSICA: ORCHESTRALE GOTICO-SINFONICO IBRIDO =====================
+   Motore "through-composed": ogni tema è una sequenza di SEZIONI che si
+   evolvono (Tensione strisciante → Terrore e Rabbia → Climax apocalittico),
+   poi il corpo caotico va in loop. Tracce instradate al Sampler (campioni
+   reali FluidR3) con ricaduta sul synth. Tutti i boss in 7/8 (14 sedicesimi
+   = 1 battuta). Pulsazione 16° = 60 / BPM / 4. */
 function nf(n){
   const m = /^([A-G]#?)(-?\d)$/.exec(n);
   const ix = {C:0,"C#":1,D:2,"D#":3,E:4,F:5,"F#":6,G:7,"G#":8,A:9,"A#":10,B:11}[m[1]];
@@ -2438,212 +2514,243 @@ function nf(n){
 }
 function seq(len, map){ const a=new Array(len).fill(null); for(const k in map) a[+k]=map[k]; return a; }
 
+/* ── SEZIONI ──────────────────────────────────────────────────────────────────
+   Ogni sezione: { bpm, len, bass, cello, swell, choir, brass, timp, drum }.
+   bass   : sub sintetico (nota singola).
+   cello  : violoncello campionato — ostinato in 16°/crome (nota o [nota,dur]).
+   swell  : archi tremolo campionati — cluster dissonanti sostenuti [nota,dur].
+   choir  : coro "aahs" campionato — urla/lamenti sostenuti [nota,dur].
+   brass  : trombone campionato + distorsione waveshaper — stab aggressivi.
+   timp   : timpani campionato (nota → intonato).
+   drum   : synth k/s/h/t, combinazioni con "|". */
+
 const THEMES = {
-  /* ── MENU: "Il Velo Spezzato" ─────────────────────────────────────────────────
-     Dark gothic lento (26 BPM). La-minore frigio. Nessuna percussione.
-     Archi lunghi che salgono e scendono su cluster dissonanti.
-     Coro "Ah"/"Oh" rade, distanti, come voci da un'altra stanza. */
+  /* ── MENU: "Il Velo Spezzato" — dark gotico lento, coro e archi sospesi ── */
   menu: {
-    title:"Il Velo Spezzato", bpm:26, len:32,
-    bassType:"triangle", dark:true,
-    bass: seq(32,{ 0:"A1", 16:"F1" }),
-    lead: seq(32,{}), pad: seq(32,{}), padHarm: seq(32,{}),
-    drum: seq(32,{}),
-    // archi lenti: cluster dissonanti La + La#/Sib
-    strings:  seq(32,{ 0:["A2",20], 18:["G#2",14] }),
-    strings2: seq(32,{ 4:["D#3",16], 22:["C3",10] }),
-    // coro sparso, "Ah" e "Oh"
-    choir: seq(32,{ 8:["A3",12,"a"], 24:["F3",8,"o"] }),
-    brass: seq(32,{}),
+    title:"Il Velo Spezzato", dark:true, loopFrom:0,
+    sections:[
+      { bpm:30, len:28,
+        bass:  seq(28,{ 0:"A1", 14:"F1" }),
+        swell: seq(28,{ 0:["A2",16], 4:["A#2",12], 16:["G2",12], 20:["A2",8] }),
+        choir: seq(28,{ 2:["A3",14,"a"], 16:["F3",10,"o"] }),
+        cello: seq(28,{ 0:["A1",10], 14:["D2",8] }),
+        drum:  seq(28,{}),
+      },
+    ],
   },
 
-  /* ── BOSS 0: "Frantumazione" ───────────────────────────────────────────────────
-     7/8 · 116 BPM · La frigio (A A# C D E F G)
-     Suddivisione 3+2+2. Archi frenetici in cascata cromatica discendente.
-     Coro urla breve sulle prime battute. Ottoni marcano i downbeat del 7/8. */
-  boss0: {
-    title:"Frantumazione", bpm:116, len:28, dread:true,
-    bassType:"triangle",
-    // violoncello ostinato: note per crome (ogni 2 sedicesimi)
-    bass: seq(28,{
-      0:"A2", 2:"A#2", 4:"A2", 6:"G2",  8:"A2", 10:"F2", 12:"G2",
-     14:"A2",16:"A#2",18:"G2",20:"A2", 22:"F2", 24:"E2", 26:"A2",
-    }),
-    lead: seq(28,{}), pad: seq(28,{}), padHarm: seq(28,{}),
-    // violini frenetici: cascata cromatica La frigio giù di due ottave
-    strings: seq(28,{
-       0:"E5", 1:"D5", 2:"C5", 3:"A#4", 4:"A4",  5:"G4",  6:"F4",
-       7:"E4", 8:"D4", 9:"C4",10:"A#3",11:"A3",  12:"G3", 13:"F3",
-      14:"G5",15:"F5",16:"E5",17:"D#5",18:"D5",  19:"C5", 20:"A#4",
-      21:"A4",22:"G4",23:"F4",24:"E4", 25:"D4",  26:"C4", 27:"A#3",
-    }),
-    // viola: moto contrario ascendente
-    strings2: seq(28,{
-       0:"A3", 2:"C4", 4:"E4",  6:"G4",  8:"A4", 10:"G4", 12:"E4",
-      14:"A3",16:"A#3",18:"C4",20:"D4",22:"E4",  24:"G4", 26:"A4",
-    }),
-    // coro: urlo "Ah" sul primo ottavo di ogni battuta
-    choir: seq(28,{ 0:["A3",7,"a"], 14:["F3",6,"a"] }),
-    // ottoni: stab sui downbeat 7/8 (pos 0,6,10 per battuta)
-    brass: seq(28,{
-       0:["A3",2],  6:["G3",2],  10:["F3",2],
-      14:["A3",2], 20:["A#3",2], 24:["G3",2],
-    }),
-    // cassa 7/8 3+2+2: kick su 0,6,10; rullante su 4,12
-    drum: seq(28,{
-       0:"k", 2:"h",  4:"s",  6:"k",  8:"h", 10:"k", 12:"s",
-      14:"k",16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s",
-    }),
+  /* ── NEMICI COMUNI: "Caccia tra le Rovine" — tensione motoria che incalza ──
+     Per gli scontri ordinari. Ostinato di violoncello, archi inquieti,
+     ottoni radi. Cresce ma non esplode: il pericolo del viaggio. */
+  enemy: {
+    title:"Caccia tra le Rovine", dread:true, loopFrom:0,
+    sections:[
+      { bpm:104, len:28,
+        bass:  seq(28,{ 0:"D2", 6:"D2", 10:"C2", 14:"D2", 20:"A1", 24:"A#1" }),
+        cello: seq(28,{
+           0:"D3", 2:"F3",  4:"D3",  6:"C3",  8:"D3", 10:"E3", 12:"F3",
+          14:"D3",16:"C3", 18:"A#2",20:"C3", 22:"D3", 24:"F3", 26:"E3",
+        }),
+        swell: seq(28,{ 0:["A3",10], 14:["G3",8], 22:["A#3",6] }),
+        brass: seq(28,{ 0:["D3",2], 6:["A2",2], 14:["F2",2] }),
+        drum:  seq(28,{ 0:"k", 4:"s", 6:"k", 10:"k", 12:"s", 14:"k", 18:"s", 20:"k", 24:"k", 26:"s" }),
+      },
+    ],
   },
 
-  /* ── BOSS 1: "Nenia del Fango" ─────────────────────────────────────────────────
-     7/8 · 80 BPM · Re frigio (D D# F G A A# C)
-     Più lento, dominato dal coro — una ninna-nanna sott'acqua.
-     Archi lenti e dissonanti. Ottoni sparsi. */
-  boss1: {
-    title:"Nenia del Fango", bpm:80, len:28, dread:true,
-    bassType:"triangle",
-    bass: seq(28,{
-       0:"D2", 2:"D2",  4:"C2",  6:"D2",  8:"D#2",10:"C2",12:"D2",
-      14:"A1",16:"A#1",18:"C2", 20:"D2", 22:"C2", 24:"D2",26:"E2",
-    }),
-    lead: seq(28,{}), pad: seq(28,{}), padHarm: seq(28,{}),
-    strings: seq(28,{
-      0:["D3",8], 10:["C3",6], 18:["D#3",5], 25:["F3",3],
-    }),
-    strings2: seq(28,{
-      0:["F3",8], 10:["E3",6], 20:["G3",8],
-    }),
-    // coro dominante: "Oh" lungo e lamentoso
-    choir: seq(28,{
-       0:["D3",10,"o"], 10:["F3",6,"a"],
-      14:["A2",10,"o"], 24:["D3",4,"a"],
-    }),
-    brass: seq(28,{ 0:["D3",4], 14:["A2",4] }),
-    drum: seq(28,{
-       0:"k", 2:"h",  4:"s",  6:"k",  8:"h", 10:"k", 12:"s",
-      14:"k",16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s",
-    }),
-  },
-
-  /* ── BOSS 2: "Galop della Fine" ────────────────────────────────────────────────
-     7/8 · 152 BPM · Mi frigio (E F G A B C D)
-     Il più aggressivo. Violini striduli in crome frenetiche.
-     Ottoni pesanti su ogni downbeat. Coro "urlo e" stridente. */
-  boss2: {
-    title:"Galop della Fine", bpm:152, len:28, dread:true,
-    bassType:"sawtooth",
-    bass: seq(28,{
-       0:"E2", 2:"E2", 4:"F2",  6:"E2",  8:"D2", 10:"E2", 12:"G2",
-      14:"E2",16:"E2",18:"D2", 20:"E2", 22:"F2", 24:"G2", 26:"E2",
-    }),
-    lead: seq(28,{}), pad: seq(28,{}), padHarm: seq(28,{}),
-    // violini striduli altissimi: run cromatiche veloci
-    strings: seq(28,{
-       0:"B5", 1:"A5", 2:"G5",  3:"F#5", 4:"E5",  5:"F5",  6:"G5",
-       7:"A5", 8:"B5", 9:"C6", 10:"B5", 11:"A5", 12:"G5", 13:"F5",
-      14:"E5",15:"D5",16:"E5", 17:"F5", 18:"G5", 19:"A5", 20:"B5",
-      21:"C6",22:"B5",23:"A5", 24:"G5", 25:"F#5",26:"E5", 27:"F5",
-    }),
-    // violoncello basso: ostinato aggressivo Mi frigio
-    strings2: seq(28,{
-       0:"E3", 2:"F3", 4:"G3",  6:"E3",  8:"D3", 10:"E3", 12:"F3",
-      14:"G3",16:"E3",18:"D3", 20:"E3", 22:"F3", 24:"G3", 26:"E3",
-    }),
-    // coro: urla frenetiche "e"/"a" su tutti i downbeat 7/8 — massimo caos Bloodborne
-    choir: seq(28,{
-       0:["E4",4,"a"],  3:["B4",2,"e"],  6:["G4",3,"e"],
-       9:["A4",2,"a"], 12:["F4",2,"e"],
-      14:["E4",4,"a"], 17:["B4",2,"e"], 20:["G4",3,"e"],
-      23:["A4",2,"a"], 26:["E4",2,"e"],
-    }),
-    // ottoni: stab denso a ogni sedicesimo di downbeat — martello orchestrale
-    brass: seq(28,{
-       0:["E3",2],  2:["E3",1],  4:["F3",2],  6:["E3",2],  8:["D3",1], 10:["E3",2], 12:["G3",1],
-      14:["E3",2], 16:["D3",1], 18:["E3",2], 20:["G3",2], 22:["F3",1], 24:["E3",2], 26:["D3",1],
-    }),
-    // percussioni dense in 7/8 ad alta velocità
-    drum: seq(28,{
-       0:"k", 1:"h", 2:"h", 3:"s", 4:"k", 5:"h", 6:"k",
-       7:"h", 8:"s", 9:"h",10:"k",11:"h",12:"k",13:"s",
-      14:"k",15:"h",16:"h",17:"s",18:"k",19:"h",20:"k",
-      21:"h",22:"s",23:"h",24:"k",25:"h",26:"k",27:"s",
-    }),
-  },
-
-  /* ── BOSS 3: "Morte del Primo Nome" ────────────────────────────────────────────
-     7/8 · 128 BPM · La frigio · len:42 (3 battute per più sviluppo)
-     La piena orchestra. Archi in sweep epico discesa/salita/discesa.
-     Coro multiplo con "e" urlante nel climax finale (battuta 3). */
-  boss3: {
-    title:"Morte del Primo Nome", bpm:128, len:42, dread:true,
-    bassType:"sawtooth",
-    bass: seq(42,{
-       0:"A2", 2:"A#2", 4:"A2",  6:"G2",  8:"A2", 10:"A#2",12:"A2",
-      14:"F2",16:"G2", 18:"A2", 20:"G#2",22:"A2", 24:"G2", 26:"A#2",
-      28:"E2",30:"E2", 32:"F2", 34:"G2", 36:"A2", 38:"G2", 40:"F2",
-    }),
-    lead: seq(42,{}), pad: seq(42,{}), padHarm: seq(42,{}),
-    // archi: discesa epica (batt.1), risalita (batt.2), climax caotico (batt.3)
-    strings: seq(42,{
-       0:"A5", 1:"G5", 2:"F5",  3:"E5",  4:"D5",  5:"C5",  6:"A#4",
-       7:"A4", 8:"G4", 9:"F4", 10:"E4", 11:"D4", 12:"C4", 13:"A#3",
-      14:"A3",15:"A#3",16:"C4",17:"D4", 18:"E4", 19:"F4", 20:"G4",
-      21:"A4",22:"A#4",23:"C5",24:"D5", 25:"E5", 26:"F5", 27:"G5",
-      28:"A5",29:"A#5",30:"A5",31:"G5", 32:"F5", 33:"E5", 34:"D5",
-      35:"C5",36:"A5",37:"A#5",38:"A5",39:"G5",  40:"F5", 41:"E5",
-    }),
-    strings2: seq(42,{
-       0:"A3", 2:"G3",  4:"F3",  6:"A#3", 8:"A3", 10:"G3", 12:"F3",
-      14:"E3",16:"F3", 18:"G3", 20:"A3", 22:"G3", 24:"F3", 26:"E3",
-      28:"A2",30:"A#2",32:"C3", 34:"D3", 36:"A3", 38:"G3", 40:"F3",
-    }),
-    // coro: entrate drammatiche, "e" urlante al climax (batt.3 step 28+)
-    choir: seq(42,{
-       0:["A3",8,"a"], 14:["F3",7,"o"],
-      22:["G3",6,"a"], 28:["E3",8,"o"],
-      36:["A3",6,"e"],
-    }),
-    // ottoni su ogni downbeat 7/8 delle 3 battute
-    brass: seq(42,{
-       0:["A3",3],  6:["G3",2],  10:["A#3",2],
-      14:["F3",3], 20:["A3",2],  24:["G3",2],
-      28:["E3",4], 36:["A3",4],  40:["G3",2],
-    }),
-    drum: seq(42,{
-       0:"k",    2:"h",    4:"s",    6:"k",    8:"h",    10:"k",   12:"s",
-      14:"k",   16:"h",   18:"s",   20:"k",   22:"h",   24:"k",   26:"s",
-      // climax battuta 3: timpani + kick simultanei per il finale catastrofico
-      28:"k|t", 29:"h",   30:"t",   31:"h",   32:"s|t", 33:"h",   34:"k|t",
-      35:"h",   36:"t",   37:"h",   38:"k|t", 39:"h",   40:"s|t", 41:"h",
-    }),
-  },
-
-  /* ── ELITE: "Sfida" ────────────────────────────────────────────────────────────
-     4/4 · 136 BPM · Mi frigio. Breve e brutale. */
+  /* ── ÉLITE: "Sfida" — breve e brutale, 4/4 serrato ── */
   elite: {
-    title:"Sfida dell'Élite", bpm:136, len:16, dread:true,
-    bassType:"sawtooth",
-    bass: seq(16,{ 0:"E2",2:"F2",4:"E2",6:"G2",8:"E2",10:"D2",12:"E2",14:"F2" }),
-    lead: seq(16,{}), pad: seq(16,{}), padHarm: seq(16,{}),
-    strings: seq(16,{
-      0:"B4",1:"A4",2:"G4",3:"F#4",4:"E4",5:"F4",6:"G4",7:"A4",
-      8:"B4",9:"C5",10:"B4",11:"A4",12:"G4",13:"F4",14:"E4",15:"D4",
-    }),
-    strings2: seq(16,{
-      0:"E3",2:"F3",4:"G3",6:"E3",8:"D3",10:"E3",12:"F3",14:"G3",
-    }),
-    choir: seq(16,{ 0:["E4",5,"a"], 8:["B4",5,"a"] }),
-    brass: seq(16,{ 0:["E3",2],4:["G3",2],8:["E3",2],12:["D3",2] }),
-    drum: seq(16,{
-      0:"k",1:"h",2:"h",3:"s",4:"k",5:"h",6:"k",7:"h",
-      8:"s",9:"h",10:"k",11:"h",12:"k",13:"s",14:"h",15:"h",
-    }),
+    title:"Sfida dell'Élite", dread:true, loopFrom:0,
+    sections:[
+      { bpm:140, len:16,
+        bass:  seq(16,{ 0:"E2",2:"F2",4:"E2",6:"G2",8:"E2",10:"D2",12:"E2",14:"F2" }),
+        cello: seq(16,{
+          0:"E3",1:"F3",2:"G3",3:"E3",4:"D3",5:"E3",6:"F3",7:"G3",
+          8:"E3",9:"D3",10:"C3",11:"D3",12:"E3",13:"F3",14:"G3",15:"E3",
+        }),
+        swell: seq(16,{ 0:["B4",8], 8:["A4",6] }),
+        choir: seq(16,{ 0:["E4",5,"e"], 8:["B4",5,"e"] }),
+        brass: seq(16,{ 0:["E3",2],4:["G3",2],8:["E3",2],12:["D3",2] }),
+        timp:  seq(16,{ 0:"E2", 8:"E2" }),
+        drum:  seq(16,{ 0:"k",2:"h",3:"s",4:"k",6:"k",7:"s",8:"k",10:"h",11:"s",12:"k",14:"k",15:"s" }),
+      },
+    ],
+  },
+
+  /* ── BOSS 0: "Frantumazione" — A frigio · custode di pietra del Sepolcreto ──
+     Sez.0 tensione granitica · Sez.1 (loop) rabbia marcata. */
+  boss0: {
+    title:"Frantumazione", dread:true, loopFrom:1,
+    sections:[
+      // CREEPING TENSION
+      { bpm:96, len:28,
+        bass:  seq(28,{ 0:"A1", 14:"A#1" }),
+        cello: seq(28,{
+           0:"A2", 2:"A2", 4:"A2",  6:"A2",  8:"A#2",10:"A2", 12:"G2",
+          14:"A2",16:"A2",18:"A2", 20:"A2", 22:"F2", 24:"G2", 26:"A2",
+        }),
+        swell: seq(28,{ 0:["A3",16], 8:["A#3",10], 16:["A3",12] }),
+        choir: seq(28,{ 4:["A3",12,"o"] }),
+        drum:  seq(28,{ 0:"k", 14:"k" }),
+      },
+      // TERROR & RAGE (loop)
+      { bpm:118, len:28,
+        bass:  seq(28,{ 0:"A1", 6:"A1", 10:"G1", 14:"A1", 20:"A1", 24:"F1" }),
+        cello: seq(28,{
+           0:"A2", 2:"A#2", 4:"A2",  6:"G2",  8:"A2", 10:"F2", 12:"G2",
+          14:"A2",16:"A#2",18:"G2", 20:"A2", 22:"F2", 24:"E2", 26:"A2",
+        }),
+        swell: seq(28,{ 0:["A4",7], 6:["A#4",4], 10:["G4",4], 14:["A4",7], 20:["F4",4], 24:["G4",4] }),
+        choir: seq(28,{ 0:["A4",6,"a"], 6:["F4",4,"e"], 14:["A4",6,"a"], 20:["G4",4,"e"] }),
+        brass: seq(28,{ 0:["A3",2], 6:["G3",2], 10:["F3",2], 14:["A3",2], 20:["A#3",2], 24:["G3",2] }),
+        timp:  seq(28,{ 0:"A2", 14:"A2" }),
+        drum:  seq(28,{ 0:"k|t", 2:"h", 4:"s", 6:"k", 8:"h", 10:"k", 12:"s", 14:"k|t", 16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s" }),
+      },
+    ],
+  },
+
+  /* ── BOSS 1: "Nenia del Fango" — D frigio · l'Annegata della palude ──
+     Dominato dal coro; lentissimo, soffocante. Sez.1 (loop) ninnananna
+     d'incubo sott'acqua: pochi tamburi, archi tremolo che ondeggiano. */
+  boss1: {
+    title:"Nenia del Fango", dread:true, loopFrom:1,
+    sections:[
+      // CREEPING
+      { bpm:66, len:28,
+        bass:  seq(28,{ 0:"D1", 14:"A0" }),
+        swell: seq(28,{ 0:["D3",16], 6:["E3",10], 16:["D#3",12] }),
+        choir: seq(28,{ 0:["D3",14,"o"], 14:["A2",12,"o"] }),
+        cello: seq(28,{ 0:["D2",12], 14:["A1",10] }),
+        drum:  seq(28,{}),
+      },
+      // RAGE (loop) — il fango ribolle
+      { bpm:84, len:28,
+        bass:  seq(28,{ 0:"D2", 6:"D2", 10:"C2", 14:"A1", 20:"A#1", 24:"D2" }),
+        cello: seq(28,{
+           0:"D3", 2:"D3", 4:"C3",  6:"D3",  8:"D#3",10:"C3", 12:"D3",
+          14:"A2",16:"A#2",18:"C3", 20:"D3", 22:"C3", 24:"D3", 26:"E3",
+        }),
+        swell: seq(28,{ 0:["D4",10], 8:["E4",6], 14:["A#3",10], 22:["G3",6] }),
+        choir: seq(28,{ 0:["D4",10,"o"], 10:["F4",6,"a"], 14:["A3",10,"o"], 24:["D4",4,"e"] }),
+        brass: seq(28,{ 0:["D3",3], 14:["A2",3] }),
+        timp:  seq(28,{ 0:"D2", 14:"A1" }),
+        drum:  seq(28,{ 0:"k", 6:"k", 10:"s", 14:"k|t", 20:"k", 24:"s" }),
+      },
+    ],
+  },
+
+  /* ── BOSS 2: "Galop della Fine" — E frigio · il Boia di Cenere ──
+     Il più aggressivo: metal sinfonico. Galoppo frenetico, violoncello in
+     16°, ottoni distorti su ogni downbeat, coro che urla "e". Sez.0 carica
+     breve · Sez.1 (loop) caos apocalittico. */
+  boss2: {
+    title:"Galop della Fine", dread:true, loopFrom:1,
+    sections:[
+      // CHARGE
+      { bpm:150, len:14,
+        bass:  seq(14,{ 0:"E2", 6:"E2", 10:"E2" }),
+        cello: seq(14,{ 0:"E3",1:"E3",2:"E3",3:"E3",4:"F3",5:"E3",6:"D3",7:"E3",8:"E3",9:"E3",10:"E3",11:"E3",12:"F3",13:"G3" }),
+        swell: seq(14,{ 0:["E5",14] }),
+        brass: seq(14,{ 0:["E3",2], 6:["E3",2], 10:["E3",2] }),
+        drum:  seq(14,{ 0:"k",2:"h",4:"h",6:"k",8:"h",10:"k",12:"h" }),
+      },
+      // APOCALYPTIC CHAOS (loop)
+      { bpm:158, len:28,
+        bass:  seq(28,{ 0:"E1", 4:"E1", 6:"E1", 10:"E1", 14:"E1", 18:"D1", 20:"E1", 24:"F1", 26:"E1" }),
+        cello: seq(28,{
+           0:"E3", 1:"F3",  2:"G3",  3:"E3",  4:"D3",  5:"E3",  6:"F3",
+           7:"G3", 8:"E3",  9:"D3", 10:"E3", 11:"F3", 12:"G3", 13:"A3",
+          14:"E3",15:"D3", 16:"E3", 17:"F3", 18:"D3", 19:"E3", 20:"G3",
+          21:"F3",22:"E3", 23:"D3", 24:"E3", 25:"F3", 26:"G3", 27:"A3",
+        }),
+        swell: seq(28,{
+           0:"B5", 1:"A5", 2:"G5",  4:"E5",  6:"G5",  8:"B5", 10:"A5", 12:"G5",
+          14:"E5",16:"F5", 18:"G5", 20:"B5", 22:"C6", 24:"B5", 26:"G5",
+        }),
+        choir: seq(28,{
+           0:["E4",4,"e"],  4:["B4",3,"e"],  7:["G4",3,"e"], 10:["A4",3,"e"],
+          14:["E4",4,"e"], 18:["G4",3,"e"], 21:["B4",3,"e"], 24:["E5",4,"e"],
+        }),
+        brass: seq(28,{
+           0:["E3",2],  4:["F3",2],  6:["E3",2],  8:["D3",1], 10:["E3",2], 12:["G3",1],
+          14:["E3",2], 16:["D3",1], 18:["E3",2], 20:["G3",2], 24:["E3",2], 26:["F3",1],
+        }),
+        timp:  seq(28,{ 0:"E2", 6:"E2", 10:"E2", 14:"E2", 20:"E2", 24:"E2" }),
+        drum:  seq(28,{
+           0:"k|t", 1:"h", 2:"h", 3:"s", 4:"k", 5:"h", 6:"k", 7:"h", 8:"s", 9:"h",
+          10:"k", 11:"h", 12:"k", 13:"s", 14:"k|t",15:"h",16:"h",17:"s",18:"k",19:"h",
+          20:"k", 21:"h", 22:"s", 23:"h", 24:"k", 25:"h", 26:"k", 27:"s",
+        }),
+      },
+    ],
+  },
+
+  /* ── BOSS 3: "Morte del Primo Nome" — A frigio · il Sovrano Senza Nome ──
+     L'opera completa in tre atti: Tensione strisciante (sez.0) → Rabbia
+     (sez.1) → Climax apocalittico con timpani e coro in delirio (sez.2).
+     Il loop riparte dalla rabbia: l'orrore non si placa. */
+  boss3: {
+    title:"Morte del Primo Nome", dread:true, loopFrom:1,
+    sections:[
+      // ATTO I — CREEPING TENSION
+      { bpm:88, len:28,
+        bass:  seq(28,{ 0:"A1", 14:"F1" }),
+        cello: seq(28,{
+           0:"A2", 4:"A2",  8:"A2", 12:"A#2",
+          14:"A2",18:"A2", 22:"G2", 26:"A2",
+        }),
+        swell: seq(28,{ 0:["A3",16], 8:["A#3",10], 16:["G3",12], 22:["A3",6] }),
+        choir: seq(28,{ 4:["A3",12,"o"], 18:["F3",8,"o"] }),
+        drum:  seq(28,{ 0:"t", 14:"t" }),
+      },
+      // ATTO II — TERROR & RAGE (loop)
+      { bpm:128, len:28,
+        bass:  seq(28,{ 0:"A1", 6:"G1", 10:"A#1", 14:"F1", 20:"A1", 24:"G1" }),
+        cello: seq(28,{
+           0:"A2", 2:"A#2", 4:"A2",  6:"G2",  8:"A2", 10:"A#2",12:"A2",
+          14:"F2",16:"G2", 18:"A2", 20:"G#2",22:"A2", 24:"G2", 26:"A#2",
+        }),
+        swell: seq(28,{
+           0:"A5", 2:"G5", 4:"F5",  6:"A#4", 8:"A4", 10:"G4", 12:"F4",
+          14:"E4",16:"F4",18:"G4", 20:"A4", 24:"A#4", 26:"C5",
+        }),
+        choir: seq(28,{ 0:["A4",7,"a"], 6:["G4",3,"e"], 14:["F4",6,"o"], 20:["A4",4,"e"] }),
+        brass: seq(28,{ 0:["A3",3], 6:["G3",2], 10:["A#3",2], 14:["F3",3], 20:["A3",2], 24:["G3",2] }),
+        timp:  seq(28,{ 0:"A2", 14:"F2" }),
+        drum:  seq(28,{ 0:"k|t", 2:"h", 4:"s", 6:"k", 8:"h", 10:"k", 12:"s", 14:"k|t", 16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s" }),
+      },
+      // ATTO III — APOCALYPTIC CLIMAX
+      { bpm:132, len:28,
+        bass:  seq(28,{ 0:"A1", 2:"A1", 4:"A#1", 6:"A1", 8:"G1", 10:"A1", 12:"F1", 14:"A1", 18:"A#1", 22:"A1", 26:"E1" }),
+        cello: seq(28,{
+           0:"A2", 1:"A2", 2:"A#2", 3:"A2",  4:"G2",  5:"A2",  6:"F2",
+           7:"A2", 8:"A2", 9:"A#2",10:"A2", 11:"G2", 12:"F2", 13:"A2",
+          14:"A2",15:"A2",16:"A#2",17:"A2", 18:"G2", 19:"A2", 20:"F2",
+          21:"A2",22:"A2",23:"A#2",24:"A2", 25:"G2", 26:"F2", 27:"A2",
+        }),
+        swell: seq(28,{ 0:["A5",14], 2:["A#5",12], 14:["G5",14], 16:["F5",12] }),
+        choir: seq(28,{
+           0:["A4",6,"e"],  4:["C5",4,"e"],  8:["A4",4,"e"], 12:["F4",3,"e"],
+          14:["A4",6,"e"], 18:["A#4",4,"e"],22:["A4",4,"e"], 26:["E5",2,"e"],
+        }),
+        brass: seq(28,{
+           0:["A3",2], 2:["A#3",1], 4:["G3",2], 6:["A3",2], 8:["F3",1], 10:["A3",2], 12:["G3",1],
+          14:["A3",2],16:["A#3",1],18:["G3",2],20:["A3",2],22:["F3",1],24:["A3",2],26:["G3",1],
+        }),
+        timp:  seq(28,{ 0:"A2", 4:"A2", 8:"A2", 12:"A2", 14:"A2", 18:"A2", 22:"A2", 26:"A2" }),
+        drum:  seq(28,{
+           0:"k|t", 2:"s", 4:"k|t", 6:"s", 8:"k|t", 10:"s", 12:"k|t",
+          14:"k|t",16:"s",18:"k|t",20:"s",22:"k|t",24:"s",26:"k|t",
+        }),
+      },
+    ],
   },
 };
 
 const Music = {
-  timer:0, step:0, nextTime:0, theme:null, gain:null, vol:0.6, bedNodes:[], reverbIn:null,
+  timer:0, sec:0, step:0, nextTime:0, spb:0.12, theme:null, gain:null, vol:0.6,
+  bedNodes:[], reverbIn:null, distCurve:null,
+  makeDist(k){ const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/n*2-1; c[i]=Math.tanh(x*k); } return c; },
   ensure(){
     if(!AudioFX.ensure()) return false;
     if(!this.gain){
@@ -2651,7 +2758,7 @@ const Music = {
       this.gain = c.createGain();
       this.gain.gain.value = this.vol;
       this.gain.connect(c.destination);
-      // cattedrale Bloodborne: convolution reverb bus (wet signal)
+      // cattedrale Bloodborne: convolution reverb bus (segnale wet)
       try{
         const conv=c.createConvolver();
         conv.buffer=makeIR(c,4.8,2.0);
@@ -2659,6 +2766,7 @@ const Music = {
         conv.connect(rg); rg.connect(c.destination);
         this.reverbIn=conv;
       }catch(e){ this.reverbIn=null; }
+      this.distCurve = this.makeDist(8);
     }
     return true;
   },
@@ -2670,29 +2778,32 @@ const Music = {
       this.gain.gain.setValueAtTime(Math.max(0.0001,this.vol), t);
     }
   },
+  curSec(){ return this.theme ? this.theme.sections[this.sec] : null; },
+  applyTempo(){ const s=this.curSec(); if(s) this.spb = 60/s.bpm/4; },
   start(name){
     if(!AudioFX.enabled || !this.ensure()) return;
     this.stop();
     const th = THEMES[name];
     if(!th) return;
     if(AudioFX.ctx.state==="suspended") AudioFX.ctx.resume();
+    Sampler.load(); // decodifica i campioni (idempotente)
     this.theme = th;
-    th.spb = 60/th.bpm/4;
-    this.step = 0;
-    this.nextTime = AudioFX.ctx.currentTime + 0.08;
+    this.sec = 0; this.step = 0;
+    this.applyTempo();
+    this.nextTime = AudioFX.ctx.currentTime + 0.10;
     this.gain.gain.cancelScheduledValues(AudioFX.ctx.currentTime);
     this.gain.gain.setValueAtTime(0.0001, AudioFX.ctx.currentTime);
-    this.gain.gain.exponentialRampToValueAtTime(Math.max(0.0001,this.vol), AudioFX.ctx.currentTime+0.5);
+    this.gain.gain.exponentialRampToValueAtTime(Math.max(0.0001,this.vol), AudioFX.ctx.currentTime+0.6);
     this.startBed();
     this.timer = setInterval(()=>this.schedule(), 30);
   },
-  /* letto di terrore sotto i temi dark/dread: due sub-drone profondi e detunati */
+  /* letto di terrore sotto i temi: sub-drone profondi e detunati */
   startBed(){
     this.stopBed();
     if(!this.theme || !(this.theme.dark || this.theme.dread) || !AudioFX.ctx) return;
     const c=AudioFX.ctx, now=c.currentTime;
-    const base = this.theme.dark ? 27.5 : 32.7; // A0 / C1
-    const peak = this.theme.dark ? 0.11 : 0.055;
+    const base = this.theme.dark ? 27.5 : 32.7;
+    const peak = this.theme.dark ? 0.10 : 0.05;
     [0, 0.6].forEach((det)=>{
       const o=c.createOscillator(), g=c.createGain();
       o.type="sine"; o.frequency.value = base*(1+det*0.012);
@@ -2723,177 +2834,97 @@ const Music = {
     if(!this.theme || !AudioFX.enabled){ this.stop(); return; }
     const c = AudioFX.ctx;
     while(this.nextTime < c.currentTime + 0.15){
-      this.playStep(this.step, this.nextTime);
+      const s = this.curSec();
+      if(!s){ this.stop(); return; }
+      this.playStep(s, this.step, this.nextTime);
       const th=this.theme;
       if(th.dark){ // menu: dark ambient pieno
         if(Math.random()<.04) dreadScrape(this.gain, this.nextTime, 0.7+Math.random()*0.8, 0.014);
         if(Math.random()<.03) dreadWhisper(this.gain, this.nextTime, 0.9+Math.random()*0.6, 0.010);
         if(Math.random()<.015) dreadSwell(this.gain, 110, this.nextTime, 3+Math.random()*2, 0.018);
         if(Math.random()<.012) dreadChime(this.gain, 160+Math.random()*40, this.nextTime, 6+Math.random()*3, 0.026);
-      } else if(th.dread){ // scontri: effetti oscuri per tensione Bloodborne
+      } else if(th.dread){ // scontri: effetti oscuri per tensione
         if(Math.random()<.008) dreadScrape(this.gain, this.nextTime, 0.5+Math.random()*0.4, 0.010);
-        if(Math.random()<.006) dreadChime(this.gain, 80+Math.random()*40, this.nextTime, 4+Math.random()*2, 0.018);
-        if(Math.random()<.004) dreadWhisper(this.gain, this.nextTime, 1.2+Math.random()*0.8, 0.008);
+        if(Math.random()<.005) dreadChime(this.gain, 80+Math.random()*40, this.nextTime, 4+Math.random()*2, 0.016);
       }
-      this.nextTime += this.theme.spb;
-      this.step = (this.step+1)%this.theme.len;
+      this.nextTime += this.spb;
+      this.step++;
+      if(this.step >= s.len){
+        this.step = 0;
+        this.sec++;
+        if(this.sec >= this.theme.sections.length) this.sec = this.theme.loopFrom||0;
+        this.applyTempo();
+      }
     }
   },
-  inst(freq, t, dur, type, vol){
+  /* ── SUB BASSO SINTETICO ── */
+  subBass(freq, t, dur){
     const c=AudioFX.ctx, o=c.createOscillator(), g=c.createGain();
-    o.type=type; o.frequency.setValueAtTime(freq,t);
+    o.type="triangle"; o.frequency.setValueAtTime(freq,t);
     g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol,t+0.014);
+    g.gain.exponentialRampToValueAtTime(0.10,t+0.02);
     g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
     o.connect(g); g.connect(this.gain);
     o.start(t); o.stop(t+dur+0.05);
   },
-  pad(freq, t, dur){
+  /* ── OTTONE CAMPIONATO + DISTORSIONE (aggressivo) ── */
+  brassSample(freq, t, dur, vol){
+    const pk=Sampler.pick("trombone", freq);
+    if(!pk) return false;
     const c=AudioFX.ctx;
-    [-7,0,7].forEach((cents,i)=>{
-      const o=c.createOscillator(), g=c.createGain();
-      o.type="triangle";
-      o.frequency.setValueAtTime(freq*Math.pow(2,cents/1200), t);
-      const atk=Math.min(0.4, dur*0.25);
-      const vol = i===1 ? 0.042 : 0.018;
-      g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(vol, t+atk);
-      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-      o.connect(g); g.connect(this.gain);
-      o.start(t); o.stop(t+dur+0.12);
-    });
+    const src=c.createBufferSource(); src.buffer=pk.buf; src.playbackRate.value=pk.rate;
+    let node=src;
+    if(typeof c.createWaveShaper==="function" && this.distCurve){
+      const ws=c.createWaveShaper(); ws.curve=this.distCurve;
+      try{ ws.oversample="2x"; }catch(e){}
+      src.connect(ws); node=ws;
+    }
+    const lp=c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2600; lp.Q.value=1.1;
+    node.connect(lp);
+    const g=c.createGain();
+    const atk=Math.min(0.04, dur*0.25);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol,t+atk);
+    g.gain.setValueAtTime(vol*0.8, Math.max(t+atk+0.001, t+dur-0.06));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    lp.connect(g); g.connect(this.gain);
+    if(this.reverbIn){ const rs=c.createGain(); rs.gain.value=0.12; g.connect(rs); rs.connect(this.reverbIn); }
+    src.start(t); src.stop(t+dur+0.1);
+    return true;
   },
-  /* ── ARCHI CON VIBRATO REALE ─────────────────────────────────────────────────
-     3 voci leggermente scordaste + LFO per vibrato + lowpass per calore.
-     fast=true → attacco istantaneo per run frenetiche di 16° */
-  strings(freq, t, dur, vol, fast){
+  /* ── FALLBACK SINTETICI (se i campioni non sono pronti) ── */
+  synthVoice(freq, t, dur, vol, type, cutoff, fast){
     const c=AudioFX.ctx;
-    if(!c || !c.createBiquadFilter) return;
-    const atk = fast ? 0.012 : Math.min(0.55, dur*0.28);
-    const cutoff = fast ? 3400 : 1800;
-    [-9, 0, 8].forEach((cents, i)=>{
-      const osc=c.createOscillator();
-      osc.type="sawtooth";
-      osc.frequency.setValueAtTime(freq*Math.pow(2,cents/1200), t);
-      // LFO vibrato (più veloce per archi frenetici)
-      const lfo=c.createOscillator(), lfoG=c.createGain();
-      lfo.type="sine"; lfo.frequency.value = fast ? 6.8 : 4.3;
-      lfoG.gain.value = fast ? 4.5 : 2.2;
-      lfo.connect(lfoG); lfoG.connect(osc.frequency);
-      const lp=c.createBiquadFilter();
-      lp.type="lowpass"; lp.frequency.value=cutoff; lp.Q.value=0.55;
-      const g=c.createGain();
-      const vk=Math.max(0.0001, vol*(i===1?1:0.44));
+    if(!c.createBiquadFilter) return;
+    const atk = fast ? 0.012 : Math.min(0.5, dur*0.28);
+    [-9,0,8].forEach((cents,i)=>{
+      const o=c.createOscillator(); o.type=type;
+      o.frequency.setValueAtTime(freq*Math.pow(2,cents/1200), t);
+      const lp=c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=cutoff; lp.Q.value=0.6;
+      const g=c.createGain(); const vk=Math.max(0.0001, vol*(i===1?1:0.42));
       g.gain.setValueAtTime(0.0001,t);
       g.gain.exponentialRampToValueAtTime(vk, t+atk);
       g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-      osc.connect(lp); lp.connect(g); g.connect(this.gain);
-      // wet reverb per archi in temi dread (coda sinfonico-gotica)
-      if(this.reverbIn && this.theme && this.theme.dread && !fast){
-        const rs=c.createGain(); rs.gain.value=0.32; g.connect(rs); rs.connect(this.reverbIn);
-      }
-      lfo.start(t); osc.start(t);
-      lfo.stop(t+dur+0.14); osc.stop(t+dur+0.14);
+      o.connect(lp); lp.connect(g); g.connect(this.gain);
+      if(this.reverbIn && this.theme && this.theme.dread){ const rs=c.createGain(); rs.gain.value=0.3; g.connect(rs); rs.connect(this.reverbIn); }
+      o.start(t); o.stop(t+dur+0.12);
     });
-  },
-  /* ── CORO CON FILTRI FORMANTICI ──────────────────────────────────────────────
-     4 voci sawtooth (ensemble), ognuna attraverso bandpass sulle formanti vocaliche.
-     vowel: "a"=Ah, "o"=Oh, "e"=urlo stridente (coro operistico del terrore). */
-  choir(freq, t, dur, vol, vowel){
-    const c=AudioFX.ctx;
-    if(!c || !c.createBiquadFilter) return;
-    const FMTS = {
-      a:[{f:800,q:6,v:1},{f:1200,q:8,v:0.70},{f:2600,q:12,v:0.28}],
-      o:[{f:500,q:7,v:1},{f:850, q:8,v:0.62},{f:2200,q:12,v:0.20}],
-      e:[{f:390,q:6,v:1},{f:2200,q:7,v:0.92},{f:3000,q:14,v:0.55}],
-      u:[{f:340,q:7,v:1},{f:600, q:8,v:0.48},{f:2400,q:12,v:0.14}],
-    }[vowel||"a"] || [];
-    const atk=Math.min(0.45, dur*0.28);
-    [-12,-6,0,7].forEach((cents)=>{
-      const osc=c.createOscillator();
-      osc.type="sawtooth";
-      osc.frequency.value=freq*Math.pow(2,cents/1200);
-      // vibrato lento da coro
-      const lfo=c.createOscillator(), lfoG=c.createGain();
-      lfo.type="sine"; lfo.frequency.value=5.0; lfoG.gain.value=2.5;
-      lfo.connect(lfoG); lfoG.connect(osc.frequency);
-      FMTS.forEach(({f,q,v})=>{
-        const bp=c.createBiquadFilter();
-        bp.type="bandpass"; bp.frequency.value=f; bp.Q.value=q;
-        const g=c.createGain();
-        const vk=Math.max(0.0001, vol*v*(cents===0?1:0.38));
-        g.gain.setValueAtTime(0.0001,t);
-        g.gain.exponentialRampToValueAtTime(vk, t+atk);
-        g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-        osc.connect(bp); bp.connect(g); g.connect(this.gain);
-        // wet send → cattedrale reverb
-        if(this.reverbIn){ const rv=c.createGain(); rv.gain.value=0.72; g.connect(rv); rv.connect(this.reverbIn); }
-      });
-      lfo.start(t); osc.start(t);
-      lfo.stop(t+dur+0.14); osc.stop(t+dur+0.14);
-    });
-    // Bloodborne choir echo: copia ritardata ~280ms → spazio gotico
-    if(this.theme && this.theme.dread){
-      const ecO=c.createOscillator(); ecO.type="sawtooth"; ecO.frequency.value=freq*0.997;
-      const ecG=c.createGain();
-      const ecAtk=Math.min(0.38,dur*0.22);
-      ecG.gain.setValueAtTime(0.0001, t+0.27);
-      ecG.gain.exponentialRampToValueAtTime(Math.max(0.0001,vol*0.28), t+0.27+ecAtk);
-      ecG.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.27);
-      ecO.connect(ecG); ecG.connect(this.gain);
-      if(this.reverbIn){ const rv2=c.createGain(); rv2.gain.value=0.5; ecG.connect(rv2); rv2.connect(this.reverbIn); }
-      ecO.start(t+0.27); ecO.stop(t+dur+0.44);
-    }
-  },
-  /* ── OTTONI PESANTI ──────────────────────────────────────────────────────────
-     Sawtooth + lowpass risonante + sub-armonica per peso.
-     Glide minimo sull'attacco per l'aggressività dell'ottone. */
-  brass(freq, t, dur, vol){
-    const c=AudioFX.ctx;
-    if(!c || !c.createBiquadFilter) return;
-    const lp=c.createBiquadFilter();
-    lp.type="lowpass"; lp.frequency.value=1500; lp.Q.value=3.8;
-    const osc=c.createOscillator();
-    osc.type="sawtooth";
-    osc.frequency.setValueAtTime(freq*0.96, t);
-    osc.frequency.exponentialRampToValueAtTime(freq, t+0.05);
-    const g=c.createGain();
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol,t+0.04);
-    g.gain.setValueAtTime(vol*0.78, t+dur-0.07);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-    osc.connect(lp); lp.connect(g); g.connect(this.gain);
-    osc.start(t); osc.stop(t+dur+0.1);
-    // sub-armonica: corpo grave degli ottoni
-    const sub=c.createOscillator(), sg=c.createGain();
-    sub.type="sine"; sub.frequency.value=freq/2;
-    sg.gain.setValueAtTime(0.0001,t);
-    sg.gain.exponentialRampToValueAtTime(vol*0.32, t+0.04);
-    sg.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-    sub.connect(sg); sg.connect(this.gain);
-    sub.start(t); sub.stop(t+dur+0.1);
   },
   drum(kind, t){
     const c=AudioFX.ctx;
     if(kind==="k"){
-      // cassa orchestrale pesante: sweep 95→28 Hz, transiente di punch
       const o=c.createOscillator(), g=c.createGain();
-      o.type="sine";
-      o.frequency.setValueAtTime(95,t);
-      o.frequency.exponentialRampToValueAtTime(28,t+0.18);
-      g.gain.setValueAtTime(0.36,t);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+      o.type="sine"; o.frequency.setValueAtTime(105,t); o.frequency.exponentialRampToValueAtTime(30,t+0.18);
+      g.gain.setValueAtTime(0.40,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
       o.connect(g); g.connect(this.gain); o.start(t); o.stop(t+0.26);
-      // click di attacco
       const ck=c.createOscillator(), ckg=c.createGain();
-      ck.type="square"; ck.frequency.value=200;
-      ckg.gain.setValueAtTime(0.09,t); ckg.gain.exponentialRampToValueAtTime(0.0001,t+0.025);
+      ck.type="square"; ck.frequency.value=210;
+      ckg.gain.setValueAtTime(0.10,t); ckg.gain.exponentialRampToValueAtTime(0.0001,t+0.025);
       ck.connect(ckg); ckg.connect(this.gain); ck.start(t); ck.stop(t+0.03);
-    } else if(kind==="t"){ // timpani
+    } else if(kind==="t"){ // timpani synth (fallback se campione assente)
       const o=c.createOscillator(), g=c.createGain();
-      o.type="sine";
-      o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(52,t+0.45);
-      g.gain.setValueAtTime(0.26,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
+      o.type="sine"; o.frequency.setValueAtTime(82,t); o.frequency.exponentialRampToValueAtTime(50,t+0.45);
+      g.gain.setValueAtTime(0.28,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
       o.connect(g); g.connect(this.gain); o.start(t); o.stop(t+0.62);
     } else {
       const dur = kind==="s" ? 0.1 : 0.03;
@@ -2901,53 +2932,43 @@ const Music = {
       const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
       for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
       const src=c.createBufferSource(); src.buffer=buf;
-      const g=c.createGain(); g.gain.value = kind==="s" ? 0.17 : 0.07;
+      const g=c.createGain(); g.gain.value = kind==="s" ? 0.18 : 0.07;
       src.connect(g); g.connect(this.gain); src.start(t);
     }
   },
-  playStep(st, t){
-    const th=this.theme, spb=th.spb;
-    // basso (arco/violoncello)
-    const b=th.bass[st];
-    if(b) this.inst(nf(b), t, spb*1.88, th.bassType||"triangle", 0.095);
-    // melodia legacy (nessun tema la usa più, ma compat.)
-    const l=th.lead[st];
-    if(l){
-      const [n,d]=Array.isArray(l)?l:[l,1];
-      this.inst(nf(n), t, spb*d*0.9, "square", 0.058);
-    }
-    // pad legacy
-    const p=th.pad&&th.pad[st];
-    if(p){ const [n,d]=Array.isArray(p)?p:[p,4]; this.pad(nf(n),t,spb*d*0.92); }
-    const ph=th.padHarm&&th.padHarm[st];
-    if(ph){ const [n,d]=Array.isArray(ph)?ph:[ph,4]; this.pad(nf(n),t,spb*d*0.92); }
-    // ARCHI: nota singola o doppio valore [nota, dur_in_steps]
-    const sv=th.strings&&th.strings[st];
-    if(sv){
-      const [n,d]=Array.isArray(sv)?sv:[sv,1];
-      const fast = th.dread && !Array.isArray(sv); // single note in dread = frantic
-      this.strings(nf(n), t, spb*(typeof d==="number"?d:1)*0.92, 0.072, fast);
-    }
-    const sv2=th.strings2&&th.strings2[st];
-    if(sv2){
-      const [n,d]=Array.isArray(sv2)?sv2:[sv2,1];
-      const fast = th.dread && !Array.isArray(sv2);
-      this.strings(nf(n), t, spb*(typeof d==="number"?d:1)*0.90, 0.056, fast);
-    }
-    // CORO
-    const ch=th.choir&&th.choir[st];
-    if(ch){
-      const [n,d,v]=Array.isArray(ch)?ch:[ch,6,"a"];
-      this.choir(nf(n), t, spb*(typeof d==="number"?d:6)*0.95, 0.050, v||"a");
-    }
-    // OTTONI
-    const br=th.brass&&th.brass[st];
-    if(br){
-      const [n,d]=Array.isArray(br)?br:[br,2];
-      this.brass(nf(n), t, spb*(typeof d==="number"?d:2)*0.92, 0.065);
-    }
-    // percussioni (supporta pattern combinati "k|t" per kick+timpani simultanei)
-    const dr=th.drum[st];
+  playStep(s, st, t){
+    const spb=this.spb, rv=this.reverbIn;
+    // BASSO (sub sintetico)
+    const b=s.bass&&s.bass[st];
+    if(b) this.subBass(nf(b), t, spb*1.9);
+    // VIOLONCELLO (ostinato campionato)
+    const ce=s.cello&&s.cello[st];
+    if(ce){ const [n,d]=Array.isArray(ce)?ce:[ce,1.6]; const f=nf(n);
+      if(!Sampler.play("cello", f, t, spb*d*0.95, 0.17, this.gain, rv, 0.18))
+        this.synthVoice(f, t, spb*d*0.9, 0.085, "sawtooth", 2200, true); }
+    // ARCHI TREMOLO (swell dissonanti)
+    const sw=s.swell&&s.swell[st];
+    if(sw){ const [n,d]=Array.isArray(sw)?sw:[sw,1]; const f=nf(n);
+      const isSus=Array.isArray(sw);
+      if(!Sampler.play("tremolo_strings", f, t, spb*(typeof d==="number"?d:1)*0.95, 0.105, this.gain, rv, 0.45))
+        this.synthVoice(f, t, spb*(typeof d==="number"?d:1)*0.9, 0.06, "sawtooth", isSus?1600:3200, !isSus); }
+    // CORO (urla/lamenti campionati)
+    const ch=s.choir&&s.choir[st];
+    if(ch){ const [n,d]=Array.isArray(ch)?ch:[ch,6]; const f=nf(n);
+      if(!Sampler.play("choir_aahs", f, t, spb*(typeof d==="number"?d:6)*0.95, 0.13, this.gain, rv, 0.7))
+        this.synthVoice(f, t, spb*(typeof d==="number"?d:6)*0.9, 0.05, "sawtooth", 1400, false); }
+    // OTTONI (trombone distorto)
+    const br=s.brass&&s.brass[st];
+    if(br){ const [n,d]=Array.isArray(br)?br:[br,2]; const f=nf(n);
+      if(!this.brassSample(f, t, spb*(typeof d==="number"?d:2)*0.92, 0.15))
+        this.synthVoice(f, t, spb*(typeof d==="number"?d:2)*0.9, 0.07, "sawtooth", 1500, true); }
+    // TIMPANI (campionato, intonato)
+    const tp=s.timp&&s.timp[st];
+    if(tp){ const f=nf(tp);
+      if(!Sampler.play("timpani", f, t, spb*1.6, 0.55, this.gain, rv, 0.3))
+        this.drum("t", t); }
+    // PERCUSSIONI (synth, combinazioni con "|")
+    const dr=s.drum&&s.drum[st];
     if(dr) dr.split("|").forEach(k=>this.drum(k,t));
   },
 };
@@ -3993,9 +4014,10 @@ function openCombatModal(enemy, tile, isBoss, isElite){
   bsInit(enemy.n, tile.region, !!isBoss, !!isElite);
   if(isBoss){ Music.start("boss"+tile.region); bsBossIntro(tile.region); }
   else if(isElite){ Music.start("elite"); }
+  else { Music.start("enemy"); }
   const np = $("cb-nowplaying");
   if(np){
-    const th = isBoss ? THEMES["boss"+tile.region] : (isElite ? THEMES.elite : null);
+    const th = isBoss ? THEMES["boss"+tile.region] : (isElite ? THEMES.elite : THEMES.enemy);
     np.textContent = th ? "♪ "+th.title : "";
   }
   setAction("Scontro in corso", `${enemy.n} ti affronta.`, []);
@@ -4919,6 +4941,7 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
     music(){ return Music; },
     ambient(){ return Ambient; },
     audio(){ return AudioFX; },
+    sampler(){ return Sampler; },
     newGame(c){ return newGame(c); },
     setNoBattleCanvas(){ if(typeof BS!=="undefined") BS.ctx=null; },
   };

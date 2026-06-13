@@ -1,6 +1,6 @@
 # Le Terre Spezzate
 
-Un **gioco da tavolo soulslike in solitario**, giocabile direttamente nel browser. Un singolo file HTML autonomo: nessun build, nessuna dipendenza esterna oltre ai font.
+Un **gioco da tavolo soulslike in solitario**, giocabile direttamente nel browser. Sito statico autonomo (`index.html` + `samples.js`): nessun build, nessuna dipendenza esterna oltre ai font.
 
 Mondo originale ispirato alle meccaniche dei soulslike (Elden Ring in primis) — nomi, personaggi e luoghi sono inventati per non usare proprietà di FromSoftware/Bandai Namco.
 
@@ -24,10 +24,15 @@ Mondo originale ispirato alle meccaniche dei soulslike (Elden Ring in primis) �
 
 ## Caratteristiche tecniche
 
-- **Singolo file** `index.html`, zero dipendenze runtime.
-- Audio sintetizzato in tempo reale in **WebAudio** (SFX + sequencer musicale chiptune), nessun file audio.
+- `index.html` + `samples.js` (campioni orchestrali), zero dipendenze runtime esterne.
+- **Motore musicale ibrido**: campioni orchestrali reali (coro, violoncello, archi tremolo, timpani, trombone) ripitchati via WebAudio e fusi con synth (sub, ottoni distorti, percussioni). Temi boss *through-composed* in 7/8 con reverb a convoluzione "da cattedrale".
+- SFX e ambienza sintetizzati in tempo reale in **WebAudio**.
 - Sprite e scene di battaglia disegnati proceduralmente su **canvas**.
 - Rispetta `prefers-reduced-motion` ed è completamente giocabile da tastiera.
+
+## Crediti audio
+
+- Campioni orchestrali in `samples.js` estratti da **FluidR3_GM** (Frank Wen), distribuito con licenza **MIT** — liberamente ridistribuibile. Note d'ancoraggio curate e ripitchate a runtime dal motore del gioco.
 
 ## Comandi da tastiera
 
