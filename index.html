@@ -1506,6 +1506,7 @@ function buildBoard(){
 function renderBoard(){
   tiles.forEach(t=>{
     const el = $("tile-"+t.idx);
+    if(!el) return;
     el.classList.toggle("cleared", t.cleared && t.type!=="grace");
     el.classList.toggle("active-grace", t.type==="grace" && t.idx===player.checkpoint);
     el.classList.toggle("current", t.idx===player.pos);
@@ -2576,6 +2577,7 @@ const Music = {
   theme: null, vol: 0.6, _cur: null, _pool: {},
   start(name){
     if(!AudioFX.enabled) return;
+    AudioFX.ensure();
     this.stop();
     const url = MUSIC_URLS[name];
     if(!url) return;
