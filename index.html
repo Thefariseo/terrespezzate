@@ -9,17 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#0d0b08;
-  --coal:#16110c;
-  --panel:#1d1710;
-  --edge:#3a2e1c;
-  --gold:#c9a227;
-  --gold-bright:#ecc857;
-  --parchment:#ddd2b6;
-  --faded:#9a8d6f;
-  --blood:#9c3a32;
-  --grace:#ffd87a;
-  --rot:#5a6b4a;
+  /* palette fredda e desaturata — burocrazia dell'ultimo regno (stile Papers, Please) */
+  --ink:#0a0b0b;
+  --coal:#121413;
+  --panel:#181b1a;
+  --edge:#363a37;
+  --gold:#9a8f63;
+  --gold-bright:#c2b486;
+  --parchment:#c0bdab;
+  --faded:#85857a;
+  --blood:#8a2e26;
+  --grace:#c9bb80;
+  --rot:#525c4e;
   --f-pixel:'Press Start 2P',monospace;
   --f-ui:'VT323',monospace;
   --f-body:'VT323',monospace;
@@ -32,10 +33,27 @@ body{
   font-family:var(--f-ui);
   font-size:21px;
   line-height:1.3;
-  background-image:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,162,39,.07), transparent 60%);
+  background-image:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(150,160,156,.045), transparent 60%);
   min-height:100vh;
   -webkit-font-smoothing:none;
   font-smooth:never;
+}
+/* ===== GRADO BUROCRATICO (stile Papers, Please): desaturazione, CRT, vignetta, grana ===== */
+/* la pixel-art su canvas perde colore e diventa fredda e documentale */
+canvas{ filter:saturate(.5) contrast(1.1) brightness(.95); }
+/* scanline + vignetta da cabina di controllo, sopra ogni cosa ma non cliccabile */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.24) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 128% 108% at 50% 50%, transparent 50%, rgba(0,0,0,.62) 100%);
+  mix-blend-mode:multiply;
+}
+/* grana fotografica fissa, bassa intensità */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9997;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:160px 160px;
 }
 h1,h2,h3,.cz{font-family:var(--f-pixel);line-height:1.5}
 button{
@@ -915,12 +933,21 @@ const ELITES = [
   {n:"Golem di Scorie",hp:44,atk:7,r:[250,310]},
   {n:"Araldo della Fine",hp:58,atk:9,r:[360,440]},
 ];
-const BOSSES = [
+/* Ogni regione ha un PASSATO di possibili guardiani: a inizio run se ne sorteggia uno.
+   La stessa terra, un custode diverso — la mappa cambia, e con essa il nemico finale. */
+const BOSSES_V0 = [
   {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:42,atk:4,r:[180,180]},
   {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:58,atk:6,r:[320,320]},
   {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:76,atk:8,r:[520,520]},
   {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:110,atk:10,r:[1100,1100]},
 ];
+const BOSSES_V1 = [
+  {n:"Coro d'Ossa",sub:"Mille morti, una sola voce",hp:46,atk:4,r:[190,190]},
+  {n:"L'Annegato",sub:"Chi entrò e non tornò",hp:62,atk:6,r:[330,330]},
+  {n:"Boia di Cenere",sub:"L'ultimo a deporre la lama",hp:80,atk:8,r:[540,540]},
+  {n:"Regina Cancellata",sub:"Il nome che il Sovrano divorò",hp:116,atk:10,r:[1120,1120]},
+];
+let BOSSES = [];
 
 // tipi casella per regione (9 caselle): grazia, nemico, evento, nemico, tesoro, mercante, élite, evento, boss
 const REGION_PATTERN = ["grace","enemy","event","enemy","treasure","shop","elite","event","boss"];
@@ -987,7 +1014,7 @@ const CLASSES = {
 };
 
 /* ===================== TECNICA SPECIALE (Ardore) ===================== */
-const BOSS_CUTSCENES = [
+const BOSS_CUT_V0 = [
   { color:"#9a9fa8", panels:[
     "La nebbia si solidifica. Nel cuore del Sepolcreto qualcosa si rialza — qualcosa che non avrebbe mai dovuto esistere ancora.",
     "La Sentinella Spezzata fluttua davanti a te, frammenti di armatura sospesi nel vuoto come costellazioni morte. La sua volontà non riconosce la morte.",
@@ -1013,6 +1040,33 @@ const BOSS_CUTSCENES = [
     "Spezza le terre, spezza i nomi, spezza tutto ciò che incontra — forse perché è l'unica cosa che gli è rimasta. Adesso tocca a te.",
   ]},
 ];
+const BOSS_CUT_V1 = [
+  { color:"#9a9fa8", panels:[
+    "Non una figura, ma molte. Il Sepolcreto trattiene il fiato e poi lo libera tutto insieme.",
+    "Mille ossa si sollevano da mille tombe e si stringono in un'unica sagoma che cammina. Il Coro d'Ossa non ha un volto: ha tutti i volti dei sepolti.",
+    "Quando parla, parlano in mille. Ogni voce un nome dimenticato, ogni nome una lama puntata contro di te.",
+    "Non puoi ucciderli tutti. Puoi solo spezzare la voce che li tiene insieme. Comincia a colpire.",
+  ]},
+  { color:"#4a9a5a", panels:[
+    "L'acqua si ritira di colpo, come trattenuta da una mano invisibile. Sul fondo, qualcosa si alza in piedi per la prima volta da secoli.",
+    "L'Annegato è ogni viandante che la palude ha inghiottito. Il fango cola dalle sue orbite vuote, eppure ti guarda. Ti riconosce. Anche tu volevi solo attraversare.",
+    "Non ti odia. Ti invidia. Tu cammini ancora, tu respiri ancora. Vuole ciò che hai, e lo vuole adesso.",
+    "Tende verso di te una mano gonfia d'acqua nera. Non lasciartela stringere.",
+  ]},
+  { color:"#c86030", panels:[
+    "Tra le braci dell'Altopiano, un patibolo che il fuoco non ha consumato. E accanto, chi vi ha lavorato fino all'ultimo.",
+    "Il Boia di Cenere giustiziò il proprio esercito perché nessuno fuggisse il rogo. L'ultimo colpo se lo diede da solo. Ma la mano non ha mai smesso di stringere l'ascia.",
+    "Non conosce pietà: ha smesso di conoscerla il giorno in cui ne ebbe più bisogno. Ora resta solo la lama, e il peso che cala.",
+    "Solleva l'ascia incandescente. Per lui sei soltanto l'ultimo nome sulla lista.",
+  ]},
+  { color:"#8040c0", panels:[
+    "Oltre la sala del trono, una porta che non dovrebbe esistere. Dietro, una donna che il mondo ha dimenticato persino di aver avuto.",
+    "La Regina Cancellata regnava prima del Sovrano. Lui le strappò il nome per primo, e con esso ogni ricordo di lei. Eppure è rimasta, in attesa, nell'unico luogo dove nessuno poteva cercarla.",
+    "Non vuole il trono. Vuole essere ricordata, anche solo da chi sta per ucciderla. È più di quanto abbia avuto in mille anni.",
+    "Ti guarda come si guarda l'ultima persona che pronuncerà il tuo nome. Poi solleva la lama. Falla degna di essere ricordata.",
+  ]},
+];
+let BOSS_CUTSCENES = [];
 const CS_BG = [
   {sky:"#060810",ground:"#080c14",mote:"#7a8aaa",glow:"#9a9fa8",type:"motes"},
   {sky:"#030a05",ground:"#050e07",mote:"#5a9a6a",glow:"#4a9a5a",type:"bubbles"},
@@ -1025,12 +1079,34 @@ const REGION_LORE = [
   {title:"L'Altopiano Cinereo",text:"Cent'anni fa un esercito intero scelse di bruciare piuttosto che ritirarsi. Il fuoco non si è mai del tutto spento. I cavalieri camminano ancora tra le ceneri — senza carne, senza memoria, ma con la lama ancora in pugno e il giuramento ancora in gola."},
   {title:"La Cittadella del Crepuscolo",text:"Sei arrivato. Pochi ci hanno provato. Nessuno l'ha raccontato. La Cittadella fu costruita quando il Sovrano capì che il suo nome stava scomparendo dal mondo — non per difendersi, ma per essere ricordato. Non ci riesce. Dipende da te."},
 ];
-const BOSS_EPILOGUE = [
+const BOSS_EPI_V0 = [
   {title:"La Sentinella cade",text:"I frammenti si disperdono nel vento grigio. Per mille anni questo guardiano ha custodito una soglia che nessuno attraversava più. Non sapeva che il regno per cui combatteva era cenere da secoli. Ora lo sa."},
   {title:"La Madre si placa",text:"L'acqua si quieta. Qualcosa di antico si dissolve nell'oscurità della palude. Il suo dolore era così vecchio che aveva smesso di chiamarsi dolore — era diventato semplicemente lei. Adesso non c'è più né lei né il dolore."},
   {title:"Il Cavaliere si spegne",text:"Le braci si spengono in silenzio. Il giuramento si rompe come ferro consumato — non con un colpo, ma con un sospiro. L'altopiano respira. Da qualche parte, in un mondo che non esiste più, qualcuno aspettava questa notizia."},
   {title:"Il Sovrano cade",text:"Il nome che era stato cancellato dal mondo ritorna per un istante — poi svanisce di nuovo, questa volta per scelta. Il silenzio che cade è diverso da tutti gli altri silenzi che hai attraversato. Adesso sei tu la cosa più pericolosa rimasta nelle Terre Spezzate."},
 ];
+const BOSS_EPI_V1 = [
+  {title:"Il Coro tace",text:"Le mille ossa ricadono, una a una, in mille tombe diverse. Per un istante, prima che il silenzio torni, ti pare di sentire mille voci dire grazie. Poi più nulla."},
+  {title:"L'Annegato riposa",text:"Si lascia andare all'indietro, nell'acqua che torna a salire. Stavolta non lotta. Forse era questo che cercava da sempre: non la tua vita, ma il permesso di smettere di cercarla."},
+  {title:"Il Boia depone la lama",text:"L'ascia cade nella cenere e si spegne. Il patibolo crolla in polvere. L'ultimo nome sulla sua lista, capisci troppo tardi, era il suo. Adesso anche quello è cancellato."},
+  {title:"La Regina è ricordata",text:"Mentre si dissolve, le sue labbra formano una domanda muta — il suo nome. Non lo conosci, non puoi pronunciarlo. Ma annuisci, e per lei è abbastanza: svanisce sorridendo, ricordata da uno sconosciuto."},
+];
+let BOSS_EPILOGUE = [];
+/* Sceglie un guardiano per regione (0 = originale, 1 = variante). Restituisce e
+   memorizza la selezione, così il salvataggio ricarica la stessa run. */
+function pickBosses(picks){
+  const P = (picks && picks.length===4) ? picks.map(x=>x===1?1:0)
+                                        : [0,0,0,0].map(()=>Math.random()<0.5?1:0);
+  BOSSES = []; BOSS_CUTSCENES = []; BOSS_EPILOGUE = [];
+  for(let r=0;r<4;r++){
+    const v = P[r];
+    BOSSES[r]         = (v ? BOSSES_V1   : BOSSES_V0  )[r];
+    BOSS_CUTSCENES[r] = (v ? BOSS_CUT_V1 : BOSS_CUT_V0)[r];
+    BOSS_EPILOGUE[r]  = (v ? BOSS_EPI_V1 : BOSS_EPI_V0)[r];
+  }
+  return P;
+}
+pickBosses([0,0,0,0]); // default sulla schermata titolo finché non parte una run
 
 const TECNICAS = {
   lama_spezzata:  { nm:"Lama Spezzata",   icon:"⚡", col:"#ffe040", desc:"Danno raddoppiato. Stordisce il nemico, saltando il suo prossimo attacco." },
@@ -1147,7 +1223,9 @@ function newGame(cls){
     rolls:0, runesEarned:C.runes, startedAt:Date.now(),
     ardore:0, visitedRegions:[0], lastRegionSeen:0,
     passives:[], synergies:[], ng:false, ngScale:1, secretSeen:false,
+    bossPick:[0,0,0,0],
   };
+  player.bossPick = pickBosses(); // sorteggia i guardiani di questa run
   // Ciclo del Ritorno (NG+): nemici più forti, boss con affissi, boss segreto
   if(ngPlusSelected && getMedals().includes("finisher")){
     player.ng = true; player.ngScale = 1.4;
@@ -1260,6 +1338,8 @@ function loadSlot(n){
     player.ng = player.ng || false;
     player.ngScale = player.ngScale || 1;
     if(player.secretSeen===undefined) player.secretSeen = false;
+    player.bossPick = (player.bossPick && player.bossPick.length===4) ? player.bossPick : [0,0,0,0];
+    pickBosses(player.bossPick); // ripristina i guardiani sorteggiati per questa run
     return true;
   }catch(e){ return false; }
 }
@@ -2130,6 +2210,11 @@ const Ambient = {
     if(!AudioFX.enabled || !this.bus){ this.stop(); return; }
     const c = AudioFX.ctx, t = c.currentTime;
     const r = this.region;
+    // strato di terrore comune a ogni terra: freddo, soprannaturale, dissonante
+    const droneRoot = [55,49,62,41][r]||50;
+    if(Math.random()<.10) dreadScrape(this.bus, t, 0.6+Math.random()*0.7, 0.015);
+    if(Math.random()<.06) dreadWhisper(this.bus, t, 0.8+Math.random()*0.6, 0.011);
+    if(Math.random()<.035) dreadSwell(this.bus, droneRoot*2, t, 2.4+Math.random()*1.6, 0.02);
     if(r===0){ // Sepolcreto: vento metallico + campana rara
       if(Math.random()<.5) AmbientNoise(t,.5,.012, 'wind');
       if(Math.random()<.05) AmbientTone(this.bus,[196,233][Math.random()<.5?0:1],t,1.6,"sine",.05);
@@ -2188,6 +2273,58 @@ function AmbientNoise(t, dur, vol, kind){
   src.connect(g); g.connect(Ambient.bus||AudioFX.out()); src.start(t);
 }
 
+/* ===================== SOUND-DESIGN DARK AMBIENT ===================== */
+/* raschio metallico distante: rumore filtrato a banda stretta che sale di tono */
+function dreadScrape(bus, t, dur, vol){
+  const c=AudioFX.ctx;
+  if(!c.createBiquadFilter) return;
+  const n=Math.floor(c.sampleRate*dur);
+  const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+  const src=c.createBufferSource(); src.buffer=buf;
+  const bp=c.createBiquadFilter(); bp.type="bandpass"; bp.Q.value=18;
+  const f0=700+Math.random()*500;
+  bp.frequency.setValueAtTime(f0,t);
+  bp.frequency.exponentialRampToValueAtTime(f0*(2.4+Math.random()*1.8), t+dur);
+  const g=c.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol||0.02, t+dur*0.35);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  src.connect(bp); bp.connect(g); g.connect(bus||AudioFX.out());
+  src.start(t); src.stop(t+dur+0.05);
+}
+/* sussurro inquietante: rumore a banda media con inviluppo respirato */
+function dreadWhisper(bus, t, dur, vol){
+  const c=AudioFX.ctx;
+  if(!c.createBiquadFilter) return;
+  const n=Math.floor(c.sampleRate*dur);
+  const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++){ const env=Math.sin(Math.PI*i/n); d[i]=(Math.random()*2-1)*env*env; }
+  const src=c.createBufferSource(); src.buffer=buf;
+  const bp=c.createBiquadFilter(); bp.type="bandpass"; bp.Q.value=5;
+  bp.frequency.setValueAtTime(900+Math.random()*300,t);
+  bp.frequency.linearRampToValueAtTime(1500+Math.random()*500,t+dur);
+  const g=c.createGain(); g.gain.value=vol||0.014;
+  src.connect(bp); bp.connect(g); g.connect(bus||AudioFX.out());
+  src.start(t); src.stop(t+dur+0.05);
+}
+/* swell dissonante: archi freddi — radice + seconda minore + tritono, filtrati */
+function dreadSwell(bus, baseFreq, t, dur, vol){
+  const c=AudioFX.ctx;
+  const lp = c.createBiquadFilter ? c.createBiquadFilter() : null;
+  if(lp){ lp.type="lowpass"; lp.frequency.value=640; lp.connect(bus||AudioFX.out()); }
+  const dest = lp || bus || AudioFX.out();
+  [1, 1.0595, 1.4142].forEach((mul,i)=>{
+    const o=c.createOscillator(), g=c.createGain();
+    o.type="sawtooth"; o.frequency.value=baseFreq*mul;
+    const v=(vol||0.028)*(i===0?1:0.55);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(v, t+dur*0.45);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t+dur+0.12);
+  });
+}
+
 /* ===================== TOAST ===================== */
 function toast(msg, cls){
   const host = $("toasts");
@@ -2227,13 +2364,12 @@ function seq(len, map){ const a=new Array(len).fill(null); for(const k in map) a
 /* pad/padHarm → coro di oscillatori triangle detuned (stile From Software) */
 const THEMES = {
   /* ---- menu atmosferico (Il Velo Spezzato) ---- */
-  menu: { title:"Il Velo Spezzato", bpm:46, len:64, bassType:"triangle",
-    bass: seq(64,{0:"A1",8:"A1",16:"C2",24:"C2",32:"G1",40:"G1",48:"E1",56:"E1"}),
-    lead: seq(64,{2:["E4",6],12:["C4",5],20:["D4",4],27:["E4",3],
-                  34:["G4",5],42:["F#4",4],50:["E4",6],58:["A3",5]}),
-    pad:     seq(64,{0:["A3",16],16:["C4",16],32:["B3",16],48:["G3",16]}),
-    padHarm: seq(64,{0:["E4",16],16:["G4",16],32:["D4",16],48:["B3",16]}),
-    drum: seq(64,{0:"k",32:"k",8:"h",40:"h"}),
+  menu: { title:"Il Velo Spezzato", bpm:30, len:64, bassType:"triangle", dark:true,
+    bass: seq(64,{0:"A1",16:"F1",32:"G1",48:"D1"}),
+    lead: seq(64,{6:["E4",7],26:["F4",6],44:["C4",7],58:["A3",5]}),
+    pad:     seq(64,{0:["A2",16],16:["F2",16],32:["G2",16],48:["D2",16]}),
+    padHarm: seq(64,{0:["A#2",16],16:["B2",16],32:["C#3",16],48:["D#2",16]}),
+    drum: seq(64,{}),
   },
   /* ---- Sentinella Spezzata — come Gundyr ---- */
   boss0: { title:"Veglia della Sentinella", bpm:104, len:32, bassType:"triangle",
@@ -2291,9 +2427,12 @@ const THEMES = {
     drum: seq(16,{0:"k",4:"h",8:"k",12:"h"}),
   },
 };
+/* i temi di scontro mantengono il ritmo ma guadagnano un letto di terrore:
+   sub-drone profondo, raschi metallici radi e una voce dissonante nei pad */
+["boss0","boss1","boss2","boss3","elite"].forEach(k=>{ if(THEMES[k]) THEMES[k].dread=true; });
 
 const Music = {
-  timer:0, step:0, nextTime:0, theme:null, gain:null, vol:0.6,
+  timer:0, step:0, nextTime:0, theme:null, gain:null, vol:0.6, bedNodes:[],
   ensure(){
     if(!AudioFX.ensure()) return false;
     if(!this.gain){
@@ -2324,9 +2463,33 @@ const Music = {
     this.gain.gain.cancelScheduledValues(AudioFX.ctx.currentTime);
     this.gain.gain.setValueAtTime(0.0001, AudioFX.ctx.currentTime);
     this.gain.gain.exponentialRampToValueAtTime(Math.max(0.0001,this.vol), AudioFX.ctx.currentTime+0.5);
+    this.startBed();
     this.timer = setInterval(()=>this.schedule(), 30);
   },
+  /* letto di terrore sotto i temi dark/dread: due sub-drone profondi e detunati */
+  startBed(){
+    this.stopBed();
+    if(!this.theme || !(this.theme.dark || this.theme.dread) || !AudioFX.ctx) return;
+    const c=AudioFX.ctx, now=c.currentTime;
+    const base = this.theme.dark ? 27.5 : 32.7; // A0 / C1
+    const peak = this.theme.dark ? 0.11 : 0.055;
+    [0, 0.6].forEach((det)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="sine"; o.frequency.value = base*(1+det*0.012);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(peak, now+2.2);
+      o.connect(g); g.connect(this.gain); o.start(now);
+      this.bedNodes.push(o,g);
+    });
+  },
+  stopBed(){
+    if(!AudioFX.ctx){ this.bedNodes=[]; return; }
+    const t=AudioFX.ctx.currentTime;
+    this.bedNodes.forEach(n=>{ try{ if(n.stop) n.stop(t+0.7); else if(n.gain){ n.gain.cancelScheduledValues(t); n.gain.exponentialRampToValueAtTime(0.0001,t+0.6); } }catch(e){} });
+    this.bedNodes=[];
+  },
   stop(){
+    this.stopBed();
     if(this.timer){ clearInterval(this.timer); this.timer=0; }
     if(this.theme && this.gain && AudioFX.ctx){
       const t = AudioFX.ctx.currentTime;
@@ -2341,6 +2504,14 @@ const Music = {
     const c = AudioFX.ctx;
     while(this.nextTime < c.currentTime + 0.15){
       this.playStep(this.step, this.nextTime);
+      const th=this.theme;
+      if(th.dark){ // menu: dark ambient pieno — raschi, sussurri, archi dissonanti
+        if(Math.random()<.05) dreadScrape(this.gain, this.nextTime, 0.7+Math.random()*0.8, 0.016);
+        if(Math.random()<.04) dreadWhisper(this.gain, this.nextTime, 0.9+Math.random()*0.6, 0.012);
+        if(Math.random()<.02) dreadSwell(this.gain, 110, this.nextTime, 3+Math.random()*2, 0.02);
+      } else if(th.dread){ // scontri: solo rari raschi metallici, ritmo intatto
+        if(Math.random()<.012) dreadScrape(this.gain, this.nextTime, 0.5+Math.random()*0.5, 0.012);
+      }
       this.nextTime += this.theme.spb;
       this.step = (this.step+1)%this.theme.len;
     }
@@ -2369,6 +2540,17 @@ const Music = {
       o.connect(g); g.connect(this.gain);
       o.start(t); o.stop(t+dur+0.12);
     });
+    // voce dissonante (tritono sotto) per i temi dark/dread: archi freddi
+    if(this.theme && (this.theme.dark || this.theme.dread)){
+      const o=c.createOscillator(), g=c.createGain();
+      o.type="sawtooth";
+      o.frequency.setValueAtTime(freq*0.7071, t);
+      const atk=Math.min(0.5, dur*0.3);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(this.theme.dark?0.02:0.012, t+atk);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.connect(g); g.connect(this.gain); o.start(t); o.stop(t+dur+0.12);
+    }
   },
   drum(kind, t){
     const c=AudioFX.ctx;
@@ -4279,6 +4461,15 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
     get player(){ return player; },
     get tiles(){ return tiles; },
     get combat(){ return combat; },
+    get bosses(){ return BOSSES; },
+    get bossCut(){ return BOSS_CUTSCENES; },
+    get bossEpi(){ return BOSS_EPILOGUE; },
+    get themes(){ return THEMES; },
+    pickBosses(p){ return pickBosses(p); },
+    music(){ return Music; },
+    ambient(){ return Ambient; },
+    audio(){ return AudioFX; },
+    newGame(c){ return newGame(c); },
     setNoBattleCanvas(){ if(typeof BS!=="undefined") BS.ctx=null; },
   };
 }
