@@ -1223,7 +1223,7 @@ function newGame(cls){
     rolls:0, runesEarned:C.runes, startedAt:Date.now(),
     ardore:0, visitedRegions:[0], lastRegionSeen:0,
     passives:[], synergies:[], ng:false, ngScale:1, secretSeen:false,
-    bossPick:[0,0,0,0],
+    bossPick:[0,0,0,0], worldPath:null,
   };
   player.bossPick = pickBosses(); // sorteggia i guardiani di questa run
   // Ciclo del Ritorno (NG+): nemici più forti, boss con affissi, boss segreto
@@ -1339,6 +1339,7 @@ function loadSlot(n){
     player.ngScale = player.ngScale || 1;
     if(player.secretSeen===undefined) player.secretSeen = false;
     player.bossPick = (player.bossPick && player.bossPick.length===4) ? player.bossPick : [0,0,0,0];
+    if(player.worldPath===undefined) player.worldPath = null;
     pickBosses(player.bossPick); // ripristina i guardiani sorteggiati per questa run
     return true;
   }catch(e){ return false; }
@@ -1560,6 +1561,27 @@ async function animateDie(roll){
   el.classList.add("landed");
   await sleep(420);
 }
+function choosePath(n){
+  player.worldPath = n;
+  if(n === 1){
+    // Via dell'Oblio: region 1 diventa più difficile — nessun negozio, nessun tesoro, 3 élite
+    const hardMids = ["enemy","elite","enemy","elite","event","elite","enemy"];
+    hardMids.forEach((t,i)=>{ tiles[9+1+i].type=t; tiles[9+1+i].cleared=false; });
+    log("Imbocchi la Via dell'Oblio — sentiero maledetto, privo di riparo.", "bad");
+    toast("☠ Via dell'Oblio", "bad");
+    sfx("hurt");
+  } else {
+    log("Scegli la Via della Palude — il cammino noto.", "gold");
+    toast("⚗ Via della Palude", "gold");
+  }
+  saveGame(); buildBoard(); renderBoard();
+  setAction("La via si apre",
+    n===1
+      ? `Il sentiero maledetto ti aspetta. Tre guardiani élite sorvegliano la strada — ma al termine, il <strong>Sigillo dell'Oblio</strong> attende chi sopravvive.`
+      : `La via verso ${REGIONS[1]} è aperta. Tira il dado.`,
+    [["Tira il dado", rollMove]], "boss");
+}
+
 async function rollMove(){
   if(!player.canMove || moving || combat) return;
   moving = true;
@@ -2362,8 +2384,23 @@ function dreadCry(bus, t, dur, vol){
   src.connect(bp); bp.connect(g); g.connect(bus||AudioFX.out());
   src.start(t); src.stop(t+dur+0.05);
 }
-
-/* ===================== TOAST ===================== */
+/* impulso di riverbero sintetico: coda esponenziale + riflessioni iniziali.
+   La cattedrale sonora di Bloodborne nasce da qui. */
+function makeIR(c, dur, decay){
+  const rate = c.sampleRate || 44100;
+  const len = Math.max(1, Math.floor(rate*dur));
+  const buf = c.createBuffer(2, len, rate);
+  for(let k=0;k<2;k++){
+    const d = buf.getChannelData(k);
+    for(let i=0;i<len;i++){
+      const t=i/len;
+      let s=(Math.random()*2-1)*Math.pow(1-t, decay);
+      if(i < rate*0.09 && Math.random()<0.018) s += (Math.random()*2-1)*0.55; // early reflections
+      d[i]=s;
+    }
+  }
+  return buf;
+}
 function toast(msg, cls){
   const host = $("toasts");
   if(!host || !host.appendChild) return;
@@ -2513,15 +2550,17 @@ const THEMES = {
        0:"E3", 2:"F3", 4:"G3",  6:"E3",  8:"D3", 10:"E3", 12:"F3",
       14:"G3",16:"E3",18:"D3", 20:"E3", 22:"F3", 24:"G3", 26:"E3",
     }),
-    // coro stridente "e" e "a" su downbeat
+    // coro: urla frenetiche "e"/"a" su tutti i downbeat 7/8 — massimo caos Bloodborne
     choir: seq(28,{
-       0:["E4",4,"a"],  7:["B4",3,"a"],
-      14:["E4",4,"a"], 21:["G4",3,"e"],
+       0:["E4",4,"a"],  3:["B4",2,"e"],  6:["G4",3,"e"],
+       9:["A4",2,"a"], 12:["F4",2,"e"],
+      14:["E4",4,"a"], 17:["B4",2,"e"], 20:["G4",3,"e"],
+      23:["A4",2,"a"], 26:["E4",2,"e"],
     }),
-    // ottoni pesanti: stab a ogni downbeat 7/8
+    // ottoni: stab denso a ogni sedicesimo di downbeat — martello orchestrale
     brass: seq(28,{
-       0:["E3",2],  2:["E3",1],  4:["F3",2],  6:["E3",2],
-      14:["E3",2], 16:["D3",1], 18:["E3",2], 20:["G3",2],
+       0:["E3",2],  2:["E3",1],  4:["F3",2],  6:["E3",2],  8:["D3",1], 10:["E3",2], 12:["G3",1],
+      14:["E3",2], 16:["D3",1], 18:["E3",2], 20:["G3",2], 22:["F3",1], 24:["E3",2], 26:["D3",1],
     }),
     // percussioni dense in 7/8 ad alta velocità
     drum: seq(28,{
@@ -2572,9 +2611,11 @@ const THEMES = {
       28:["E3",4], 36:["A3",4],  40:["G3",2],
     }),
     drum: seq(42,{
-       0:"k", 2:"h",  4:"s",  6:"k",  8:"h", 10:"k", 12:"s",
-      14:"k",16:"h", 18:"s", 20:"k", 22:"h", 24:"k", 26:"s",
-      28:"k",30:"h", 32:"s", 34:"k", 36:"h", 38:"k", 40:"s",
+       0:"k",    2:"h",    4:"s",    6:"k",    8:"h",    10:"k",   12:"s",
+      14:"k",   16:"h",   18:"s",   20:"k",   22:"h",   24:"k",   26:"s",
+      // climax battuta 3: timpani + kick simultanei per il finale catastrofico
+      28:"k|t", 29:"h",   30:"t",   31:"h",   32:"s|t", 33:"h",   34:"k|t",
+      35:"h",   36:"t",   37:"h",   38:"k|t", 39:"h",   40:"s|t", 41:"h",
     }),
   },
 
@@ -2602,13 +2643,22 @@ const THEMES = {
 };
 
 const Music = {
-  timer:0, step:0, nextTime:0, theme:null, gain:null, vol:0.6, bedNodes:[],
+  timer:0, step:0, nextTime:0, theme:null, gain:null, vol:0.6, bedNodes:[], reverbIn:null,
   ensure(){
     if(!AudioFX.ensure()) return false;
     if(!this.gain){
-      this.gain = AudioFX.ctx.createGain();
+      const c=AudioFX.ctx;
+      this.gain = c.createGain();
       this.gain.gain.value = this.vol;
-      this.gain.connect(AudioFX.ctx.destination);
+      this.gain.connect(c.destination);
+      // cattedrale Bloodborne: convolution reverb bus (wet signal)
+      try{
+        const conv=c.createConvolver();
+        conv.buffer=makeIR(c,4.8,2.0);
+        const rg=c.createGain(); rg.gain.value=0.46;
+        conv.connect(rg); rg.connect(c.destination);
+        this.reverbIn=conv;
+      }catch(e){ this.reverbIn=null; }
     }
     return true;
   },
@@ -2680,8 +2730,10 @@ const Music = {
         if(Math.random()<.03) dreadWhisper(this.gain, this.nextTime, 0.9+Math.random()*0.6, 0.010);
         if(Math.random()<.015) dreadSwell(this.gain, 110, this.nextTime, 3+Math.random()*2, 0.018);
         if(Math.random()<.012) dreadChime(this.gain, 160+Math.random()*40, this.nextTime, 6+Math.random()*3, 0.026);
-      } else if(th.dread){ // scontri: rari raschi metallici per tensione
+      } else if(th.dread){ // scontri: effetti oscuri per tensione Bloodborne
         if(Math.random()<.008) dreadScrape(this.gain, this.nextTime, 0.5+Math.random()*0.4, 0.010);
+        if(Math.random()<.006) dreadChime(this.gain, 80+Math.random()*40, this.nextTime, 4+Math.random()*2, 0.018);
+        if(Math.random()<.004) dreadWhisper(this.gain, this.nextTime, 1.2+Math.random()*0.8, 0.008);
       }
       this.nextTime += this.theme.spb;
       this.step = (this.step+1)%this.theme.len;
@@ -2736,6 +2788,10 @@ const Music = {
       g.gain.exponentialRampToValueAtTime(vk, t+atk);
       g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
       osc.connect(lp); lp.connect(g); g.connect(this.gain);
+      // wet reverb per archi in temi dread (coda sinfonico-gotica)
+      if(this.reverbIn && this.theme && this.theme.dread && !fast){
+        const rs=c.createGain(); rs.gain.value=0.32; g.connect(rs); rs.connect(this.reverbIn);
+      }
       lfo.start(t); osc.start(t);
       lfo.stop(t+dur+0.14); osc.stop(t+dur+0.14);
     });
@@ -2770,10 +2826,24 @@ const Music = {
         g.gain.exponentialRampToValueAtTime(vk, t+atk);
         g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
         osc.connect(bp); bp.connect(g); g.connect(this.gain);
+        // wet send → cattedrale reverb
+        if(this.reverbIn){ const rv=c.createGain(); rv.gain.value=0.72; g.connect(rv); rv.connect(this.reverbIn); }
       });
       lfo.start(t); osc.start(t);
       lfo.stop(t+dur+0.14); osc.stop(t+dur+0.14);
     });
+    // Bloodborne choir echo: copia ritardata ~280ms → spazio gotico
+    if(this.theme && this.theme.dread){
+      const ecO=c.createOscillator(); ecO.type="sawtooth"; ecO.frequency.value=freq*0.997;
+      const ecG=c.createGain();
+      const ecAtk=Math.min(0.38,dur*0.22);
+      ecG.gain.setValueAtTime(0.0001, t+0.27);
+      ecG.gain.exponentialRampToValueAtTime(Math.max(0.0001,vol*0.28), t+0.27+ecAtk);
+      ecG.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.27);
+      ecO.connect(ecG); ecG.connect(this.gain);
+      if(this.reverbIn){ const rv2=c.createGain(); rv2.gain.value=0.5; ecG.connect(rv2); rv2.connect(this.reverbIn); }
+      ecO.start(t+0.27); ecO.stop(t+dur+0.44);
+    }
   },
   /* ── OTTONI PESANTI ──────────────────────────────────────────────────────────
      Sawtooth + lowpass risonante + sub-armonica per peso.
@@ -2876,9 +2946,9 @@ const Music = {
       const [n,d]=Array.isArray(br)?br:[br,2];
       this.brass(nf(n), t, spb*(typeof d==="number"?d:2)*0.92, 0.065);
     }
-    // percussioni
+    // percussioni (supporta pattern combinati "k|t" per kick+timpani simultanei)
     const dr=th.drum[st];
-    if(dr) this.drum(dr, t);
+    if(dr) dr.split("|").forEach(k=>this.drum(k,t));
   },
 };
 
@@ -3066,6 +3136,72 @@ sovrano_boss:[
 "...bb...bb......",
 "..aaa...aaa.....",
 ],
+/* ── VARIANTI V1 ──────────────────────────────────────────── */
+coro_boss:[
+"....eae.eae.....",
+"...aaaaaaaaaa...",
+"...eaeaaeaaaa...",
+"..aaaaaaaaaa....",
+"..baaaaaaaaab...",
+"..bbbbbbbbbb....",
+"...baaabaaab....",
+"....baaaaab.....",
+"....bb.bbb......",
+"....bb..bb......",
+"...bbb..bbb.....",
+"..aaaa..aaaa....",
+"...ee....ee.....",
+],
+annegato_boss:[
+".......aaaa.....",
+"......aaeaaa....",
+"......aaaaaa....",
+"..ss.bb.bbb.ss..",
+"..ss.bbbbbbb.ss.",
+".sss.bbbbbbb.sss",
+".sss.bbbbbbb.sss",
+"..ss.bbbbbbb.ss.",
+"...s.bb...bb.s..",
+"...s.bb...bb.s..",
+"....sbb...bbs...",
+"....sb.....bs...",
+"....aaa...aaa...",
+],
+boia_boss:[
+"....aaaa........",
+"...aaaeaa.......",
+"...aaaaaa.......",
+"..b.bbbbb.bwwww.",
+".bbbbbbbbbw.www.",
+"bbbbbbbbbbbff...",
+"bbbbbbbbbbbbf...",
+".bbbbbbbbbbb....",
+"..bbbbbbbbbb.f..",
+"...bbbbbbbbb....",
+"...bbb.bbb......",
+"...bbb.bbb......",
+"...bb...bb......",
+"..aaa...aaa.....",
+"...ff...ff......",
+],
+regina_boss:[
+"...c.c.c.c......",
+"....ccccccc.....",
+"....aaaaaa......",
+"...aeeeeeaa.....",
+"....aaaaaa......",
+".c.bbbbbbbb.c...",
+"w.bbbbbbbbbbb...",
+"ww.bbbbbbbbbb...",
+".ww.bbbbbbbbb...",
+"..ww.bbbbbbbb...",
+"...ww..bbbbb....",
+"....www..bbb....",
+"....wwwww..bb...",
+".....wwwww..b...",
+"......wwwwwww...",
+".......wwwww....",
+],
 };
 const HERO_PAL = {a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"};
 const ENEMY_LOOK = {
@@ -3086,6 +3222,11 @@ const ENEMY_LOOK = {
   "Cavaliere della Cenere":{sp:"cenere_boss",pal:{a:"#9a8070",b:"#5a3020",e:"#ff5a10",f:"#ff9020",w:"#9a7050",s:"#999"},boss:1},
   "Sovrano Senza Nome":{sp:"sovrano_boss",  pal:{a:"#b0a890",b:"#1e1530",c:"#ecc857",e:"#050310",w:"#c0b8e8",s:"#999"},boss:1},
   "L'Eco del Primo":   {sp:"sovrano_boss",  pal:{a:"#e8e4d8",b:"#403858",c:"#fff0a0",e:"#100818",w:"#fff",s:"#ccc"},boss:1},
+  // V1 varianti
+  "Coro d'Ossa":       {sp:"coro_boss",     pal:{a:"#c8c0b8",b:"#7a7268",e:"#fff8e0",s:"#b0b0a0",w:"#e8e4d8"},boss:1},
+  "L'Annegato":        {sp:"annegato_boss", pal:{a:"#4a6870",b:"#2c4a52",e:"#b8fff8",s:"#6a9898",w:"#a8d8d8"},boss:1},
+  "Boia di Cenere":    {sp:"boia_boss",     pal:{a:"#7a6858",b:"#3a2818",e:"#ff6030",f:"#ffa040",w:"#988070",s:"#b0a090"},boss:1},
+  "Regina Cancellata": {sp:"regina_boss",   pal:{a:"#d0c0e0",b:"#483068",c:"#ffe0f8",e:"#180828",w:"#f8e8ff",s:"#c0a8d8"},boss:1},
 };
 const REGION_BG = [
   {sky0:"#0c1018",sky1:"#1b2434",hill:"#131a26",ground:"#1a2230",line:"#2c3a52",mote:"#8fa8c8",spire:"#0e141e"},
@@ -4185,8 +4326,27 @@ function winCombat(){
     resumeAmbient();
     if(wasBoss){
       const epi = BOSS_EPILOGUE[bossRegion];
-      const goNext = ()=>setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,bossRegion+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]], "boss");
-      if(epi) showLorePanel(epi, goNext); else goNext();
+      // after hard path boss 1: award exclusive relic
+      if(bossRegion===1 && player.worldPath===1 && !player.items.includes("Sigillo dell'Oblio")){
+        player.items.push("Sigillo dell'Oblio");
+        player.atk += 3;
+        renderStats(); saveGame();
+        log("Trovi il Sigillo dell'Oblio: il tuo attacco cresce di 3.", "gold");
+        toast("✦ Sigillo dell'Oblio +3 ATK", "gold");
+        sfx("level");
+      }
+      if(bossRegion===0){
+        // path choice: standard road vs cursed road
+        const goPath = ()=>setAction("♛ La Sentinella Cade",
+          `Due strade si aprono davanti a te.<br><br>
+          <strong>⚗ Via della Palude</strong> — Cammino noto: botteghe, grazia, riposo.<br><br>
+          <strong>☠ Via dell'Oblio</strong> — Maledetta, senza riparo. Tre élite ti attendono, ma sopravvivere svela il <em>Sigillo dell'Oblio</em> (+3 ATK).`,
+          [["⚗ Via della Palude", ()=>choosePath(0)], ["☠ Via dell'Oblio", ()=>choosePath(1)]], "boss");
+        if(epi) showLorePanel(epi, goPath); else goPath();
+      } else {
+        const goNext = ()=>setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,bossRegion+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]], "boss");
+        if(epi) showLorePanel(epi, goNext); else goNext();
+      }
     } else {
       setAction("Vittoria", "Il sentiero torna silenzioso. Tira il dado per avanzare.", [["Tira il dado",rollMove]]);
     }
