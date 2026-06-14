@@ -79,16 +79,17 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!important;transition:none!important}
 
 /* ---------- animazioni ---------- */
-.die.rolling{animation:dietumble .4s linear infinite}
+.die.rolling,.die.landed{font-size:2.8rem;line-height:1.2;display:block;text-align:center;border:none;background:none;padding:.2em 0;text-shadow:0 0 20px rgba(236,200,87,.55);margin:0 auto}
+.die.rolling{animation:dietumble .38s linear infinite}
 @keyframes dietumble{
-  0%{transform:rotate(-6deg) translateY(0)}
-  25%{transform:rotate(5deg) translateY(-3px)}
-  50%{transform:rotate(-4deg) translateY(0)}
-  75%{transform:rotate(6deg) translateY(-2px)}
-  100%{transform:rotate(-6deg) translateY(0)}
+  0%{transform:rotate(-9deg) translateY(0)}
+  25%{transform:rotate(8deg) translateY(-5px)}
+  50%{transform:rotate(-6deg) translateY(0)}
+  75%{transform:rotate(9deg) translateY(-3px)}
+  100%{transform:rotate(-9deg) translateY(0)}
 }
-.die.landed{animation:dieland .35s ease-out}
-@keyframes dieland{0%{transform:scale(1.6);text-shadow:0 0 22px rgba(236,200,87,.9)}100%{transform:scale(1)}}
+.die.landed{animation:dieland .44s cubic-bezier(.17,.89,.32,1.28)}
+@keyframes dieland{0%{transform:scale(2.4);text-shadow:0 0 40px rgba(236,200,87,1)}50%{text-shadow:0 0 24px rgba(236,200,87,.7)}100%{transform:scale(1);text-shadow:0 0 10px rgba(236,200,87,.25)}}
 .tile .pawn{animation:pawnpop .22s ease-out}
 @keyframes pawnpop{0%{transform:scale(.3) translateY(-8px);opacity:.2}70%{transform:scale(1.25)}100%{transform:scale(1)}}
 .tile.stepped{animation:steppulse .3s ease-out}
@@ -218,9 +219,12 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
   position:absolute;bottom:1px;right:3px;font-size:.8rem;color:var(--gold-bright);
   filter:drop-shadow(0 0 4px rgba(236,200,87,.8));
 }
-.legend{display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin-top:.7rem;font-size:.92rem;color:var(--faded);
-  border:1px solid #221a10;padding:.6rem .8rem;background:rgba(0,0,0,.2)}
-.legend span b{color:var(--parchment);font-weight:400}
+.legend{display:flex;flex-wrap:wrap;gap:.45rem .55rem;margin-top:.6rem;font-size:.84rem;color:var(--faded);
+  border:none;padding:0;background:none}
+.legend span{display:inline-flex;align-items:center;gap:.4em;
+  border:1px solid #2a2114;background:linear-gradient(180deg,#1b150e,#110c07);
+  padding:.32em .62em;box-shadow:inset 0 1px 0 rgba(255,222,150,.05),0 1px 2px rgba(0,0,0,.4)}
+.legend span b{color:var(--parchment);font-weight:400;font-size:1.02rem;line-height:1}
 
 /* ---------- pannello azione ---------- */
 #action-panel{
@@ -327,6 +331,8 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 #cb-tecnica{background:linear-gradient(135deg,#2a1a0a,#1a100a);border:1px solid #5c3a1a;color:#c09060;letter-spacing:.08em;font-size:.9rem;transition:all .3s}
 #cb-tecnica:not(:disabled){border-color:#c07830;color:#ffb860;box-shadow:0 0 12px rgba(200,120,40,.4);animation:ardore-pulse 1.4s ease-in-out infinite}
 @keyframes ardore-pulse{0%,100%{box-shadow:0 0 8px rgba(200,120,40,.3)}50%{box-shadow:0 0 18px rgba(255,160,60,.6)}}
+.btnrow button.cancelled{position:relative;border-color:#7a3aa0!important;color:#7a5a9a!important;opacity:.5;animation:none!important;box-shadow:none!important}
+.btnrow button.cancelled::after{content:"✖";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#c060ff;text-shadow:0 0 8px #b040ff;pointer-events:none}
 
 /* ---------- cutscene ---------- */
 #ov-cutscene{background:rgba(0,0,0,.97);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
@@ -362,8 +368,8 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 #cutscene-dots{font-size:1.3rem;color:#5c4c2c;letter-spacing:.4em;animation:dotpulse 1.4s ease-in-out infinite}
 @keyframes dotpulse{0%,100%{opacity:.3}50%{opacity:1}}
 /* ---------- lore panel ---------- */
-#ov-lore{background:rgba(0,0,0,.93);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
-#lore-inner{max-width:520px;width:100%;border:1px solid #3a2e1c;background:rgba(10,8,4,.97);padding:2rem 2.4rem;text-align:center}
+#ov-lore{background:rgba(4,3,2,.72);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:2rem;backdrop-filter:blur(2px)}
+#lore-inner{max-width:520px;width:100%;border:1px solid #3a2e1c;background:rgba(10,8,4,.92);padding:2rem 2.4rem;text-align:center;box-shadow:0 0 0 4px rgba(8,6,4,.7),0 20px 60px rgba(0,0,0,.7)}
 #lore-region{font-family:var(--f-pixel);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:#6b5c3c;margin-bottom:1rem}
 #lore-text{font-family:var(--f-body);font-style:italic;font-size:1.12rem;line-height:1.8;color:#c0b090;min-height:4.5em;margin-bottom:1.2rem;text-shadow:0 0 30px rgba(180,140,60,.1)}
 
@@ -476,15 +482,104 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
   background:repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 3px);
   mix-blend-mode:multiply;
 }
-/* la mappa diventa un nastro di orientamento compatto sotto il mondo */
-#board.has-world{padding:8px 10px;gap:6px}
+/* ---------- LA MAPPA VIVENTE: il nastro del viaggio (pietre miliari) ----------
+   Sotto il mondo cinematico il tabellone smette di essere una griglia di emoji
+   e diventa una mappa diegetica: pietre miliari incise lungo un sentiero. */
+#board.has-world{
+  padding:11px 16px 13px;gap:9px;
+  background:
+    radial-gradient(120% 140% at 50% -20%, rgba(60,50,32,.18), transparent 60%),
+    linear-gradient(180deg,rgba(22,17,11,.55),rgba(8,6,4,.7)),
+    var(--coal);
+}
 #board.has-world .region-row.expanded .scene-name{display:none}
 #board.has-world .tile .tilename{display:none}
-#board.has-world .tiles-row .tile{aspect-ratio:auto;min-height:30px;font-size:.7rem}
-#board.has-world .tile .num{font-size:.36rem}
+#board.has-world .region-row.expanded{
+  border-color:rgba(201,162,39,.16);
+  background:linear-gradient(180deg,rgba(0,0,0,.10),transparent);
+  padding:8px 8px 9px;
+}
+/* il sentiero: una linea incisa che lega le pietre miliari */
+#board.has-world .tiles-row{
+  position:relative;grid-template-columns:repeat(9,minmax(0,1fr));gap:9px;padding-top:6px;
+}
+#board.has-world .tiles-row::before{
+  content:"";position:absolute;left:4%;right:4%;top:50%;height:0;z-index:0;pointer-events:none;
+  border-top:2px dotted rgba(150,134,92,.26);transform:translateY(2px);
+}
+/* la pietra miliare */
+#board.has-world .tiles-row .tile{
+  aspect-ratio:auto;min-height:48px;font-size:.7rem;z-index:1;
+  border-radius:7px 7px 3px 3px;gap:1px;
+  background:linear-gradient(180deg,#2a2114 0%,#1c1610 58%,#130e09 100%);
+  border:1px solid #3a2e1a;border-top-width:2px;
+  box-shadow:inset 0 1px 0 rgba(255,222,150,.10),inset 0 -4px 7px rgba(0,0,0,.5),0 2px 5px rgba(0,0,0,.5);
+  transition:transform .14s,box-shadow .3s,border-color .3s,background .3s;
+}
+#board.has-world .tile .num{font-size:.34rem;top:3px;left:4px;color:#5b4f38;opacity:.65}
+#board.has-world .tile .icon{font-size:1.2rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+/* alone runico colorato per tipo + corona superiore incisa */
+#board.has-world .tile.grace .icon{color:var(--grace);text-shadow:0 0 9px rgba(255,216,122,.6)}
+#board.has-world .tile.grace{border-top-color:#7a6326}
+#board.has-world .tile.enemy .icon{color:#c98b7e}
+#board.has-world .tile.enemy{border-top-color:#5a352e}
+#board.has-world .tile.elite .icon{color:#e0a865;text-shadow:0 0 9px rgba(224,168,101,.4)}
+#board.has-world .tile.elite{border-top-color:#6a4d28}
+#board.has-world .tile.shop .icon{color:#7ec08a}
+#board.has-world .tile.shop{border-top-color:#3d5a40}
+#board.has-world .tile.treasure .icon{color:var(--gold-bright);text-shadow:0 0 8px rgba(236,200,87,.5)}
+#board.has-world .tile.treasure{border-top-color:#6b561f}
+#board.has-world .tile.event .icon{color:#b49adf}
+#board.has-world .tile.event{border-top-color:#4a3a6a}
+#board.has-world .tile.boss .icon{color:#e26a5c;text-shadow:0 0 11px rgba(226,106,92,.7)}
+#board.has-world .tile.boss{
+  background:linear-gradient(180deg,#2c1714,#1d0f0c);border-color:#5a2a24;border-top-color:#8a3a30;
+}
+#board.has-world .tile.empty .icon{color:#4a4030;opacity:.5}
+/* pietra attraversata: spenta, coperta di cenere */
+#board.has-world .tile.cleared{filter:grayscale(.6) brightness(.66);opacity:.58}
+#board.has-world .tile.cleared.current{filter:none;opacity:1}
+/* QUI SEI: pietra accesa, col gagliardetto piantato sopra */
+#board.has-world .tile.current{
+  transform:translateY(-5px);overflow:visible;
+  border-color:var(--gold-bright);border-top-color:var(--gold-bright);
+  background:linear-gradient(180deg,#3a2c12,#241a0a);color:var(--gold-bright);
+  box-shadow:inset 0 1px 0 rgba(255,222,150,.25),0 0 0 1px rgba(236,200,87,.5),0 0 18px rgba(236,200,87,.32),0 5px 9px rgba(0,0,0,.6);
+}
+#board.has-world .tile.current .icon{animation:waystoneGlow 2.6s ease-in-out infinite}
+@keyframes waystoneGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(236,200,87,.5))}50%{filter:drop-shadow(0 0 12px rgba(236,200,87,.95))}}
+#board.has-world .tile .pawn{
+  position:absolute;top:-11px;left:50%;bottom:auto;right:auto;transform:translateX(-50%);
+  font-size:.82rem;color:var(--gold-bright);filter:drop-shadow(0 0 6px rgba(236,200,87,.9));
+  animation:pennantWave 2.2s ease-in-out infinite;
+}
+@keyframes pennantWave{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-2px)}}
+#board.has-world .tile.runes-drop{border-color:var(--gold);box-shadow:inset 0 0 14px rgba(236,200,87,.5),0 2px 5px rgba(0,0,0,.5)}
+/* i capitoli del viaggio: le regioni non attive come sezioni della mappa,
+   sigillate davanti, consumate alle spalle */
+#board.has-world .region-row.collapsed{
+  position:relative;padding:7px 12px;opacity:.66;
+  border:1px solid #241c10;border-left:3px solid #3a2a16;
+  background:linear-gradient(90deg,rgba(24,18,11,.5),rgba(10,8,5,.25));
+  transition:opacity .3s,border-color .3s,background .3s;
+}
+#board.has-world .region-row.collapsed:hover{opacity:.92;border-left-color:#6b561f}
+#board.has-world .region-row.collapsed .region-label{font-size:.5rem}
+#board.has-world .region-row.collapsed .region-label .bossname{
+  border:1px solid #3a221e;padding:.2em .52em;background:rgba(44,18,16,.42);border-radius:2px;
+}
+/* capitolo concluso: sigillo d'oro, atmosfera spenta */
+#board.has-world .region-row.collapsed.beaten{
+  border-left-color:#6b561f;opacity:.5;
+  background:linear-gradient(90deg,rgba(36,28,12,.4),rgba(10,8,5,.2));
+}
+#board.has-world .region-row.collapsed.beaten .region-label .bossname{
+  border-color:#5a4a1e;background:rgba(40,32,12,.4);color:#9a8a52;
+}
 @media(max-width:560px){
   #world-flavor{display:none}
-  #board.has-world .tiles-row .tile{min-height:26px}
+  #board.has-world .tiles-row .tile{min-height:40px}
+  #board.has-world .tile .icon{font-size:1rem}
 }
 
 /* ---------- pannello personaggio ---------- */
@@ -950,6 +1045,7 @@ kbd{
 <!-- ============ GRAZIA ============ -->
 <div class="overlay" id="ov-grace">
   <div class="modal">
+    <canvas id="grace-flame" width="120" height="80" aria-hidden="true" style="display:block;margin:0 auto .3em;"></canvas>
     <h2 style="color:var(--grace)">❋ Sito di Grazia</h2>
     <p class="sub" id="grace-flavor">Il calore della grazia ti ristora. Vitalità e fiaschette ripristinate.</p>
     <div id="grace-levelup"></div>
@@ -1071,16 +1167,16 @@ function playerType(){ return {vagabondo:"luce",cavaliere:"pietra",asceta:"fiamm
 /* Ogni regione ha un PASSATO di possibili guardiani: a inizio run se ne sorteggia uno.
    La stessa terra, un custode diverso — la mappa cambia, e con essa il nemico finale. */
 const BOSSES_V0 = [
-  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:42,atk:4,r:[180,180],type:"pietra"},
-  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:58,atk:6,r:[320,320],type:"natura"},
-  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:76,atk:8,r:[520,520],type:"fiamma"},
-  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:110,atk:10,r:[1100,1100],type:"ombra"},
+  {n:"Sentinella Spezzata",sub:"Custode del Sepolcreto",hp:42,atk:4,r:[180,180],type:"pietra",mech:"scudo"},
+  {n:"Madre della Palude",sub:"Colei che annega i nomi",hp:58,atk:6,r:[320,320],type:"natura",mech:"figlio"},
+  {n:"Cavaliere della Cenere",sub:"Ultimo stendardo dell'Altopiano",hp:76,atk:8,r:[520,520],type:"fiamma",mech:"posa"},
+  {n:"Sovrano Senza Nome",sub:"Signore delle Terre Spezzate",hp:110,atk:10,r:[1100,1100],type:"ombra",mech:"aspetti"},
 ];
 const BOSSES_V1 = [
-  {n:"Coro d'Ossa",sub:"Mille morti, una sola voce",hp:46,atk:4,r:[190,190],type:"pietra"},
-  {n:"L'Annegato",sub:"Chi entrò e non tornò",hp:62,atk:6,r:[330,330],type:"natura"},
-  {n:"Boia di Cenere",sub:"L'ultimo a deporre la lama",hp:80,atk:8,r:[540,540],type:"fiamma"},
-  {n:"Regina Cancellata",sub:"Il nome che il Sovrano divorò",hp:116,atk:10,r:[1120,1120],type:"ombra"},
+  {n:"Coro d'Ossa",sub:"Mille morti, una sola voce",hp:46,atk:4,r:[190,190],type:"pietra",mech:"coro"},
+  {n:"L'Annegato",sub:"Chi entrò e non tornò",hp:62,atk:6,r:[330,330],type:"natura",mech:"risacca"},
+  {n:"Boia di Cenere",sub:"L'ultimo a deporre la lama",hp:80,atk:8,r:[540,540],type:"fiamma",mech:"condanna"},
+  {n:"Regina Cancellata",sub:"Il nome che il Sovrano divorò",hp:116,atk:10,r:[1120,1120],type:"ombra",mech:"oblio"},
 ];
 let BOSSES = [];
 
@@ -1315,7 +1411,7 @@ function checkSynergies(){
 function hasSynergy(id){ return player && player.synergies && player.synergies.includes(id); }
 
 /* ===================== BOSS SEGRETO (NG+ / tutti i titoli) ===================== */
-const BOSS5 = {n:"L'Eco del Primo", sub:"Ciò che resta quando ogni nome è speso", hp:170, atk:13, r:[2500,2500], type:"luce"};
+const BOSS5 = {n:"L'Eco del Primo", sub:"Ciò che resta quando ogni nome è speso", hp:170, atk:13, r:[2500,2500], type:"luce", mech:"aspetti"};
 
 /* affissi NG+ per i boss */
 const NG_AFFIXES = [
@@ -1323,6 +1419,48 @@ const NG_AFFIXES = [
   {id:"doppio", nm:"Furia Gemella", desc:"attacca due volte"},
   {id:"scudo",  nm:"Egida", desc:"si protegge ciclicamente"},
 ];
+
+/* ===================== IL FILO DEL DESTINO ===================== */
+/* Le scelte del viandante muovono due assi nascosti — Misericordia e Ambizione.
+   La somma di una run intera, non un singolo bivio, decide quale finale ottieni. */
+function karmaTag(axis, n){
+  if(!player) return;
+  player.karma = player.karma || {misericordia:0, ambizione:0};
+  player.karma[axis] = (player.karma[axis]||0) + (n||1);
+}
+function karmaFlag(k){ if(!player) return; player.flags = player.flags||{}; player.flags[k] = true; }
+/* descrittore breve dell'inclinazione attuale, mostrato ai siti di grazia */
+function karmaLeaning(){
+  if(!player) return null;
+  const k = player.karma||{}; const mis = k.misericordia||0, amb = k.ambizione||0;
+  if(mis===0 && amb===0) return {t:"Le Terre non ti conoscono ancora.", c:"#8a8170"};
+  if(amb >= mis+4) return {t:"Le Terre imparano a temerti.", c:"#c87a6a"};
+  if(mis >= amb+4) return {t:"Le Terre ti ricordano con gratitudine.", c:"#9ac08a"};
+  if(amb > mis)    return {t:"Cammini come chi vuole prendere.", c:"#c0a07a"};
+  if(mis > amb)    return {t:"Cammini come chi vuole risparmiare.", c:"#9ab0a0"};
+  return {t:"Le Terre non hanno ancora deciso chi sei.", c:"#a89a80"};
+}
+/* I quattro destini possibili del viandante. */
+const ENDINGS = {
+  tiranno: { id:"tiranno", medal:"tiranno", col:"#b25cf0", title:"Il Nuovo Innominato",
+    text:"Ti siedi sul trono che hai strappato con le unghie e le lame. Le Terre Spezzate hanno di nuovo un signore — e tu hai già scordato il tuo nome. Forse è meglio così: un nome è solo un'altra cosa che possono toglierti. Ora sei tu a toglierli." },
+  custode: { id:"custode", medal:"custode", col:"#ffd87a", title:"La Fiamma Custode",
+    text:"Non reclami nulla. Ti siedi accanto all'ultima grazia e lasci che la tua fiamma arda per chi verrà dopo di te. Lentamente, lungo i sentieri spezzati, altre fiammelle rispondono. Le Terre non guariscono in una notte. Ma, per la prima volta da secoli, cominciano." },
+  nome:    { id:"nome", medal:"nome", col:"#7fd0c0", title:"Il Nome Restituito",
+    text:"Pronunci ad alta voce i nomi che hai raccolto lungo la via — la Regina, l'Annegato, ogni caduto che hai scelto di ricordare. Uno a uno, le Terre li riprendono. Dove regnava l'oblio torna la memoria. Hai vinto non spezzando, ma ricucendo ciò che era stato strappato." },
+  fiamma:  { id:"fiamma", medal:"finisher", col:"#ecc857", title:"Le Terre sono tue",
+    text:"Il Sovrano Senza Nome è caduto. Le Terre Spezzate conoscono di nuovo l'alba. Cammini verso l'orizzonte grigio senza un titolo, senza un trono: solo una fiamma ostinata che si rifiuta di spegnersi." },
+};
+function computeEnding(){
+  if(!player) return ENDINGS.fiamma;
+  const k = player.karma||{}; const mis = k.misericordia||0, amb = k.ambizione||0;
+  const f = player.flags||{};
+  if(amb >= mis+4) return ENDINGS.tiranno;
+  const nomePath = f.queenRemembered || (f.freedSoul && Math.abs(mis-amb)<=1 && mis>0);
+  if(nomePath && mis >= amb) return ENDINGS.nome;
+  if(mis >= amb+4) return ENDINGS.custode;
+  return ENDINGS.fiamma;
+}
 
 /* ===================== STATO ===================== */
 let tiles, player, combat, runesDropTile;
@@ -1359,6 +1497,7 @@ function newGame(cls){
     ardore:0, visitedRegions:[0], lastRegionSeen:0,
     passives:[], synergies:[], ng:false, ngScale:1, secretSeen:false,
     bossPick:[0,0,0,0], worldPath:null,
+    karma:{misericordia:0, ambizione:0}, flags:{}, endingId:null,
   };
   player.bossPick = pickBosses(); // sorteggia i guardiani di questa run
   // Ciclo del Ritorno (NG+): nemici più forti, boss con affissi, boss segreto
@@ -1411,6 +1550,10 @@ function floatDmg(sideId, text, color){
   sp.style.color = color;
   host.appendChild(sp);
   setTimeout(()=>sp.remove(), 1000);
+  if(BS.ctx){
+    if(sideId==="cb-eside" && BS.enemy) bsFloatDmg(BS.enemy.baseX, BS.enemy.baseY-55, text, color);
+    else if(sideId==="cb-pside" && BS.hero) bsFloatDmg(BS.hero.baseX, BS.hero.baseY-55, text, color);
+  }
 }
 const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
 
@@ -1544,7 +1687,7 @@ function buildBoard(){
     const beaten = tiles[row*9+8].cleared;
     const isActive = row===curRegion;
     const wrap = document.createElement("div");
-    wrap.className = "region-row" + (isActive?" expanded":" collapsed");
+    wrap.className = "region-row" + (isActive?" expanded":" collapsed") + (beaten?" beaten":"");
     wrap.id = "rrow-"+row;
     wrap.dataset.region = row;
     const lbl = document.createElement("div");
@@ -1590,7 +1733,7 @@ function renderBoard(){
     const old = el.querySelector(".pawn");
     if(old) old.remove();
     if(t.idx===player.pos){
-      const s=document.createElement("span"); s.className="pawn"; s.textContent="⬤"; el.appendChild(s);
+      const s=document.createElement("span"); s.className="pawn"; s.textContent="⚑"; el.appendChild(s);
     }
   });
   $("region-name").textContent = REGIONS[tiles[player.pos].region];
@@ -1651,13 +1794,18 @@ function drawPortrait(){
   if(!cv || !cv.getContext) return;
   const ctx = cv.getContext("2d");
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = "#11151e"; ctx.fillRect(0,0,14,14);
-  const map = SPRITES.hero;
-  for(let r=0;r<map.length;r++)for(let c=0;c<map[0].length;c++){
-    const ch = map[r][c];
-    if(ch===".") continue;
-    ctx.fillStyle = HERO_PAL[ch]||"#f0f";
-    ctx.fillRect(c+1, r+2, 1, 1);
+  const map=heroSprite(), pal=heroPal();
+  const hpPct = player ? Math.max(0,player.hp/Math.max(1,player.maxhp)) : 1;
+  ctx.fillStyle = hpPct<0.30?"#1e100a":"#11151e"; ctx.fillRect(0,0,14,14);
+  for(let r=0;r<map.length;r++) for(let c=0;c<map[0].length;c++){
+    const ch=map[r][c]; if(ch===".") continue;
+    let col=pal[ch]||"#f0f";
+    if(hpPct<0.30 && col.length===7 && col[0]==='#'){
+      const ri=(0.30-hpPct)/0.30*0.55;
+      const rr=parseInt(col.slice(1,3),16),rg=parseInt(col.slice(3,5),16),rb=parseInt(col.slice(5,7),16);
+      col=`rgb(${Math.min(255,Math.round(rr*(1-ri)+155*ri))},${Math.round(rg*(1-ri))},${Math.round(rb*(1-ri))})`;
+    }
+    ctx.fillStyle=col; ctx.fillRect(c+1,r+2,1,1);
   }
 }
 function renderAll(){ buildBoard(); renderBoard(); renderStats(); }
@@ -1706,17 +1854,18 @@ function passOver(tile){
     sfx("rune");
   }
 }
+const DIE_CHARS = ["⚀","⚁","⚂","⚃","⚄","⚅"];
 let moving = false;
 async function animateDie(roll){
-  setAction("Il dado rotola...", `<span class="die rolling" id="live-die">·</span>`, []);
+  setAction("Il dado rotola...", `<span class="die rolling" id="live-die">⚀</span>`, []);
   const el = $("live-die");
   if(!REDUCED){
-    for(let i=0;i<9;i++){ el.textContent = d6(); await sleep(60+i*8); }
+    for(let i=0;i<10;i++){ el.textContent = DIE_CHARS[Math.floor(Math.random()*6)]; await sleep(55+i*12); }
   }
-  el.textContent = roll;
+  el.textContent = DIE_CHARS[roll-1];
   el.classList.remove("rolling");
   el.classList.add("landed");
-  await sleep(420);
+  await sleep(460);
 }
 function choosePath(n){
   player.worldPath = n;
@@ -1724,10 +1873,12 @@ function choosePath(n){
     // Via dell'Oblio: region 1 diventa più difficile — nessun negozio, nessun tesoro, 3 élite
     const hardMids = ["enemy","elite","enemy","elite","event","elite","enemy"];
     hardMids.forEach((t,i)=>{ tiles[9+1+i].type=t; tiles[9+1+i].cleared=false; });
+    karmaTag("ambizione",3); karmaFlag("oblivionPath");
     log("Imbocchi la Via dell'Oblio — sentiero maledetto, privo di riparo.", "bad");
     toast("☠ Via dell'Oblio", "bad");
     sfx("hurt");
   } else {
+    karmaTag("misericordia",2);
     log("Scegli la Via della Palude — il cammino noto.", "gold");
     toast("⚗ Via della Palude", "gold");
   }
@@ -1795,7 +1946,7 @@ function arriveAt(tile, roll){
   }
   if(tile.cleared && tile.type!=="grace" && tile.type!=="shop"){
     const fl = flavor("path", tile.region);
-    setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. ${fl} Questo luogo è ormai silenzioso.`, [["Tira il dado",rollMove]]);
+    setAction("Il sentiero", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${fl} Questo luogo è ormai silenzioso.`, [["Tira il dado",rollMove]]);
     renderStats();
     return;
   }
@@ -1808,7 +1959,7 @@ function arriveAt(tile, roll){
     case "treasure": openTreasure(tile, roll); break;
     case "event": runEvent(tile, roll); break;
     default:
-      setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. ${flavor("path",tile.region)||"Il vento soffia tra le rovine."} Nulla accade.`, [["Tira il dado",rollMove]]);
+      setAction("Il sentiero", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${flavor("path",tile.region)||"Il vento soffia tra le rovine."} Nulla accade.`, [["Tira il dado",rollMove]]);
   }
 }
 
@@ -1825,7 +1976,7 @@ function openTreasure(tile, roll){
   sfx("rune");
   log(`Apri uno scrigno dimenticato: ${amount} rune.`,"gold");
   renderBoard(); renderStats();
-  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. ${flavor("treasure",tile.region)} <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
+  setAction("✦ Tesoro", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${flavor("treasure",tile.region)} <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
 }
 
 function runEvent(tile, roll){
@@ -1921,12 +2072,13 @@ function runEvent(tile, roll){
             player.runes -= cost;
             player.runeBonus = (player.runeBonus||0) + 0.15;
             player.items.push("Sigillo del Pellegrino");
+            karmaTag("misericordia",2);
             log("Evento: ottieni il Sigillo del Pellegrino (+15% rune).","gold"); sfx("level");
             toast("✦ Sigillo del Pellegrino", "gold");
             renderStats();
             setAction("? Il Pellegrino Cieco","«Vedrai più lontano di me, ora.» Il pellegrino svanisce. Tira il dado.",[["Tira il dado",rollMove]],"event");
          }],
-         ["Rifiuta",()=>{ log("Rifiuti il pellegrino.","bad"); setAction("? Evento","Il pellegrino abbassa la mano e si dissolve nella nebbia. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],
+         ["Rifiuta",()=>{ karmaTag("ambizione",1); log("Rifiuti il pellegrino.","bad"); setAction("? Evento","Il pellegrino abbassa la mano e si dissolve nella nebbia. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],
         "event");
       renderBoard(); renderStats();
       return;
@@ -1942,12 +2094,13 @@ function runEvent(tile, roll){
         `Un altare antico pretende carne in cambio di potere. Sacrifica <strong style="color:#d4847a">10 vitalità massima</strong> per <strong style="color:var(--gold-bright)">+2 attacco permanente</strong>.`,
         [["Sacrifica",()=>{
             player.maxhp -= 10; player.hp = Math.min(player.hp, player.maxhp); player.atk += 2;
+            karmaTag("ambizione",2);
             log("Evento: sacrifichi 10 PV max per +2 ATK.","gold"); sfx("hurt");
             toast("⚔ +2 attacco · −10 PV max","gold");
             renderStats();
             setAction("? L'Altare del Sacrificio","L'altare beve e tace. Ti senti più forte, e più fragile. Tira il dado.",[["Tira il dado",rollMove]],"event");
          }],
-         ["Rifiuta",()=>{ log("Lasci l'altare intatto.","good"); setAction("? Evento","Volti le spalle all'altare. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],
+         ["Rifiuta",()=>{ karmaTag("misericordia",1); log("Lasci l'altare intatto.","good"); setAction("? Evento","Volti le spalle all'altare. Tira il dado.",[["Tira il dado",rollMove]],"event"); }]],
         "event");
       renderBoard(); renderStats();
       return;
@@ -2010,6 +2163,7 @@ function runEvent(tile, roll){
         [["Libera l'anima",()=>{
             player.guardianSoul = true;
             player.items.push("Anima Riconoscente");
+            karmaTag("misericordia",2); karmaFlag("freedSoul");
             log("Evento: liberi l'anima — ti proteggerà una volta dalla morte.","gold"); sfx("grace");
             toast("☥ Anima Riconoscente","gold");
             renderStats();
@@ -2017,6 +2171,7 @@ function runEvent(tile, roll){
          }],
          ["Saccheggia",()=>{
             player.runes += loot;
+            karmaTag("ambizione",2);
             log(`Evento: saccheggi la cella (+${loot} rune).`,"gold"); sfx("rune");
             toast(`⟐ +${loot} rune`,"gold");
             renderStats();
@@ -2028,7 +2183,7 @@ function runEvent(tile, roll){
     }
   }
   renderBoard(); renderStats();
-  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${flavor("event",tile.region)} ${text}`, [["Tira il dado",rollMove]], "event");
+  setAction("? Evento", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${flavor("event",tile.region)} ${text}`, [["Tira il dado",rollMove]], "event");
 }
 
 /* ===================== NPC CON DIALOGO RAMIFICATO ===================== */
@@ -2124,6 +2279,7 @@ function npcPellegrino(region){
   showNPC(npc);
   npcNode(`Un pellegrino senza occhi volge il viso verso di te. «Sento il peso delle rune che porti. E sento qualcosa di più pesante: la tua strada.»`, [
     ["«Benedicimi.»", ()=>{
+      karmaTag("misericordia",1);
       if(d6()>=3){
         player.maxhp+=6; player.hp+=6;
         log("Pellegrino: benedizione (+6 PV max).","good"); sfx("grace");
@@ -2150,6 +2306,7 @@ function npcRinnegato(region, tile){
       npcNode(`«La forza ha un prezzo di sangue.» Ti offre +2 attacco permanente in cambio di 8 vitalità massima.`,[
         ["Accetta il patto", ()=>{
           player.maxhp=Math.max(10,player.maxhp-8); player.hp=Math.min(player.hp,player.maxhp); player.atk+=2;
+          karmaTag("ambizione",1);
           log("Rinnegato: +2 ATK, −8 PV max.","gold"); sfx("hurt");
           npcNode("«Ora colpisci come chi non ha più nulla da perdere.» Si rimette in cammino.",[["Prosegui",closeNPC]]);
         }],
@@ -2159,6 +2316,7 @@ function npcRinnegato(region, tile){
     ["«Sfidami a duello.»", ()=>{
       $("ov-npc").classList.remove("open");
       npcResume = null;
+      karmaTag("ambizione",1);
       log("Accetti la sfida del Cavaliere Rinnegato.","bad");
       const foe = {n:"Cavaliere Rinnegato", hp:22+region*10, atk:4+region, r:[120+region*60, 160+region*60]};
       setAction("⚔ Duello", "Il Cavaliere Rinnegato sguaina la lama.", [], "elite");
@@ -2179,6 +2337,49 @@ const GRACE_FLAVOR = [
   "Il calore dell'Altopiano è diverso vicino alla grazia. Non brucia. Scalda. Per un momento sembri quasi capire perché qualcuno avrebbe potuto giurare di difendere questo posto.",
   "Oltre la Cittadella non ci sono più grazie. Lo sai. Questa fiamma è l'ultima cosa vera prima dell'oscurità. Siediti. Respira. Poi alzati.",
 ];
+const GF = {ctx:null,parts:[],raf:0,lastTs:0};
+function graceFlameStart(){
+  const cv = $("grace-flame");
+  if(!cv||!cv.getContext||REDUCED) return;
+  GF.ctx = cv.getContext("2d");
+  GF.parts = [];
+  if(!GF.raf){ GF.lastTs = performance.now(); GF.raf = requestAnimationFrame(graceFlameLoop); }
+}
+function graceFlameStop(){
+  if(GF.raf){ cancelAnimationFrame(GF.raf); GF.raf=0; }
+  GF.ctx = null;
+}
+function graceFlameLoop(ts){
+  if(!GF.ctx){ GF.raf=0; return; }
+  const dt=Math.min(50,ts-GF.lastTs); GF.lastTs=ts;
+  const ctx=GF.ctx;
+  ctx.clearRect(0,0,120,80);
+  // base glow
+  const grd=ctx.createRadialGradient(60,74,0,60,74,30);
+  grd.addColorStop(0,"rgba(255,160,40,.14)"); grd.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=grd; ctx.fillRect(0,0,120,80);
+  // spawn particles
+  for(let i=0;i<3;i++) GF.parts.push({
+    x:60+(Math.random()-.5)*10, y:72,
+    vx:(Math.random()-.5)*0.4, vy:-(0.9+Math.random()*1.3),
+    life:1, r:2+Math.random()*2.5
+  });
+  GF.parts = GF.parts.filter(p=>{
+    p.life-=dt/1200;
+    if(p.life<=0) return false;
+    p.x+=p.vx*dt/16; p.y+=p.vy*dt/16;
+    const t=1-p.life;
+    const r=255, g=Math.round(90+t*145), b=Math.round(t*50);
+    ctx.globalAlpha=p.life*(p.life<0.25?p.life/0.25:1)*0.85;
+    ctx.fillStyle=`rgb(${r},${g},${b})`;
+    const sz=p.r*(1.1-t*0.65);
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5,sz), 0, 6.2832); ctx.fill();
+    return true;
+  });
+  ctx.globalAlpha=1;
+  GF.raf=requestAnimationFrame(graceFlameLoop);
+}
+
 function openGrace(tile){
   tile.cleared = true;
   player.checkpoint = tile.idx;
@@ -2192,10 +2393,12 @@ function openGrace(tile){
   const fl = $("grace-flavor");
   if(fl) fl.textContent = GRACE_FLAVOR[tile.region]||GRACE_FLAVOR[0];
   $("ov-grace").classList.add("open");
+  graceFlameStart();
 }
 function showGraceMenu(){
   renderGraceMenu();
   $("ov-grace").classList.add("open");
+  graceFlameStart();
 }
 function levelCost(){ return 45 + (player.level-1)*30; }
 function renderGraceMenu(){
@@ -2211,6 +2414,7 @@ function renderGraceMenu(){
       <span>⟐ <strong style="color:var(--gold-bright)">${player.runes}</strong> rune</span>
     </div>
     ${tec?`<div class="grace-tecnica-hint" style="color:${tec.col}">${tec.icon} Tecnica: <strong>${tec.nm}</strong></div>`:""}
+    ${(()=>{ const l=karmaLeaning(); return l?`<div class="grace-tecnica-hint" style="color:${l.c};border-left-color:${l.c}">☍ Il filo del destino: <em>${l.t}</em></div>`:""; })()}
     <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">♥</span><div><span class="nm">Vigore</span><div class="d">+10 vitalità massima (e cura completa)</div></div></div>
       <button id="lv-vig" ${can?"":"disabled"}>⟐ ${cost}</button></div>
     <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">⚔</span><div><span class="nm">Forza</span><div class="d">+1 attacco permanente</div></div></div>
@@ -2250,6 +2454,7 @@ function levelUp(which){
 }
 $("grace-leave").addEventListener("click", ()=>{
   $("ov-grace").classList.remove("open");
+  graceFlameStop();
   setAction("❋ Grazia", "La fiamma arde quieta. Puoi meditare ancora o proseguire.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
 
@@ -2416,12 +2621,13 @@ const Ambient = {
     const c = AudioFX.ctx, now = c.currentTime;
     // drone: due oscillatori detunati, frequenza per regione
     const baseFreq = [55, 49, 62, 41][region] || 50;
-    const types = ["sine","triangle","sawtooth","sawtooth"];
+    const types = ["sine","triangle","triangle","sine"];
+    const droneGain = [[0.50,0.32],[0.50,0.32],[0.36,0.22],[0.28,0.18]][region]||[0.50,0.32];
     [-5,5].forEach((cents,i)=>{
       const o=c.createOscillator(), g=c.createGain();
       o.type = types[region]||"sine";
       o.frequency.value = baseFreq*Math.pow(2,cents/1200);
-      g.gain.value = i===0?0.5:0.32;
+      g.gain.value = droneGain[i];
       o.connect(g); g.connect(this.bus); o.start(now);
       this.drone.push(o,g);
     });
@@ -2448,14 +2654,15 @@ const Ambient = {
       if(Math.random()<.4){ const f=520+Math.random()*500; AmbientTone(this.bus,f,t,.25,"sine",.06,f*0.4); }
       if(Math.random()<.12) AmbientNoise(t,.3,.008,'wind');
       if(Math.random()<.05) dreadChime(this.bus, 240+Math.random()*60, t, 6+Math.random()*2, 0.030);
-    } else if(r===2){ // Altopiano: crepitio + campana incandescente
-      if(Math.random()<.7) AmbientNoise(t,.05+Math.random()*.06,.02,'crackle');
-      if(Math.random()<.04) AmbientTone(this.bus,70,t,.8,"sawtooth",.04);
-      if(Math.random()<.05) dreadChime(this.bus, 380+Math.random()*120, t, 3+Math.random()*1.5, 0.033);
-    } else if(r===3){ // Cittadella: silenzio + campane alte + pianto più frequente
-      if(Math.random()<.15){ const f=1200+Math.random()*900; AmbientTone(this.bus,f,t,.6,"square",.016,f*0.7); }
-      if(Math.random()<.08) dreadChime(this.bus, 700+Math.random()*400, t, 4+Math.random()*2, 0.026);
-      if(Math.random()<.07) dreadCry(this.bus, t, 1.5+Math.random()*1.0, 0.018);
+    } else if(r===2){ // Altopiano: cenere portata dal vento, rintocchi gravi incandescenti
+      if(Math.random()<.10) AmbientNoise(t,.04+Math.random()*.05,.006,'crackle');
+      if(Math.random()<.09) AmbientNoise(t,.35,.005,'wind');
+      if(Math.random()<.04) AmbientTone(this.bus,110+Math.random()*30,t,1.4,"triangle",.015);
+      if(Math.random()<.04) dreadChime(this.bus, 260+Math.random()*90, t, 3.5+Math.random()*2, 0.022);
+    } else if(r===3){ // Cittadella: silenzio pesante, risonanze profonde, lamento raro
+      if(Math.random()<.07){ const f=150+Math.random()*100; AmbientTone(this.bus,f,t,1.5,"sine",.012); }
+      if(Math.random()<.06) dreadChime(this.bus, 280+Math.random()*180, t, 5+Math.random()*3, 0.018);
+      if(Math.random()<.02) dreadCry(this.bus, t, 1.5+Math.random()*1.0, 0.011);
     }
   },
   setRegion(region){
@@ -2934,6 +3141,56 @@ regina_boss:[
 ],
 };
 const HERO_PAL = {a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"};
+/* Sprite distinte per classe: silhouette leggibile a 4px/pixel */
+Object.assign(SPRITES, {
+hero_cavaliere:[
+"...cccc.....",
+"..aaaaaa.ww.",
+"..aeaeaa.w..",
+"..aaaaaa.ww.",
+".cbbbbbbbbw.",
+"bbbbbbbbbw..",
+"bbbbbbbbbb..",
+"..bbbbbb....",
+"...bb.bb....",
+"...bb.bb....",
+"..aaa.aaa...",
+],
+hero_asceta:[
+"...aa.......",
+"..aaaa..w...",
+"..aeaa.cw...",
+"..aaaa..w...",
+"...bb...w...",
+"..bbbbbww...",
+".bbbbbbb....",
+"..bb.bb.....",
+"..b...b.....",
+"..b...b.....",
+".aa...aa....",
+],
+hero_mendico:[
+"....aa......",
+"...aaaa.....",
+"...aeaa.s...",
+"...aaaa.ss..",
+"....bbb.s...",
+"...bbbbb....",
+"...bbbbb....",
+"...bbb......",
+"...b..b.....",
+"....b.b.....",
+"...aa.a.....",
+],
+});
+const CLASS_PALS = {
+  vagabondo:{a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"},
+  cavaliere:{a:"#cdbf9a",b:"#7a8898",c:"#c8a820",e:"#0a0c12",w:"#dde0e8",s:"#aab0b8"},
+  asceta:   {a:"#d4b890",b:"#362e24",c:"#ff8020",e:"#1a0c04",w:"#5a4a34",s:"#c4a07a"},
+  mendico:  {a:"#c4a87a",b:"#4a3c2c",e:"#1a1006",s:"#b09060",w:"#9a8060",c:"#ecc857"},
+};
+function heroSprite(){ try{ const k=player&&player.cls; return (k&&SPRITES['hero_'+k])||SPRITES.hero; }catch(e){ return SPRITES.hero; } }
+function heroPal(){    try{ const k=player&&player.cls; return CLASS_PALS[k]||HERO_PAL; }catch(e){ return HERO_PAL; } }
 const ENEMY_LOOK = {
   "Soldato Errante":   {sp:"humanoid", pal:{a:"#8a93a3",b:"#5a6373",e:"#0a0c10",s:"#b8a48a",w:"#c8cdd8"}},
   "Segugio di Tomba":  {sp:"beast",    pal:{a:"#6a6f7e",b:"#3c4150",e:"#ffd87a",s:"#999",w:"#ccc"}},
@@ -2969,7 +3226,7 @@ const REGION_BG = [
   {sky0:"#0f0a16",sky1:"#1f1434",hill:"#160e26",ground:"#191130",line:"#3c2c5e",mote:"#a98fd8",spire:"#110a1e"},
 ];
 const BS = {ctx:null,cv:null,raf:0,t:0,queue:[],cur:null,parts:[],slashes:[],motes:[],shake:0,
-  hero:null,enemy:null,bg:null,spires:[],lastTs:0,region:0};
+  hero:null,enemy:null,bg:null,spires:[],lastTs:0,region:0,floats:[]};
 
 function spriteSize(map){ return {w:map[0].length, h:map.length}; }
 function mkFighter(map,pal,scale,baseX,baseY,flip){
@@ -2993,7 +3250,7 @@ function bsInit(enemyName,region,isBoss,isElite){
   const cvH = BS.cv ? BS.cv.height : 165;
   for(let i=0;i<18;i++) BS.motes.push({x:Math.random()*340,y:Math.random()*cvH,v:.08+Math.random()*.25,r:Math.random()>.5?1:2});
   const groundY = isBoss ? 148 : (isElite ? 142 : 138);
-  BS.hero = mkFighter(SPRITES.hero, HERO_PAL, 5, 78, groundY, false);
+  BS.hero = mkFighter(heroSprite(), heroPal(), 5, 78, groundY, false);
   const look = ENEMY_LOOK[enemyName] || {sp:"humanoid",pal:{a:"#999",b:"#666",e:"#fff",s:"#caa",w:"#ddd"}};
   const scale = isBoss ? 7 : (isElite ? 6 : 5);
   BS.enemy = mkFighter(SPRITES[look.sp], look.pal, scale, isBoss?242:252, groundY, true);
@@ -3072,6 +3329,10 @@ function spawnBurst(x,y,color,n,spread){
     const a = Math.random()*Math.PI*2, sp=(spread||1)*(0.6+Math.random()*1.8);
     BS.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,c:color,life:1,g:.06,sz:2+Math.floor(Math.random()*2)});
   }
+}
+function bsFloatDmg(x, y, text, color){
+  if(!BS.ctx || REDUCED) return;
+  BS.floats.push({x, y, text, color:color||"#ecc857", life:1.0});
 }
 function dissolveFighter(f){
   const sz=spriteSize(f.map), px=f.scale;
@@ -3253,6 +3514,22 @@ function draw(dt){
     ctx.globalAlpha = 1;
     return true;
   });
+  // numeri danni fluttuanti
+  if(BS.floats.length){
+    ctx.save();
+    ctx.textAlign="center"; ctx.font="bold 9px 'Press Start 2P',monospace";
+    BS.floats = BS.floats.filter(fl=>{
+      fl.life -= dt/1100;
+      if(fl.life<=0) return false;
+      fl.y -= 0.55*dt/16;
+      ctx.globalAlpha = fl.life < 0.28 ? fl.life/0.28 : Math.min(1, fl.life);
+      ctx.fillStyle = fl.color;
+      ctx.fillText(fl.text, Math.round(fl.x), Math.round(fl.y));
+      return true;
+    });
+    ctx.globalAlpha=1;
+    ctx.restore();
+  }
   ctx.restore();
 }
 /* sequenze d'attacco */
@@ -3323,7 +3600,27 @@ function bsFlask(){
   }, null);
 }
 function bsEnemyDie(){
-  bsPush(220, null, ()=>{ dissolveFighter(BS.enemy); spawnBurst(BS.enemy.baseX, BS.enemy.baseY-26, "#ecc857", 14, 1.6); BS.shake=240; });
+  if(!BS.enemy) return;
+  const isBoss=typeof combat!=='undefined'&&combat&&combat.isBoss;
+  BS.enemy.flash=isBoss?300:200; // colpo finale: flash bianco sulla sprite
+  bsPush(isBoss?200:150, null, ()=>{
+    if(!BS.enemy) return;
+    dissolveFighter(BS.enemy);
+    // particelle runa-oro che salgono (oro liberato)
+    const n=isBoss?40:22;
+    for(let i=0;i<n;i++){
+      BS.parts.push({
+        x:BS.enemy.baseX+(Math.random()-.5)*52,
+        y:BS.enemy.baseY-10-Math.random()*45,
+        vx:(Math.random()-.5)*1.8, vy:-(0.8+Math.random()*(isBoss?2.4:1.8)),
+        c:Math.random()>.45?"#ecc857":"#fff8d0", life:1, g:0.020, sz:2+(isBoss?1:0)
+      });
+    }
+    spawnBurst(BS.enemy.baseX,BS.enemy.baseY-30,"#ecc857",isBoss?32:20,isBoss?3.0:2.4);
+    spawnBurst(BS.enemy.baseX,BS.enemy.baseY-30,"#ffffff",isBoss?14:8,isBoss?1.8:1.4);
+    if(isBoss) spawnBurst(BS.enemy.baseX,BS.enemy.baseY-30,"#ffe090",20,3.6);
+    BS.shake=Math.max(BS.shake,isBoss?620:360);
+  });
 }
 function bsHeroDie(){
   bsPush(220, null, ()=>{ dissolveFighter(BS.hero); spawnBurst(BS.hero.baseX, BS.hero.baseY-22, "#9c3a32", 14, 1.6); BS.shake=260; });
@@ -3502,6 +3799,16 @@ const World = {
     this.raf=requestAnimationFrame(t=>this.loop(t));
   },
 };
+function bossProximity(){
+  try{
+    if(!player||!tiles) return 0;
+    const t=tiles[player.pos]; if(!t) return 0;
+    const end=t.region*9+8;
+    const boss=tiles[end]; if(!boss||boss.cleared) return 0;
+    const dist=end-player.pos;
+    return dist<=3?Math.max(0,1-dist/4):0;
+  }catch(e){ return 0; }
+}
 function wldRender(WD, dt){
   const ctx=WD.ctx, th=WORLD_THEME[WD.region]||WORLD_THEME[0];
   const W=WV.W, H=WV.H, gy=WV.gy, cam=WD.camX, t=WD.t;
@@ -3525,6 +3832,8 @@ function wldRender(WD, dt){
   wldHero(ctx, heroScreenX, gy, walking, t, WD);
   wldParticles(ctx, WD, th, dt);
   wldLight(ctx, th, W, H, heroScreenX, gy);
+  const _dr=bossProximity(); if(_dr>0.01) wldBossDread(ctx,th,W,H,gy,t,_dr,WD.region);
+  const _hp=player?Math.max(0,player.hp/Math.max(1,player.maxhp)):1; if(_hp<0.30&&player) wldLowHP(ctx,W,H,t,_hp);
 }
 function wldCelest(ctx,th,W,H,t){
   const c=th.celest, x=c.x*W, y=c.y*H;
@@ -3694,7 +4003,7 @@ function wldCairn(ctx,x,gy){
   ctx.beginPath(); ctx.arc(x,gy-12,2.5,Math.PI,0); ctx.fill();
 }
 function wldHero(ctx, x, gy, walking, t, WD){
-  const map=SPRITES.hero, px=4, rows=map.length, cols=map[0].length;
+  const map=heroSprite(), px=4, rows=map.length, cols=map[0].length;
   const h=rows*px, w=cols*px;
   const bob = walking ? Math.abs(Math.sin(t/90))*3 : Math.sin(t/600)*1.2;
   const ox=Math.round(x - w/2), oy=Math.round(gy - h - bob);
@@ -3705,7 +4014,7 @@ function wldHero(ctx, x, gy, walking, t, WD){
     if(legPhase>=0 && r>=rows-3) dxr = ((legPhase? (r%2?1:-1) : (r%2?-1:1)))*2;
     for(let c=0;c<cols;c++){
       const ch=map[r][c]; if(ch===".") continue;
-      ctx.fillStyle=HERO_PAL[ch]||"#caa";
+      ctx.fillStyle=(heroPal()[ch])||"#caa";
       ctx.fillRect(ox+c*px+dxr, oy+r*px, px, px);
     }
   }
@@ -3754,6 +4063,69 @@ function wldLight(ctx, th, W, H, hx, gy){
   const lg=ctx.createRadialGradient(hx,gy-14,0,hx,gy-14,72);
   lg.addColorStop(0,hexA2("#ffcf7a",.10)); lg.addColorStop(1,"rgba(0,0,0,0)");
   ctx.fillStyle=lg; ctx.fillRect(0,0,W,H);
+}
+/* Avvicinarsi al boss: il mondo si fa oscuro, la sagoma del boss aleggia nel cielo */
+function wldBossDread(ctx,th,W,H,gy,t,d,region){
+  // oscuramento progressivo + lavaggio di sangue
+  ctx.fillStyle=`rgba(0,0,0,${d*0.22})`; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=`rgba(55,4,4,${d*0.11})`; ctx.fillRect(0,0,W,H);
+  // sagoma del boss nel cielo (visibile da d>0.20)
+  if(d>0.20){
+    try{
+      const boss=typeof BOSSES!=='undefined'&&BOSSES[region];
+      const look=boss&&ENEMY_LOOK&&ENEMY_LOOK[boss.n];
+      const spr=look&&SPRITES[look.sp];
+      if(spr){
+        const sh=spr.length,sw=spr[0].length;
+        const sc=Math.max(2,Math.round(2+d*3.5));
+        const alpha=Math.min(0.20,0.03+0.17*d);
+        const bx=Math.round(W*0.70);
+        const by=Math.round(gy*0.72);
+        ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle='#0c0206';
+        for(let r=0;r<sh;r++) for(let c=0;c<sw;c++){
+          if(spr[r][c]==='.') continue;
+          ctx.fillRect(bx+(c-(sw>>1))*sc,by-(sh-r)*sc,sc-1,sc-1);
+        }
+        ctx.globalAlpha=1; ctx.restore();
+      }
+    }catch(e){}
+  }
+  // vignetta a pulsazione cardiaca (rallenta con la distanza)
+  const bpm=56+(1-d)*38;
+  const phase=((t%(60000/bpm))/(60000/bpm));
+  const beat=Math.max(0,Math.sin(phase*Math.PI));
+  const va=0.18*d*(beat*0.65+0.35);
+  if(va>0.01){
+    const vg=ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,W*0.72);
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,`rgba(80,0,0,${va})`);
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  }
+  // crepe nel terreno (appaiono da d>0.50)
+  if(d>0.50){
+    ctx.save();
+    ctx.globalAlpha=(d-0.50)*0.75;
+    ctx.strokeStyle='#1c0808'; ctx.lineWidth=1;
+    let seed=(region*31337)|0;
+    const rr=()=>{ seed=((seed*1664525+1013904223)>>>0); return seed/4294967296; };
+    for(let i=0;i<5+Math.round((d-0.50)*12);i++){
+      const cx=40+rr()*(W-80);
+      ctx.beginPath(); ctx.moveTo(cx,gy);
+      ctx.lineTo(cx+(rr()-.5)*22,gy+2+rr()*8); ctx.stroke();
+      if(rr()>.45){ ctx.beginPath(); ctx.moveTo(cx,gy); ctx.lineTo(cx+(rr()-.5)*14,gy+rr()*5); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+}
+/* Vitalità critica: pulsazione rossa ai bordi del mondo */
+function wldLowHP(ctx,W,H,t,hpPct){
+  const intensity=Math.max(0,(0.30-hpPct)/0.30);
+  const speed=380+hpPct*620;
+  const beat=Math.max(0,Math.sin((t/speed)*Math.PI));
+  const a=0.22*intensity*beat;
+  if(a<0.01) return;
+  const vg=ctx.createRadialGradient(W/2,H/2,H*0.14,W/2,H/2,W*0.62);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,`rgba(160,18,10,${a})`);
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
 }
 
 /* ---- sistema animazione cutscene ---- */
@@ -4088,27 +4460,43 @@ function triggerPhase2(bossIdx){
 }
 
 /* ===================== MECCANICHE UNICHE DEI BOSS ===================== */
-/* 0 Sentinella: scudo rigenerante · 1 Madre: invoca un figlio ·
-   2 Cavaliere: posa di parata e contrattacco · 3 Sovrano: aspetti mutevoli */
+/* Ogni boss ha un'anima diversa: la stessa terra, una sfida irriconoscibile.
+   scudo   — Sentinella: scudo rigenerante da infrangere
+   figlio  — Madre: partorisce un figlio che intercetta i colpi
+   posa    — Cavaliere: posa di parata che punisce gli attacchi
+   aspetti — Sovrano/Eco: aspetti mutevoli con resist/vulnerabilità
+   coro    — Coro d'Ossa: raccoglie Voci che lo rinforzano; la parata ne zittisce una
+   risacca — L'Annegato: alterna fasi inabissate (attutito) e riemerse (vulnerabile)
+   condanna— Boia di Cenere: conto alla rovescia verso un'esecuzione, interrompibile
+   oblio   — Regina Cancellata: cancella una tua azione e ruba l'Ardore; la riconquisti colpendo */
 const SOVRANO_ASPECTS = [
   {nm:"Vuoto",  col:"#9a5ad0", resist:"attack",  weak:"parry"},
   {nm:"Fiamma", col:"#ff6a20", resist:"tecnica", weak:"attack"},
   {nm:"Gelo",   col:"#48b0e0", resist:"parry",   weak:"tecnica"},
 ];
-function initBossMech(region){
-  if(region===0){ combat.guardMax = 18; combat.guard = combat.guardMax; }
-  else if(region===1){ combat.addReady = true; combat.add = null; }
-  else if(region===2){ combat.parryStance = false; }
-  else if(region===3){ combat.aspect = 0; combat.aspectTimer = 3; }
+const CANCEL_LABELS = { attack:"Attacco", tecnica:"Tecnica" };
+function initBossMech(mech){
+  if(mech==="scudo"){ combat.guardMax = 18; combat.guard = combat.guardMax; }
+  else if(mech==="figlio"){ combat.addReady = true; combat.add = null; }
+  else if(mech==="posa"){ combat.parryStance = false; }
+  else if(mech==="aspetti"){ if(combat.aspect==null){ combat.aspect = 0; combat.aspectTimer = 3; } }
+  else if(mech==="coro"){ combat.voci = 0; }
+  else if(mech==="risacca"){ combat.sommerso = false; }
+  else if(mech==="condanna"){ combat.condanna = 4; combat.executing = false; }
+  else if(mech==="oblio"){ combat.cancellato = null; combat.cancelTurns = 0; }
 }
 function bossMechBanner(){
   if(!combat || !combat.isBoss) return "";
-  const r = combat.tile.region;
-  if(r===0 && combat.guard>0) return `🛡 Scudo ${combat.guard}/${combat.guardMax}`;
-  if(r===0 && combat.guardBroken) return `🛡 Scudo infranto!`;
-  if(r===1 && combat.add) return `⊕ Figlio della Palude ${Math.max(0,combat.add.hp)}/${combat.add.maxhp}`;
-  if(r===2 && combat.parryStance) return `⚔ Posa di parata — non attaccare!`;
-  if(r===3 && combat.aspect!=null){ const a=SOVRANO_ASPECTS[combat.aspect]; return `✦ Aspetto del ${a.nm}`; }
+  const m = combat.mech;
+  if(m==="scudo" && combat.guard>0) return `🛡 Scudo ${combat.guard}/${combat.guardMax}`;
+  if(m==="scudo" && combat.guardBroken) return `🛡 Scudo infranto!`;
+  if(m==="figlio" && combat.add) return `⊕ Figlio della Palude ${Math.max(0,combat.add.hp)}/${combat.add.maxhp}`;
+  if(m==="posa" && combat.parryStance) return `⚔ Posa di parata — non attaccare!`;
+  if(m==="aspetti" && combat.aspect!=null){ const a=SOVRANO_ASPECTS[combat.aspect]; return `✦ Aspetto del ${a.nm}`; }
+  if(m==="coro") return `🗣 Voci del Coro ${combat.voci} — para per zittirne una`;
+  if(m==="risacca") return combat.sommerso ? `🌊 Inabissato — colpi attutiti` : `🌊 Riemerso — vulnerabile!`;
+  if(m==="condanna") return combat.condanna<=0 ? `⏳ ESECUZIONE imminente — para!` : `⏳ Condanna ${combat.condanna}`;
+  if(m==="oblio" && combat.cancellato) return `✖ ${CANCEL_LABELS[combat.cancellato]||combat.cancellato} cancellato (${combat.cancelTurns})`;
   if(combat.affix){ const af=NG_AFFIXES.find(x=>x.id===combat.affix); if(af) return `☠ ${af.nm}`; }
   return "";
 }
@@ -4157,28 +4545,45 @@ function applyEnemyDamage(dmg, source, color){
     if(source===a.resist){ dmg = Math.max(1, Math.round(dmg*0.5)); cbLog(`<span class="warn">L'Aspetto del ${a.nm} dimezza il colpo.</span>`); }
     else if(source===a.weak){ dmg = Math.round(dmg*1.6); cbLog(`<span class="heal">L'Aspetto del ${a.nm} è vulnerabile — danno aumentato!</span>`); }
   }
+  // L'Annegato: inabissato attutisce, riemerso amplifica
+  if(combat.mech==="risacca"){
+    if(combat.sommerso){ dmg = Math.max(1, Math.round(dmg*0.4)); }
+    else { dmg = Math.round(dmg*1.4); }
+  }
+  // Boia di Cenere: la Tecnica spezza l'esecuzione in corso e azzera la Condanna
+  if(combat.mech==="condanna" && combat.executing && source==="tecnica"){
+    combat.executing = false; combat.charging = false; combat.intent = "attack";
+    combat.condanna = 4;
+    cbLog(`<span class="heal">La tua Tecnica spezza l'esecuzione! Il Boia indietreggia, la Condanna si azzera.</span>`);
+    if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-34, "#ffe040", 18, 2.2); }
+  }
   e.hp -= dmg;
   floatDmg("cb-eside", "-"+dmg, color||"#ecc857");
+  // Regina Cancellata: ogni colpo a segno accelera il ritorno dell'azione cancellata
+  if(combat.mech==="oblio" && combat.cancellato && dmg>0 && combat.cancelTurns>0){
+    combat.cancelTurns--;
+    if(combat.cancelTurns<=0){ const was=combat.cancellato; combat.cancellato=null; cbLog(`<span class="heal">Strappi il ricordo dalle sue mani: la tua ${CANCEL_LABELS[was]} è tua di nuovo.</span>`); }
+  }
 }
 /* hook a inizio turno del giocatore: gestisce posa di parata e ciclo aspetti */
 function bossPreTurn(){
   if(!combat || !combat.isBoss) return;
-  const r = combat.tile.region;
-  if(r===3 && combat.aspect!=null){
+  const m = combat.mech;
+  if(m==="aspetti" && combat.aspect!=null){
     combat.aspectTimer--;
     if(combat.aspectTimer<=0){
       combat.aspect = (combat.aspect+1) % SOVRANO_ASPECTS.length;
       combat.aspectTimer = 3;
       const a = SOVRANO_ASPECTS[combat.aspect];
-      cbLog(`<span class="warn">✦ Il Sovrano muta: Aspetto del ${a.nm}.</span>`);
+      cbLog(`<span class="warn">✦ ${combat.e.n} muta: Aspetto del ${a.nm}.</span>`);
       if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-40, a.col, 20, 2.2); BS.enemy.flash=160; }
     }
   }
 }
-/* hook a fine turno nemico: rigenera scudo, invoca figlio, prepara posa */
+/* hook a fine turno nemico: rigenera scudo, invoca figlio, prepara posa, ecc. */
 function bossPostTurn(){
   if(!combat || !combat.isBoss || combat.e.hp<=0) return;
-  const r = combat.tile.region;
+  const m = combat.mech;
   // affissi del Ciclo del Ritorno
   if(combat.affix==="rigen" && combat.e.hp<combat.e.maxhp){
     const h = Math.max(1, Math.round(combat.e.maxhp*0.03));
@@ -4191,20 +4596,69 @@ function bossPostTurn(){
     cbLog(`<span class="warn">${combat.e.n} evoca un'egida protettiva.</span>`);
     if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-32, "#78b4ff", 16, 1.8); }
   }
-  if(r===0 && combat.guard<combat.guardMax && !combat.guardBroken){
+  if(m==="scudo" && combat.guard<combat.guardMax && !combat.guardBroken){
     combat.guard = Math.min(combat.guardMax, combat.guard+4);
   }
-  if(r===1 && combat.addReady && !combat.add && combat.e.hp<=combat.e.maxhp*0.55){
+  if(m==="figlio" && combat.addReady && !combat.add && combat.e.hp<=combat.e.maxhp*0.55){
     combat.addReady = false;
     const ahp = 14 + 3*(player.level||1);
     combat.add = {n:"Figlio della Palude", hp:ahp, maxhp:ahp, atk:Math.max(2,Math.round(combat.e.atk*0.5))};
     cbLog(`<span class="warn">La Madre partorisce un Figlio della Palude! Distruggilo per colpirla.</span>`);
     if(BS.ctx){ spawnBurst(BS.enemy.baseX-70, BS.enemy.baseY-30, "#5a9a50", 20, 2.4); BS.shake=Math.max(BS.shake,300); }
   }
-  if(r===2){
+  if(m==="posa"){
     // il Cavaliere assume la posa di parata a turni alterni (sfasata dalla carica)
     combat.parryStance = (combat.turn % 4 === 1);
     if(combat.parryStance) cbLog(`<span class="warn">Il Cavaliere alza la guardia in posa di parata — attaccare ora è pericoloso.</span>`);
+  }
+  if(m==="coro"){
+    // ogni terzo turno il Coro raccoglie una nuova Voce: cresce in furia e si rimargina
+    if(combat.turn % 3 === 2){
+      combat.voci++;
+      combat.e.atk += 1;
+      const h = Math.max(1, Math.round(combat.e.maxhp*0.04));
+      combat.e.hp = Math.min(combat.e.maxhp, combat.e.hp+h);
+      cbLog(`<span class="warn">🗣 Il Coro raccoglie una Voce (ora ${combat.voci}): più forte, e si rimargina. Para per zittirne una.</span>`);
+      floatDmg("cb-eside","+"+h,"#8fd49a");
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-38, "#cfd0d8", 14, 1.8); BS.enemy.flash=140; }
+    }
+  }
+  if(m==="risacca"){
+    // l'Annegato si inabissa e riemerge a turni alterni
+    combat.sommerso = !combat.sommerso;
+    if(combat.sommerso) cbLog(`<span class="warn">🌊 L'Annegato si inabissa — i tuoi colpi affondano nell'acqua nera (attutiti).</span>`);
+    else cbLog(`<span class="heal">🌊 L'Annegato riemerge, gonfio d'acqua — colpiscilo ora!</span>`);
+    if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-20, combat.sommerso?"#2a4a55":"#7fd0c0", 16, combat.sommerso?1.2:2.2); }
+  }
+  if(m==="condanna"){
+    // conto alla rovescia verso un'esecuzione: a 0 il prossimo colpo è devastante.
+    // setIntent (chiamato subito dopo) trasformerà la mossa in "heavy" se condanna<=0.
+    if(combat.executing){
+      // il colpo d'esecuzione è stato sferrato: il ciclo riparte
+      combat.executing = false; combat.condanna = 4;
+    } else {
+      combat.condanna--;
+      if(combat.condanna<=0){
+        cbLog(`<span class="warn">⏳ Il Boia solleva l'ascia: ESECUZIONE in arrivo. Para il prossimo colpo, o spezzala con la Tecnica.</span>`);
+        if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-44, "#ff5020", 22, 2.6); BS.enemy.flash=200; BS.shake=Math.max(BS.shake,300); }
+      } else {
+        cbLog(`<span class="warn">⏳ Il Boia incide un altro segno: Condanna a ${combat.condanna}.</span>`);
+      }
+    }
+  }
+  if(m==="oblio"){
+    // la Regina cancella una tua azione e ruba l'Ardore; la riconquisti colpendo
+    if(combat.cancelTurns>0){ combat.cancelTurns--; if(combat.cancelTurns<=0 && combat.cancellato){ const was=combat.cancellato, lab=CANCEL_LABELS[was]; combat.cancellato=null; cbLog(`<span class="heal">Ricordi come si ${was==="tecnica"?"evoca":"impugna"} la tua ${lab}. È tornata.</span>`); } }
+    if(!combat.cancellato && combat.turn % 3 === 2){
+      const opts = ["attack","tecnica"];
+      const pick = opts[Math.floor(Math.random()*opts.length)];
+      combat.cancellato = pick; combat.cancelTurns = 2;
+      const stolen = Math.min(player.ardore||0, 30);
+      if(stolen>0) player.ardore -= stolen;
+      cbLog(`<span class="warn">✖ La Regina cancella la tua ${CANCEL_LABELS[pick]} dalla memoria${stolen>0?` e divora ${stolen} Ardore`:""}. Colpiscila per riconquistarla.</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-40, "#b040ff", 18, 2.2); BS.enemy.flash=150; }
+      renderArdore();
+    }
   }
 }
 
@@ -4227,13 +4681,15 @@ function startCombat(enemy, tile, isBoss, isElite){
     tile, isBoss, isElite:!!isElite,
     turn:0, charging:false, staggered:false, shielded:false,
     aspect:null, guard:0, add:null, parryStance:false, affix:null,
+    mech: isBoss ? (enemy.mech||null) : null,
+    voci:0, sommerso:false, condanna:0, cancellato:null, cancelTurns:0,
   };
   player.ardore = 0;
   // affisso casuale per i boss in NG+
   if(isBoss && player.ng){
     combat.affix = NG_AFFIXES[Math.floor(Math.random()*NG_AFFIXES.length)].id;
   }
-  if(isBoss) initBossMech(tile.region);
+  if(isBoss) initBossMech(combat.mech, tile.region);
   if(isBoss){
     showBossCutscene(tile.region, ()=>openCombatModal(enemy, tile, isBoss, isElite));
   } else {
@@ -4295,6 +4751,15 @@ function renderCombat(){
     else cw.textContent = "⚠ Colpo devastante in arrivo — para!";
   }
   renderIntent();
+  // Regina Cancellata: l'azione cancellata appare disattivata
+  const atkBtn = $("cb-attack");
+  if(atkBtn){
+    const off = combat.cancellato==="attack";
+    atkBtn.disabled = off;
+    atkBtn.classList.toggle("cancelled", off);
+  }
+  const tecBtn = $("cb-tecnica");
+  if(tecBtn) tecBtn.classList.toggle("cancelled", combat.cancellato==="tecnica");
   renderStats();
 }
 function cbLog(html, cls){
@@ -4327,13 +4792,18 @@ function renderArdore(){
   if(pct)  pct.textContent  = a+"%";
   if(wrap) wrap.classList.toggle("ready", a>=100);
   if(btn){
-    btn.disabled = a<100;
+    btn.disabled = a<100 || (combat && combat.cancellato==="tecnica");
   }
 }
 function actTecnica(){
   if(!combat||combat.over||bsBusy()) return;
   const a = player.ardore||0;
   if(a<100) return;
+  // Azione cancellata dalla Regina: la Tecnica è temporaneamente preclusa
+  if(combat.cancellato==="tecnica"){
+    cbLog(`<span class="warn">La Regina ha cancellato la tua Tecnica dalla memoria. Colpiscila per riconquistarla.</span>`);
+    return;
+  }
   player.ardore = 0;
   combat.turn++;
   const C = CLASSES[player.cls||"vagabondo"];
@@ -4426,7 +4896,11 @@ function setIntent(announce){
   if(!combat || combat.e.hp<=0){ combat.intent=null; combat.charging=false; return; }
   let kind;
   if(combat.isBoss){
-    kind = (combat.turn % 3 === 2) ? "heavy" : "attack";   // cadenza storica dei boss
+    if(combat.mech==="condanna" && combat.condanna<=0){
+      kind = "heavy"; combat.executing = true;             // il colpo d'esecuzione
+    } else {
+      kind = (combat.turn % 3 === 2) ? "heavy" : "attack"; // cadenza storica dei boss
+    }
   } else {
     const r = Math.random();
     kind = r<0.20 ? "heavy" : r<0.40 ? "weak" : r<0.54 ? "guard" : "attack";
@@ -4523,8 +4997,13 @@ function actAttack(){
   if(combat.over || bsBusy()) return;
   combat.turn++;
   bossPreTurn();
+  // Azione cancellata dalla Regina: l'attacco è temporaneamente impossibile
+  if(combat.cancellato==="attack"){
+    cbLog(`<span class="warn">Non ricordi più come si impugna la lama. Para, bevi o evoca la Tecnica.</span>`);
+    combat.turn--; renderCombat(); return;
+  }
   // Cavaliere della Cenere: se è in posa di parata, l'attacco viene punito
-  if(combat.isBoss && combat.tile.region===2 && combat.parryStance){
+  if(combat.isBoss && combat.mech==="posa" && combat.parryStance){
     combat.parryStance = false;
     bsEnemyAttack(true);
     const counter = playerHurt(d6() + combat.e.atk);
@@ -4585,6 +5064,18 @@ function actParry(){
     }
     fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
     applyEnemyDamage(dmg, "parry", "#ecc857");
+    // Coro d'Ossa: una parata riuscita zittisce una Voce
+    if(combat.mech==="coro" && combat.voci>0){
+      combat.voci--;
+      combat.e.atk = Math.max(combat.e.atk-1, 1);
+      cbLog(`<span class="heal">🗣 La tua parata zittisce una Voce del Coro (restano ${combat.voci}).</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-38, "#fff", 12, 1.8); }
+    }
+    // Boia di Cenere: parare il colpo d'esecuzione lo neutralizza
+    if(combat.mech==="condanna" && combat.executing){
+      combat.executing = false; combat.condanna = 4;
+      cbLog(`<span class="heal">Pari l'ascia dell'esecuzione a un soffio dal collo! La Condanna ricomincia.</span>`);
+    }
     gainArdore(wasCharging?28:22);
     enemyTurn(true);
   } else {
@@ -4637,6 +5128,8 @@ function winCombat(){
   if(combat.over) return;
   combat.over = true;
   player.ardore = 0;
+  // Regina Cancellata: ricordarne la caduta apre la via del Nome Restituito
+  if(combat.isBoss && combat.mech==="oblio") karmaFlag("queenRemembered");
   const e = combat.e;
   let reward = rnd(e.r[0], e.r[1] || e.r[0]);
   if(player.runeBonus) reward = Math.round(reward*(1+player.runeBonus)); // Sigillo del Pellegrino
@@ -4811,6 +5304,9 @@ const MEDALS = [
   {id:"swift",    ic:"⚡", nm:"Fulmineo",         desc:"Vinci in meno di 45 tiri",       test:()=>(player.rolls||0)<45},
   {id:"beggar",   ic:"⚱", nm:"Mendico Asceso",  desc:"Vinci nei panni del Mendico",    test:()=>(player.cls||chosenClass)==="mendico"},
   {id:"echo",     ic:"☼", nm:"Voce del Primo",  desc:"Sconfiggi il Boss segreto",      test:()=>!!(player&&player.secretSeen)},
+  {id:"tiranno",  ic:"♛", nm:"Il Nuovo Innominato", desc:"Concludi una run da conquistatore", test:()=>!!(player&&player.endingId==="tiranno")},
+  {id:"custode",  ic:"❋", nm:"La Fiamma Custode",   desc:"Concludi una run da protettore",    test:()=>!!(player&&player.endingId==="custode")},
+  {id:"nome",     ic:"✶", nm:"Il Nome Restituito",  desc:"Restituisci i nomi alle Terre",     test:()=>!!(player&&player.endingId==="nome")},
 ];
 const BASE_MEDALS = ["finisher","flawless","swift","beggar"];
 function allBaseMedals(){ const m=getMedals(); return BASE_MEDALS.every(id=>m.includes(id)); }
@@ -4826,6 +5322,7 @@ function startSecretBoss(){
       turn:0, charging:false, staggered:false, shielded:false,
       aspect:0, aspectTimer:3, guard:0, add:null, parryStance:false,
       affix: player.ng ? "rigen" : null,
+      mech:"aspetti", voci:0, sommerso:false, condanna:0, cancellato:null, cancelTurns:0,
     };
     player.ardore = 0;
     Ambient.stop(true);
@@ -4857,15 +5354,27 @@ function renderTitleMedals(){
 function victory(secret){
   sfx("victory");
   recordVictory();
+  // Il finale dipende dall'intera storia costruita nella run
+  let ending = ENDINGS.fiamma;
+  if(!secret){ ending = computeEnding(); player.endingId = ending.id; }
   const fresh = unlockMedals();
   clearSave();
   const st = getStats();
   const best = st.bestRolls!=null ? `${st.bestRolls} tiri` : "—";
   const tag = (secret?"☼ Eco abbattuta · ":"") + (player.ng?"Ciclo del Ritorno · ":"");
-  $("victory-text").textContent = secret ? "L'Eco tace" : "Le Terre sono tue";
+  const accent = secret ? "#dfe6f0" : ending.col;
+  const titleEl = $("victory-text");
+  titleEl.textContent = secret ? "L'Eco tace" : ending.title;
+  if(titleEl.style) titleEl.style.color = accent;
+  // quanti finali distinti il viandante ha già scoperto (incentivo a rigiocare)
+  const endMedals = ["tiranno","custode","nome","finisher"];
+  const owned = getMedals();
+  const found = endMedals.filter(id=>owned.includes(id)).length;
+  const replayHint = secret ? "" : `<br><span style="font-size:.8rem;color:${accent};opacity:.85">✦ Finali scoperti: ${found}/4 — altre scelte portano ad altri destini.</span>`;
   $("victory-sub").innerHTML = (secret
       ? `Hai messo a tacere l'Eco del Primo. Nelle Terre Spezzate non resta più nessun nome da spezzare, tranne il tuo.`
-      : `Il Sovrano Senza Nome è caduto. Le Terre Spezzate conoscono di nuovo l'alba.`)
+      : ending.text)
+    + replayHint
     + `<br><span style="font-size:.85rem;color:#6b5c3c">${tag}Classe: ${CLASSES[player.cls||chosenClass].nm} · Miglior viaggio: ${best}</span>`;
   const medals = getMedals();
   $("victory-medals").innerHTML = medals.length
@@ -5266,6 +5775,29 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
     world(){ return World; },
     newGame(c){ return newGame(c); },
     setNoBattleCanvas(){ if(typeof BS!=="undefined") BS.ctx=null; },
+    acts(){ return {attack:actAttack, parry:actParry, flask:actFlask, tecnica:actTecnica, enemyTurn}; },
+    endings(){ return ENDINGS; },
+    computeEnding(){ return computeEnding(); },
+    karmaTag(k,n){ return karmaTag(k,n); },
+    /* avvia uno scontro col boss che possiede la meccanica richiesta, saltando cutscene/audio */
+    debugBossFight(mech){
+      const all = BOSSES_V0.concat(BOSSES_V1);
+      let idx = all.findIndex(b=>b.mech===mech);
+      const e = (idx>=0 ? all[idx] : BOSS5);
+      const region = (idx>=0 ? idx%4 : 3);
+      const tile = {region, idx: region*9+8, cleared:false};
+      combat = {
+        e:{...e, maxhp:e.hp}, tile, isBoss:true, isElite:false,
+        turn:0, charging:false, staggered:false, shielded:false,
+        aspect:null, guard:0, add:null, parryStance:false, affix:null,
+        mech:e.mech, voci:0, sommerso:false, condanna:0, cancellato:null, cancelTurns:0,
+      };
+      if(player) player.ardore = 100;
+      initBossMech(combat.mech, region);
+      if(typeof BS!=="undefined") BS.ctx=null;
+      setIntent(false);
+      return combat;
+    },
   };
 }
 </script>
