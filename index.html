@@ -1743,13 +1743,18 @@ function drawPortrait(){
   if(!cv || !cv.getContext) return;
   const ctx = cv.getContext("2d");
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = "#11151e"; ctx.fillRect(0,0,14,14);
-  const map = SPRITES.hero;
-  for(let r=0;r<map.length;r++)for(let c=0;c<map[0].length;c++){
-    const ch = map[r][c];
-    if(ch===".") continue;
-    ctx.fillStyle = HERO_PAL[ch]||"#f0f";
-    ctx.fillRect(c+1, r+2, 1, 1);
+  const map=heroSprite(), pal=heroPal();
+  const hpPct = player ? Math.max(0,player.hp/Math.max(1,player.maxhp)) : 1;
+  ctx.fillStyle = hpPct<0.30?"#1e100a":"#11151e"; ctx.fillRect(0,0,14,14);
+  for(let r=0;r<map.length;r++) for(let c=0;c<map[0].length;c++){
+    const ch=map[r][c]; if(ch===".") continue;
+    let col=pal[ch]||"#f0f";
+    if(hpPct<0.30 && col.length===7 && col[0]==='#'){
+      const ri=(0.30-hpPct)/0.30*0.55;
+      const rr=parseInt(col.slice(1,3),16),rg=parseInt(col.slice(3,5),16),rb=parseInt(col.slice(5,7),16);
+      col=`rgb(${Math.min(255,Math.round(rr*(1-ri)+155*ri))},${Math.round(rg*(1-ri))},${Math.round(rb*(1-ri))})`;
+    }
+    ctx.fillStyle=col; ctx.fillRect(c+1,r+2,1,1);
   }
 }
 function renderAll(){ buildBoard(); renderBoard(); renderStats(); }
@@ -3028,6 +3033,56 @@ regina_boss:[
 ],
 };
 const HERO_PAL = {a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"};
+/* Sprite distinte per classe: silhouette leggibile a 4px/pixel */
+Object.assign(SPRITES, {
+hero_cavaliere:[
+"...cccc.....",
+"..aaaaaa.ww.",
+"..aeaeaa.w..",
+"..aaaaaa.ww.",
+".cbbbbbbbbw.",
+"bbbbbbbbbw..",
+"bbbbbbbbbb..",
+"..bbbbbb....",
+"...bb.bb....",
+"...bb.bb....",
+"..aaa.aaa...",
+],
+hero_asceta:[
+"...aa.......",
+"..aaaa..w...",
+"..aeaa.cw...",
+"..aaaa..w...",
+"...bb...w...",
+"..bbbbbww...",
+".bbbbbbb....",
+"..bb.bb.....",
+"..b...b.....",
+"..b...b.....",
+".aa...aa....",
+],
+hero_mendico:[
+"....aa......",
+"...aaaa.....",
+"...aeaa.s...",
+"...aaaa.ss..",
+"....bbb.s...",
+"...bbbbb....",
+"...bbbbb....",
+"...bbb......",
+"...b..b.....",
+"....b.b.....",
+"...aa.a.....",
+],
+});
+const CLASS_PALS = {
+  vagabondo:{a:"#cdbf9a",b:"#7a6a45",e:"#1a1208",s:"#caa27a",w:"#e8e2cf",c:"#ecc857"},
+  cavaliere:{a:"#cdbf9a",b:"#7a8898",c:"#c8a820",e:"#0a0c12",w:"#dde0e8",s:"#aab0b8"},
+  asceta:   {a:"#d4b890",b:"#362e24",c:"#ff8020",e:"#1a0c04",w:"#5a4a34",s:"#c4a07a"},
+  mendico:  {a:"#c4a87a",b:"#4a3c2c",e:"#1a1006",s:"#b09060",w:"#9a8060",c:"#ecc857"},
+};
+function heroSprite(){ try{ const k=player&&player.cls; return (k&&SPRITES['hero_'+k])||SPRITES.hero; }catch(e){ return SPRITES.hero; } }
+function heroPal(){    try{ const k=player&&player.cls; return CLASS_PALS[k]||HERO_PAL; }catch(e){ return HERO_PAL; } }
 const ENEMY_LOOK = {
   "Soldato Errante":   {sp:"humanoid", pal:{a:"#8a93a3",b:"#5a6373",e:"#0a0c10",s:"#b8a48a",w:"#c8cdd8"}},
   "Segugio di Tomba":  {sp:"beast",    pal:{a:"#6a6f7e",b:"#3c4150",e:"#ffd87a",s:"#999",w:"#ccc"}},
@@ -3087,7 +3142,7 @@ function bsInit(enemyName,region,isBoss,isElite){
   const cvH = BS.cv ? BS.cv.height : 165;
   for(let i=0;i<18;i++) BS.motes.push({x:Math.random()*340,y:Math.random()*cvH,v:.08+Math.random()*.25,r:Math.random()>.5?1:2});
   const groundY = isBoss ? 148 : (isElite ? 142 : 138);
-  BS.hero = mkFighter(SPRITES.hero, HERO_PAL, 5, 78, groundY, false);
+  BS.hero = mkFighter(heroSprite(), heroPal(), 5, 78, groundY, false);
   const look = ENEMY_LOOK[enemyName] || {sp:"humanoid",pal:{a:"#999",b:"#666",e:"#fff",s:"#caa",w:"#ddd"}};
   const scale = isBoss ? 7 : (isElite ? 6 : 5);
   BS.enemy = mkFighter(SPRITES[look.sp], look.pal, scale, isBoss?242:252, groundY, true);
@@ -3417,7 +3472,27 @@ function bsFlask(){
   }, null);
 }
 function bsEnemyDie(){
-  bsPush(220, null, ()=>{ dissolveFighter(BS.enemy); spawnBurst(BS.enemy.baseX, BS.enemy.baseY-26, "#ecc857", 14, 1.6); BS.shake=240; });
+  if(!BS.enemy) return;
+  const isBoss=typeof combat!=='undefined'&&combat&&combat.isBoss;
+  BS.enemy.flash=isBoss?300:200; // colpo finale: flash bianco sulla sprite
+  bsPush(isBoss?200:150, null, ()=>{
+    if(!BS.enemy) return;
+    dissolveFighter(BS.enemy);
+    // particelle runa-oro che salgono (oro liberato)
+    const n=isBoss?40:22;
+    for(let i=0;i<n;i++){
+      BS.parts.push({
+        x:BS.enemy.baseX+(Math.random()-.5)*52,
+        y:BS.enemy.baseY-10-Math.random()*45,
+        vx:(Math.random()-.5)*1.8, vy:-(0.8+Math.random()*(isBoss?2.4:1.8)),
+        c:Math.random()>.45?"#ecc857":"#fff8d0", life:1, g:0.020, sz:2+(isBoss?1:0)
+      });
+    }
+    spawnBurst(BS.enemy.baseX,BS.enemy.baseY-30,"#ecc857",isBoss?32:20,isBoss?3.0:2.4);
+    spawnBurst(BS.enemy.baseX,BS.enemy.baseY-30,"#ffffff",isBoss?14:8,isBoss?1.8:1.4);
+    if(isBoss) spawnBurst(BS.enemy.baseX,BS.enemy.baseY-30,"#ffe090",20,3.6);
+    BS.shake=Math.max(BS.shake,isBoss?620:360);
+  });
 }
 function bsHeroDie(){
   bsPush(220, null, ()=>{ dissolveFighter(BS.hero); spawnBurst(BS.hero.baseX, BS.hero.baseY-22, "#9c3a32", 14, 1.6); BS.shake=260; });
@@ -3596,6 +3671,16 @@ const World = {
     this.raf=requestAnimationFrame(t=>this.loop(t));
   },
 };
+function bossProximity(){
+  try{
+    if(!player||!tiles) return 0;
+    const t=tiles[player.pos]; if(!t) return 0;
+    const end=t.region*9+8;
+    const boss=tiles[end]; if(!boss||boss.cleared) return 0;
+    const dist=end-player.pos;
+    return dist<=3?Math.max(0,1-dist/4):0;
+  }catch(e){ return 0; }
+}
 function wldRender(WD, dt){
   const ctx=WD.ctx, th=WORLD_THEME[WD.region]||WORLD_THEME[0];
   const W=WV.W, H=WV.H, gy=WV.gy, cam=WD.camX, t=WD.t;
@@ -3619,6 +3704,8 @@ function wldRender(WD, dt){
   wldHero(ctx, heroScreenX, gy, walking, t, WD);
   wldParticles(ctx, WD, th, dt);
   wldLight(ctx, th, W, H, heroScreenX, gy);
+  const _dr=bossProximity(); if(_dr>0.01) wldBossDread(ctx,th,W,H,gy,t,_dr,WD.region);
+  const _hp=player?Math.max(0,player.hp/Math.max(1,player.maxhp)):1; if(_hp<0.30&&player) wldLowHP(ctx,W,H,t,_hp);
 }
 function wldCelest(ctx,th,W,H,t){
   const c=th.celest, x=c.x*W, y=c.y*H;
@@ -3788,7 +3875,7 @@ function wldCairn(ctx,x,gy){
   ctx.beginPath(); ctx.arc(x,gy-12,2.5,Math.PI,0); ctx.fill();
 }
 function wldHero(ctx, x, gy, walking, t, WD){
-  const map=SPRITES.hero, px=4, rows=map.length, cols=map[0].length;
+  const map=heroSprite(), px=4, rows=map.length, cols=map[0].length;
   const h=rows*px, w=cols*px;
   const bob = walking ? Math.abs(Math.sin(t/90))*3 : Math.sin(t/600)*1.2;
   const ox=Math.round(x - w/2), oy=Math.round(gy - h - bob);
@@ -3799,7 +3886,7 @@ function wldHero(ctx, x, gy, walking, t, WD){
     if(legPhase>=0 && r>=rows-3) dxr = ((legPhase? (r%2?1:-1) : (r%2?-1:1)))*2;
     for(let c=0;c<cols;c++){
       const ch=map[r][c]; if(ch===".") continue;
-      ctx.fillStyle=HERO_PAL[ch]||"#caa";
+      ctx.fillStyle=(heroPal()[ch])||"#caa";
       ctx.fillRect(ox+c*px+dxr, oy+r*px, px, px);
     }
   }
@@ -3848,6 +3935,69 @@ function wldLight(ctx, th, W, H, hx, gy){
   const lg=ctx.createRadialGradient(hx,gy-14,0,hx,gy-14,72);
   lg.addColorStop(0,hexA2("#ffcf7a",.10)); lg.addColorStop(1,"rgba(0,0,0,0)");
   ctx.fillStyle=lg; ctx.fillRect(0,0,W,H);
+}
+/* Avvicinarsi al boss: il mondo si fa oscuro, la sagoma del boss aleggia nel cielo */
+function wldBossDread(ctx,th,W,H,gy,t,d,region){
+  // oscuramento progressivo + lavaggio di sangue
+  ctx.fillStyle=`rgba(0,0,0,${d*0.22})`; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=`rgba(55,4,4,${d*0.11})`; ctx.fillRect(0,0,W,H);
+  // sagoma del boss nel cielo (visibile da d>0.20)
+  if(d>0.20){
+    try{
+      const boss=typeof BOSSES!=='undefined'&&BOSSES[region];
+      const look=boss&&ENEMY_LOOK&&ENEMY_LOOK[boss.n];
+      const spr=look&&SPRITES[look.sp];
+      if(spr){
+        const sh=spr.length,sw=spr[0].length;
+        const sc=Math.max(2,Math.round(2+d*3.5));
+        const alpha=Math.min(0.20,0.03+0.17*d);
+        const bx=Math.round(W*0.70);
+        const by=Math.round(gy*0.72);
+        ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle='#0c0206';
+        for(let r=0;r<sh;r++) for(let c=0;c<sw;c++){
+          if(spr[r][c]==='.') continue;
+          ctx.fillRect(bx+(c-(sw>>1))*sc,by-(sh-r)*sc,sc-1,sc-1);
+        }
+        ctx.globalAlpha=1; ctx.restore();
+      }
+    }catch(e){}
+  }
+  // vignetta a pulsazione cardiaca (rallenta con la distanza)
+  const bpm=56+(1-d)*38;
+  const phase=((t%(60000/bpm))/(60000/bpm));
+  const beat=Math.max(0,Math.sin(phase*Math.PI));
+  const va=0.18*d*(beat*0.65+0.35);
+  if(va>0.01){
+    const vg=ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,W*0.72);
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,`rgba(80,0,0,${va})`);
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  }
+  // crepe nel terreno (appaiono da d>0.50)
+  if(d>0.50){
+    ctx.save();
+    ctx.globalAlpha=(d-0.50)*0.75;
+    ctx.strokeStyle='#1c0808'; ctx.lineWidth=1;
+    let seed=(region*31337)|0;
+    const rr=()=>{ seed=((seed*1664525+1013904223)>>>0); return seed/4294967296; };
+    for(let i=0;i<5+Math.round((d-0.50)*12);i++){
+      const cx=40+rr()*(W-80);
+      ctx.beginPath(); ctx.moveTo(cx,gy);
+      ctx.lineTo(cx+(rr()-.5)*22,gy+2+rr()*8); ctx.stroke();
+      if(rr()>.45){ ctx.beginPath(); ctx.moveTo(cx,gy); ctx.lineTo(cx+(rr()-.5)*14,gy+rr()*5); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+}
+/* Vitalità critica: pulsazione rossa ai bordi del mondo */
+function wldLowHP(ctx,W,H,t,hpPct){
+  const intensity=Math.max(0,(0.30-hpPct)/0.30);
+  const speed=380+hpPct*620;
+  const beat=Math.max(0,Math.sin((t/speed)*Math.PI));
+  const a=0.22*intensity*beat;
+  if(a<0.01) return;
+  const vg=ctx.createRadialGradient(W/2,H/2,H*0.14,W/2,H/2,W*0.62);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,`rgba(160,18,10,${a})`);
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
 }
 
 /* ---- sistema animazione cutscene ---- */
