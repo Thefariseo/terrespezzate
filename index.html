@@ -79,16 +79,17 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!important;transition:none!important}
 
 /* ---------- animazioni ---------- */
-.die.rolling{animation:dietumble .4s linear infinite}
+.die.rolling,.die.landed{font-size:2.8rem;line-height:1.2;display:block;text-align:center;border:none;background:none;padding:.2em 0;text-shadow:0 0 20px rgba(236,200,87,.55);margin:0 auto}
+.die.rolling{animation:dietumble .38s linear infinite}
 @keyframes dietumble{
-  0%{transform:rotate(-6deg) translateY(0)}
-  25%{transform:rotate(5deg) translateY(-3px)}
-  50%{transform:rotate(-4deg) translateY(0)}
-  75%{transform:rotate(6deg) translateY(-2px)}
-  100%{transform:rotate(-6deg) translateY(0)}
+  0%{transform:rotate(-9deg) translateY(0)}
+  25%{transform:rotate(8deg) translateY(-5px)}
+  50%{transform:rotate(-6deg) translateY(0)}
+  75%{transform:rotate(9deg) translateY(-3px)}
+  100%{transform:rotate(-9deg) translateY(0)}
 }
-.die.landed{animation:dieland .35s ease-out}
-@keyframes dieland{0%{transform:scale(1.6);text-shadow:0 0 22px rgba(236,200,87,.9)}100%{transform:scale(1)}}
+.die.landed{animation:dieland .44s cubic-bezier(.17,.89,.32,1.28)}
+@keyframes dieland{0%{transform:scale(2.4);text-shadow:0 0 40px rgba(236,200,87,1)}50%{text-shadow:0 0 24px rgba(236,200,87,.7)}100%{transform:scale(1);text-shadow:0 0 10px rgba(236,200,87,.25)}}
 .tile .pawn{animation:pawnpop .22s ease-out}
 @keyframes pawnpop{0%{transform:scale(.3) translateY(-8px);opacity:.2}70%{transform:scale(1.25)}100%{transform:scale(1)}}
 .tile.stepped{animation:steppulse .3s ease-out}
@@ -1042,6 +1043,7 @@ kbd{
 <!-- ============ GRAZIA ============ -->
 <div class="overlay" id="ov-grace">
   <div class="modal">
+    <canvas id="grace-flame" width="120" height="80" aria-hidden="true" style="display:block;margin:0 auto .3em;"></canvas>
     <h2 style="color:var(--grace)">❋ Sito di Grazia</h2>
     <p class="sub" id="grace-flavor">Il calore della grazia ti ristora. Vitalità e fiaschette ripristinate.</p>
     <div id="grace-levelup"></div>
@@ -1503,6 +1505,10 @@ function floatDmg(sideId, text, color){
   sp.style.color = color;
   host.appendChild(sp);
   setTimeout(()=>sp.remove(), 1000);
+  if(BS.ctx){
+    if(sideId==="cb-eside" && BS.enemy) bsFloatDmg(BS.enemy.baseX, BS.enemy.baseY-55, text, color);
+    else if(sideId==="cb-pside" && BS.hero) bsFloatDmg(BS.hero.baseX, BS.hero.baseY-55, text, color);
+  }
 }
 const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
 
@@ -1803,17 +1809,18 @@ function passOver(tile){
     sfx("rune");
   }
 }
+const DIE_CHARS = ["⚀","⚁","⚂","⚃","⚄","⚅"];
 let moving = false;
 async function animateDie(roll){
-  setAction("Il dado rotola...", `<span class="die rolling" id="live-die">·</span>`, []);
+  setAction("Il dado rotola...", `<span class="die rolling" id="live-die">⚀</span>`, []);
   const el = $("live-die");
   if(!REDUCED){
-    for(let i=0;i<9;i++){ el.textContent = d6(); await sleep(60+i*8); }
+    for(let i=0;i<10;i++){ el.textContent = DIE_CHARS[Math.floor(Math.random()*6)]; await sleep(55+i*12); }
   }
-  el.textContent = roll;
+  el.textContent = DIE_CHARS[roll-1];
   el.classList.remove("rolling");
   el.classList.add("landed");
-  await sleep(420);
+  await sleep(460);
 }
 function choosePath(n){
   player.worldPath = n;
@@ -1892,7 +1899,7 @@ function arriveAt(tile, roll){
   }
   if(tile.cleared && tile.type!=="grace" && tile.type!=="shop"){
     const fl = flavor("path", tile.region);
-    setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. ${fl} Questo luogo è ormai silenzioso.`, [["Tira il dado",rollMove]]);
+    setAction("Il sentiero", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${fl} Questo luogo è ormai silenzioso.`, [["Tira il dado",rollMove]]);
     renderStats();
     return;
   }
@@ -1905,7 +1912,7 @@ function arriveAt(tile, roll){
     case "treasure": openTreasure(tile, roll); break;
     case "event": runEvent(tile, roll); break;
     default:
-      setAction("Il sentiero", `Hai tirato <span class="die">${roll}</span>. ${flavor("path",tile.region)||"Il vento soffia tra le rovine."} Nulla accade.`, [["Tira il dado",rollMove]]);
+      setAction("Il sentiero", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${flavor("path",tile.region)||"Il vento soffia tra le rovine."} Nulla accade.`, [["Tira il dado",rollMove]]);
   }
 }
 
@@ -1922,7 +1929,7 @@ function openTreasure(tile, roll){
   sfx("rune");
   log(`Apri uno scrigno dimenticato: ${amount} rune.`,"gold");
   renderBoard(); renderStats();
-  setAction("✦ Tesoro", `Hai tirato <span class="die">${roll}</span>. ${flavor("treasure",tile.region)} <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
+  setAction("✦ Tesoro", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${flavor("treasure",tile.region)} <strong style="color:var(--gold-bright)">${amount} rune</strong>.`, [["Tira il dado",rollMove]], "treasure");
 }
 
 function runEvent(tile, roll){
@@ -2125,7 +2132,7 @@ function runEvent(tile, roll){
     }
   }
   renderBoard(); renderStats();
-  setAction("? Evento", `Hai tirato <span class="die">${roll}</span>. ${flavor("event",tile.region)} ${text}`, [["Tira il dado",rollMove]], "event");
+  setAction("? Evento", `Hai tirato <span class="die">${DIE_CHARS[roll-1]}</span>. ${flavor("event",tile.region)} ${text}`, [["Tira il dado",rollMove]], "event");
 }
 
 /* ===================== NPC CON DIALOGO RAMIFICATO ===================== */
@@ -2276,6 +2283,49 @@ const GRACE_FLAVOR = [
   "Il calore dell'Altopiano è diverso vicino alla grazia. Non brucia. Scalda. Per un momento sembri quasi capire perché qualcuno avrebbe potuto giurare di difendere questo posto.",
   "Oltre la Cittadella non ci sono più grazie. Lo sai. Questa fiamma è l'ultima cosa vera prima dell'oscurità. Siediti. Respira. Poi alzati.",
 ];
+const GF = {ctx:null,parts:[],raf:0,lastTs:0};
+function graceFlameStart(){
+  const cv = $("grace-flame");
+  if(!cv||!cv.getContext||REDUCED) return;
+  GF.ctx = cv.getContext("2d");
+  GF.parts = [];
+  if(!GF.raf){ GF.lastTs = performance.now(); GF.raf = requestAnimationFrame(graceFlameLoop); }
+}
+function graceFlameStop(){
+  if(GF.raf){ cancelAnimationFrame(GF.raf); GF.raf=0; }
+  GF.ctx = null;
+}
+function graceFlameLoop(ts){
+  if(!GF.ctx){ GF.raf=0; return; }
+  const dt=Math.min(50,ts-GF.lastTs); GF.lastTs=ts;
+  const ctx=GF.ctx;
+  ctx.clearRect(0,0,120,80);
+  // base glow
+  const grd=ctx.createRadialGradient(60,74,0,60,74,30);
+  grd.addColorStop(0,"rgba(255,160,40,.14)"); grd.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=grd; ctx.fillRect(0,0,120,80);
+  // spawn particles
+  for(let i=0;i<3;i++) GF.parts.push({
+    x:60+(Math.random()-.5)*10, y:72,
+    vx:(Math.random()-.5)*0.4, vy:-(0.9+Math.random()*1.3),
+    life:1, r:2+Math.random()*2.5
+  });
+  GF.parts = GF.parts.filter(p=>{
+    p.life-=dt/1200;
+    if(p.life<=0) return false;
+    p.x+=p.vx*dt/16; p.y+=p.vy*dt/16;
+    const t=1-p.life;
+    const r=255, g=Math.round(90+t*145), b=Math.round(t*50);
+    ctx.globalAlpha=p.life*(p.life<0.25?p.life/0.25:1)*0.85;
+    ctx.fillStyle=`rgb(${r},${g},${b})`;
+    const sz=p.r*(1.1-t*0.65);
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5,sz), 0, 6.2832); ctx.fill();
+    return true;
+  });
+  ctx.globalAlpha=1;
+  GF.raf=requestAnimationFrame(graceFlameLoop);
+}
+
 function openGrace(tile){
   tile.cleared = true;
   player.checkpoint = tile.idx;
@@ -2289,10 +2339,12 @@ function openGrace(tile){
   const fl = $("grace-flavor");
   if(fl) fl.textContent = GRACE_FLAVOR[tile.region]||GRACE_FLAVOR[0];
   $("ov-grace").classList.add("open");
+  graceFlameStart();
 }
 function showGraceMenu(){
   renderGraceMenu();
   $("ov-grace").classList.add("open");
+  graceFlameStart();
 }
 function levelCost(){ return 45 + (player.level-1)*30; }
 function renderGraceMenu(){
@@ -2347,6 +2399,7 @@ function levelUp(which){
 }
 $("grace-leave").addEventListener("click", ()=>{
   $("ov-grace").classList.remove("open");
+  graceFlameStop();
   setAction("❋ Grazia", "La fiamma arde quieta. Puoi meditare ancora o proseguire.", [["Tira il dado",rollMove],["Medita",showGraceMenu]], "grace");
 });
 
@@ -3118,7 +3171,7 @@ const REGION_BG = [
   {sky0:"#0f0a16",sky1:"#1f1434",hill:"#160e26",ground:"#191130",line:"#3c2c5e",mote:"#a98fd8",spire:"#110a1e"},
 ];
 const BS = {ctx:null,cv:null,raf:0,t:0,queue:[],cur:null,parts:[],slashes:[],motes:[],shake:0,
-  hero:null,enemy:null,bg:null,spires:[],lastTs:0,region:0};
+  hero:null,enemy:null,bg:null,spires:[],lastTs:0,region:0,floats:[]};
 
 function spriteSize(map){ return {w:map[0].length, h:map.length}; }
 function mkFighter(map,pal,scale,baseX,baseY,flip){
@@ -3221,6 +3274,10 @@ function spawnBurst(x,y,color,n,spread){
     const a = Math.random()*Math.PI*2, sp=(spread||1)*(0.6+Math.random()*1.8);
     BS.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,c:color,life:1,g:.06,sz:2+Math.floor(Math.random()*2)});
   }
+}
+function bsFloatDmg(x, y, text, color){
+  if(!BS.ctx || REDUCED) return;
+  BS.floats.push({x, y, text, color:color||"#ecc857", life:1.0});
 }
 function dissolveFighter(f){
   const sz=spriteSize(f.map), px=f.scale;
@@ -3402,6 +3459,22 @@ function draw(dt){
     ctx.globalAlpha = 1;
     return true;
   });
+  // numeri danni fluttuanti
+  if(BS.floats.length){
+    ctx.save();
+    ctx.textAlign="center"; ctx.font="bold 9px 'Press Start 2P',monospace";
+    BS.floats = BS.floats.filter(fl=>{
+      fl.life -= dt/1100;
+      if(fl.life<=0) return false;
+      fl.y -= 0.55*dt/16;
+      ctx.globalAlpha = fl.life < 0.28 ? fl.life/0.28 : Math.min(1, fl.life);
+      ctx.fillStyle = fl.color;
+      ctx.fillText(fl.text, Math.round(fl.x), Math.round(fl.y));
+      return true;
+    });
+    ctx.globalAlpha=1;
+    ctx.restore();
+  }
   ctx.restore();
 }
 /* sequenze d'attacco */
