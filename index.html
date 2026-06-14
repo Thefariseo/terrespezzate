@@ -426,7 +426,7 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 .region-label .bossname{color:#7e4038;letter-spacing:0;display:flex;align-items:center;gap:.3em}
 .region-label.active{color:var(--gold);text-shadow:1px 1px 0 #000}
 .region-label.active .bossname{color:#c46a5e}
-.tiles-row{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+.tiles-row{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
 
 /* ---------- MONDO VIVO (canvas immersivo per regione) ---------- */
 #world-stage{
@@ -521,6 +521,16 @@ kbd{
   background:rgba(110,40,25,.18);padding:.35em .6em;margin:.45em 0 0;
   animation:warnpulse 1.1s ease-in-out infinite;
 }
+.cb-intent{
+  display:flex;align-items:center;gap:.5em;justify-content:center;flex-wrap:wrap;
+  font-family:var(--f-pixel);font-size:.5rem;letter-spacing:.04em;text-transform:uppercase;
+  border:1px solid #2c2415;background:rgba(0,0,0,.32);padding:.5em .7em;margin:.5em 0 0;
+  color:var(--faded);transition:border-color .25s,background .25s;
+}
+.cb-intent .ci-ic{font-size:1.05rem;line-height:1}
+.cb-intent .ci-lbl{opacity:.7}
+.cb-intent.danger{border-color:#6e3a22;background:rgba(110,40,25,.18);animation:warnpulse 1.1s ease-in-out infinite}
+.cb-intent.defend{border-color:#2c4a66;background:rgba(40,74,102,.16)}
 #charge-warning.show{display:block}
 @keyframes warnpulse{0%,100%{box-shadow:0 0 0 rgba(255,120,80,0)}50%{box-shadow:0 0 14px rgba(255,120,80,.3)}}
 
@@ -818,7 +828,7 @@ kbd{
     <h2>Regole &amp; Comandi</h2>
     <div class="help-grid">
       <div class="help-card"><b>Movimento</b><span class="ic">⚄</span>Tira il dado e avanza. Ti fermi sempre ai <span style="color:#d4756b">boss</span> e alla prima <span style="color:var(--grace)">grazia spenta</span>. Le grazie attraversate ti curano e aggiornano il checkpoint.</div>
-      <div class="help-card"><b>Combattimento</b><span class="ic">⚔</span>Attacca: d6 + Attacco. Para: con 3+ blocchi e contrattacchi. Quando il boss si prepara al colpo devastante, è il momento di parare. Fuggi solo dai nemici comuni (5+).</div>
+      <div class="help-card"><b>Combattimento</b><span class="ic">⚔</span>Ogni nemico <strong>annuncia la prossima mossa</strong>: <strong style="color:#ff6a4a">⚠ colpo devastante</strong> (paralo!), <strong style="color:#78b4ff">🛡 si difende</strong> (attutisce i colpi fisici — la Tecnica li ignora), o un attacco normale. Attacca: d6 + Attacco. Para con 3+: una parata perfetta su un colpo caricato lo sbilancia. Sfrutta i <strong>tipi</strong> elementali per danni doppi.</div>
       <div class="help-card"><b>Morte e rune</b><span class="ic">☠</span>Alla morte perdi le rune: restano dove sei caduto, recuperale passando di lì. Risorgi all'ultima grazia. I nemici (boss esclusi) ricompaiono a ogni morte o riposo.</div>
       <div class="help-card"><b>Crescita</b><span class="ic">❋</span>Alle grazie spendi rune per Vigore (+10 PV) o Forza (+1 ATK). Dal mercante: fiaschette, affilature e talismani. Le fiaschette curano il 40% della vitalità massima.</div>
     </div>
@@ -872,6 +882,7 @@ kbd{
         <div class="bar"><i class="ghost" id="cb-ehp-ghost"></i><i class="fill" id="cb-ehp"></i><span class="bartext" id="cb-estat"></span></div>
       </div>
     </div>
+    <div id="cb-intent" class="cb-intent" style="display:none"></div>
     <div id="combat-log"></div>
     <div id="charge-warning">⚠ Colpo devastante in arrivo — para!</div>
     <div id="ardore-wrap">
@@ -1546,7 +1557,7 @@ function buildBoard(){
     }
     b.appendChild(wrap);
   }
-  if(typeof World!=="undefined") World.syncToPlayer();
+  if(typeof World!=="undefined"){ try{ World.syncToPlayer(); }catch(e){} }
 }
 function renderBoard(){
   tiles.forEach(t=>{
@@ -1728,7 +1739,7 @@ async function rollMove(){
     player.pos = i;
     if(i<target) passOver(tiles[i]);
     renderBoard(); renderStats();
-    if(typeof World!=="undefined") World.stepTo(i);
+    if(typeof World!=="undefined"){ try{ World.stepTo(i); }catch(e){} }
     fx($("tile-"+i), "stepped", 320);
     sfx("step");
     await sleep(190);
@@ -3921,7 +3932,7 @@ function regionTransition(region, cb){
   if(!ov || REDUCED){ if(cb) cb(); return; }
   $("region-wipe-num").textContent = String(region+1).padStart(2,"0");
   $("region-wipe-name").innerHTML = `${REGIONS[region]}<div class="wline"></div>`;
-  if(typeof World!=="undefined") World.setRegion(region);
+  if(typeof World!=="undefined"){ try{ World.setRegion(region); }catch(e){} }
   ov.classList.remove("run"); void ov.offsetWidth;
   ov.classList.add("run");
   Ambient.setRegion(region);
@@ -3964,6 +3975,7 @@ function triggerPhase2(bossIdx){
   spawnBurst(BS.enemy.baseX, BS.enemy.baseY-50, "#fff", 14, 1.8);
   combat.e.atk = Math.round(combat.e.atk * 1.28);
   combat.charging = true;
+  combat.intent = "heavy";
   cbLog(`<span class="warn">⚠ ${combat.e.n} — SECONDA FASE. Furia scatenata!</span>`);
   sfx("charge");
   fx($("ov-combat").querySelector(".modal"), "flash-blood", 900);
@@ -3994,9 +4006,18 @@ function bossMechBanner(){
   if(combat.affix){ const af=NG_AFFIXES.find(x=>x.id===combat.affix); if(af) return `☠ ${af.nm}`; }
   return "";
 }
-/* applica danno al nemico rispettando scudo / figlio / aspetto */
+/* applica danno al nemico rispettando guardia / scudo / figlio / aspetto */
 function applyEnemyDamage(dmg, source, color){
   const e = combat.e;
+  // Guardia del nemico comune: attutisce i colpi fisici (non la Tecnica)
+  if(combat.guarding && (source==="attack" || source==="parry")){
+    dmg = Math.max(1, Math.round(dmg*0.5));
+    combat.guarding = false;
+    cbLog(`<span style="color:#9fc0e0">Il nemico para parte del colpo.</span>`);
+  } else if(combat.guarding && source==="tecnica"){
+    combat.guarding = false;
+    cbLog(`<span class="heal">La Tecnica ignora la guardia!</span>`);
+  }
   // Madre: il figlio intercetta i colpi
   if(combat.add && combat.add.hp>0){
     combat.add.hp -= dmg;
@@ -4123,7 +4144,9 @@ function openCombatModal(enemy, tile, isBoss, isElite){
   $("cb-ename").textContent = enemy.n;
   $("combat-log").innerHTML = `<div>${enemy.n} ti si para davanti.</div>`;
   $("cb-flee").style.display = (isBoss||isElite) ? "none" : "";
+  combat.guarding = false;
   renderCombat();
+  setIntent(false);
   renderArdore();
   Ambient.stop(true);
   $("ov-combat").classList.add("open");
@@ -4165,6 +4188,7 @@ function renderCombat(){
     if(stanceWarn && !combat.charging) cw.textContent = "⚔ Posa di parata — NON attaccare, para o usa la Tecnica!";
     else cw.textContent = "⚠ Colpo devastante in arrivo — para!";
   }
+  renderIntent();
   renderStats();
 }
 function cbLog(html, cls){
@@ -4272,16 +4296,54 @@ function actTecnica(){
 function enemyDamage(){
   const e = combat.e;
   let dmg = d6() + e.atk;
-  if(combat.charging){ dmg = Math.round(dmg*1.6); combat.charging = false; cbLog(`<span class="hit">${e.n} scatena il colpo caricato!</span>`); }
+  const k = combat.intent;
+  if(k==="heavy" || combat.charging){ dmg = Math.round(dmg*1.6); combat.charging = false; cbLog(`<span class="hit">${e.n} scatena il colpo caricato!</span>`); }
+  else if(k==="weak"){ dmg = Math.max(1, Math.round(dmg*0.6)); }
   return dmg;
 }
-function maybeCharge(){
-  // i boss caricano un colpo potente ogni tanto: avviso al giocatore
-  if(combat.isBoss && !combat.charging && combat.turn % 3 === 2 && combat.e.hp>0){
-    combat.charging = true;
-    sfx("charge");
-    cbLog(`<span class="warn">${combat.e.n} si prepara a un colpo devastante... forse è il momento di parare.</span>`);
+/* ===================== INTENZIONI NEMICHE (telegrafo tattico) ===================== */
+/* Ogni nemico annuncia la prossima mossa: il giocatore legge la minaccia e sceglie
+   se parare un colpo devastante, spingere contro una guardia o assorbire un colpo leggero. */
+const INTENT = {
+  weak:   {ic:"›",  label:"Affondo leggero",   col:"#9fd0a8", cls:""},
+  attack: {ic:"⚔", label:"Attacco",            col:"#e0a060", cls:""},
+  heavy:  {ic:"⚠", label:"Colpo devastante",   col:"#ff6a4a", cls:"danger"},
+  guard:  {ic:"🛡", label:"Si difende",         col:"#78b4ff", cls:"defend"},
+  special:{ic:"✦", label:"Posa di parata",      col:"#c89bff", cls:"danger"},
+};
+function predictedDmg(kind){
+  const e = combat.e, base = e.atk + 4;
+  let d = kind==="heavy" ? base*1.6 : kind==="weak" ? base*0.6 : base;
+  return Math.max(1, Math.round(d*(player.damageTaken||1)));
+}
+function setIntent(announce){
+  if(!combat || combat.e.hp<=0){ combat.intent=null; combat.charging=false; return; }
+  let kind;
+  if(combat.isBoss){
+    kind = (combat.turn % 3 === 2) ? "heavy" : "attack";   // cadenza storica dei boss
+  } else {
+    const r = Math.random();
+    kind = r<0.20 ? "heavy" : r<0.40 ? "weak" : r<0.54 ? "guard" : "attack";
   }
+  combat.intent = kind;
+  combat.charging = (kind==="heavy");
+  if(kind==="heavy" && announce!==false){
+    sfx("charge");
+    cbLog(`<span class="warn">${combat.e.n} carica un colpo devastante — è il momento di parare!</span>`);
+  }
+  renderIntent();
+}
+function renderIntent(){
+  const el = $("cb-intent");
+  if(!el) return;
+  if(!combat || combat.e.hp<=0 || combat.over){ el.style.display="none"; return; }
+  let kind = combat.intent || "attack";
+  if(combat.parryStance) kind = "special";
+  const m = INTENT[kind] || INTENT.attack;
+  const extra = (kind==="special"||kind==="guard") ? "" : ` ~${predictedDmg(kind)}`;
+  el.style.display = "";
+  el.className = "cb-intent" + (m.cls?" "+m.cls:"");
+  el.innerHTML = `<span class="ci-ic">${m.ic}</span><span class="ci-lbl">Prossima mossa:</span> <strong style="color:${m.col}">${m.label}${extra}</strong>`;
 }
 /* attacco del Figlio della Palude (add della Madre), se presente */
 function addAttack(){
@@ -4293,15 +4355,24 @@ function addAttack(){
 }
 function enemyTurn(skip){
   if(combat.e.hp<=0) return;
-  if(skip){ maybeCharge(); bossPostTurn(); return; }
+  if(skip){ bossPostTurn(); setIntent(); return; }
   if(combat.staggered){
     combat.staggered = false;
     cbLog(`<span class="warn">${combat.e.n} è stordito — salta il turno.</span>`);
     addAttack();
-    maybeCharge(); bossPostTurn();
+    bossPostTurn(); setIntent();
     return;
   }
-  const wasCharged = combat.charging;
+  // Guardia (nemici comuni): non attacca, ma attutirà il tuo prossimo colpo
+  if(combat.intent==="guard" && !combat.isBoss){
+    combat.guarding = true;
+    cbLog(`<span class="warn">${combat.e.n} alza la guardia — il tuo prossimo colpo sarà attutito (la Tecnica la ignora).</span>`);
+    if(BS.ctx && BS.enemy){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, "#78b4ff", 10, 1.1); }
+    addAttack();
+    bossPostTurn(); setIntent();
+    return;
+  }
+  const wasCharged = (combat.intent==="heavy") || combat.charging;
   bsEnemyAttack(wasCharged);
   let dmg = enemyDamage();
   if(combat.shielded){
@@ -4331,7 +4402,7 @@ function enemyTurn(skip){
   }
   gainArdore(10);
   addAttack();
-  maybeCharge(); bossPostTurn();
+  bossPostTurn(); setIntent();
 }
 function checkCombatEnd(){
   renderCombat();
@@ -4372,6 +4443,10 @@ function actAttack(){
   }
   cbLog(`Colpisci ${combat.e.n} per <strong>${dmg}</strong>${crit?' <span class="warn">— CRITICO!</span>':''}.`);
   applyEnemyDamage(dmg, "attack", crit?"#ff6a6a":"#ecc857");
+  if(BS.ctx && BS.enemy){
+    if(crit){ BS.shake=Math.max(BS.shake,340); spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, "#fff", 12, 2.0); sfx("parry"); }
+    if(tMult>1){ BS.enemy.flash=Math.max(BS.enemy.flash,160); spawnBurst(BS.enemy.baseX, BS.enemy.baseY-30, TYPES[playerType()]&&TYPES[playerType()].clr||"#ffe040", 10, 1.6); }
+  }
   if(hasPassive("vampiro") && dmg>0){
     const h = Math.max(1, Math.round(dmg*0.15));
     player.hp = Math.min(player.maxhp, player.hp+h);
@@ -4393,11 +4468,18 @@ function actParry(){
     bsParry();
     const wasCharging = combat.charging;
     combat.charging = false;
-    const dmg = Math.ceil((d6()+player.atk)/2);
-    cbLog(`<span class="heal">Parata riuscita (${roll})${wasCharging?" — il colpo devastante va a vuoto":""}! Contrattacchi per ${dmg}.</span>`);
+    let dmg = Math.ceil((d6()+player.atk)/2);
+    if(wasCharging){
+      dmg = Math.round(dmg*1.5);
+      combat.staggered = true;
+      cbLog(`<span class="heal">Parata perfetta sul colpo caricato — il nemico è sbilanciato! Contrattacchi per ${dmg}.</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-34, "#fff7dd", 16, 2.0); BS.shake=Math.max(BS.shake,320); }
+    } else {
+      cbLog(`<span class="heal">Parata riuscita (${roll})! Contrattacchi per ${dmg}.</span>`);
+    }
     fx($("ov-combat").querySelector(".modal"), "flash-parry", 550);
     applyEnemyDamage(dmg, "parry", "#ecc857");
-    gainArdore(22);
+    gainArdore(wasCharging?28:22);
     enemyTurn(true);
   } else {
     cbLog(`La parata fallisce (${roll}).`);
