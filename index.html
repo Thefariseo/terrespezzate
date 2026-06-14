@@ -193,6 +193,21 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 .codex-fresh{display:inline-block;font-family:var(--f-pixel);font-size:.42rem;color:#0a0a0a;
   background:var(--gold-bright);padding:.2em .4em;margin-left:.5em;letter-spacing:.05em;vertical-align:middle}
 
+/* ---------- faction allegiance badge (grazia) ---------- */
+.faction-allegiance-badge{
+  display:flex;gap:.7em;align-items:center;
+  border:1px solid var(--fc,var(--edge));border-left:3px solid var(--fc,var(--gold));
+  background:rgba(0,0,0,.28);padding:.55em .7em;margin:.35em 0 .2em;
+}
+.fac-badge-sigil{flex-shrink:0;image-rendering:pixelated}
+.fac-badge-text{min-width:0;display:flex;flex-direction:column;gap:.2em}
+.fac-badge-name{font-family:var(--f-pixel);font-size:.5rem;color:var(--fc,var(--gold-bright));letter-spacing:.04em;line-height:1.5}
+.fac-badge-creed{font-family:var(--f-body);font-size:.95rem;font-style:italic;color:#c0b898;line-height:1.3}
+.fac-badge-status{font-family:var(--f-pixel);font-size:.42rem;color:var(--fc,var(--faded));letter-spacing:.06em;text-transform:uppercase;margin-top:.1em}
+.rep-row.dominant .track i{box-shadow:0 0 6px var(--fc);opacity:1}
+.rep-row.dominant .nm{font-weight:700;color:var(--fc)}
+.fac-rival-warn{font-family:var(--f-pixel);font-size:.46rem;letter-spacing:.04em;margin:.3em 0 0;padding:.35em .5em;border:1px solid currentColor;background:rgba(0,0,0,.35)}
+
 /* ---------- schermata titolo ---------- */
 #title-screen{
   min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -513,6 +528,7 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
   display:flex;justify-content:space-between;align-items:center;
   font-family:var(--f-pixel);font-size:.52rem;letter-spacing:.02em;line-height:1.5;text-transform:uppercase;
   color:#6b5c3c;padding:0 2px;
+  border-left:2px solid transparent;padding-left:5px;transition:border-color .4s;
 }
 .region-label .bossname{color:#7e4038;letter-spacing:0;display:flex;align-items:center;gap:.3em}
 .region-label.active{color:var(--gold);text-shadow:1px 1px 0 #000}
@@ -988,6 +1004,7 @@ kbd{
         <div id="flask-pips" aria-hidden="true"></div>
         <div class="rune-row"><span class="rune-glyph">⟐</span><span class="v" id="rune-num">0</span><span style="font-size:.8rem;color:var(--faded)">rune</span></div>
         <div id="tecnica-stat" style="font-size:.78rem;color:#7e6f4d;margin:.35em 0 0;font-style:italic"></div>
+        <div id="faction-stat" style="margin:.35em 0 0;display:none"></div>
         <div style="margin-top:.7em"><button id="btn-flask-out" style="width:100%">Bevi fiaschetta <kbd>F</kbd></button></div>
       </div>
       <div class="card">
@@ -1586,14 +1603,41 @@ function renderRepBars(){
   const any = FACTION_ORDER.some(id=>(player.rep[id]||0)!==0);
   if(!any) return "";
   const st = factionStanding();
-  const head = st ? `Fedeltà dominante: <strong style="color:${FACTIONS[st.id].col}">${FACTIONS[st.id].nm}</strong>` : "Nessuna bandiera, per ora.";
+  if(!st) return "";
+  const f = FACTIONS[st.id];
+  const rival = {cenere:"nome", nome:"cenere", corte:"senza", senza:"corte"}[st.id];
+  const rivalScore = rival ? (player.rep[rival]||0) : 0;
+
+  // Dominant faction badge with inline sigil
+  let html = `<div class="faction-allegiance-badge" style="--fc:${f.col};--fc2:${f.col2||f.col};--ink:${f.ink||"#111"}">`;
+  html += `<canvas class="fac-badge-sigil" width="32" height="32"></canvas>`;
+  html += `<div class="fac-badge-text">`;
+  html += `<div class="fac-badge-name">${f.nm}</div>`;
+  html += `<div class="fac-badge-creed">"${f.creed}"</div>`;
+  const statusLabel = st.score>=7?"⚑ GIURATO":st.score>=4?"⚑ Schierato":"◇ In avvicinamento";
+  html += `<div class="fac-badge-status">${statusLabel}</div>`;
+  html += `</div></div>`;
+
+  // compact rep bars
   const rows = FACTION_ORDER.map(id=>{
-    const f = FACTIONS[id]; const v = player.rep[id]||0;
-    const pct = Math.max(0, Math.min(100, (v/max)*100));
-    return `<div class="rep-row" style="--fc:${f.col}"><span class="nm">${f.short}</span>`+
-      `<span class="track"><i style="width:${pct}%"></i></span><span class="sc">${v}</span></div>`;
+    const fac=FACTIONS[id]; const v=player.rep[id]||0;
+    const pct=Math.max(0,Math.min(100,(v/max)*100));
+    return `<div class="rep-row${id===st.id?" dominant":""}" style="--fc:${fac.col}">
+      <span class="nm">${fac.glyph} ${fac.short}</span>
+      <span class="track"><i style="width:${pct}%"></i></span>
+      <span class="sc">${v}</span></div>`;
   }).join("");
-  return `<div class="grace-tecnica-hint" style="color:#b0a886;border-left-color:#7a6f4d">⚑ ${head}</div><div class="rep-bars">${rows}</div>`;
+  html += `<div class="rep-bars">${rows}</div>`;
+
+  // rival faction tension warning
+  if(rival && rivalScore >= 2 && st.score >= 3){
+    const rf = FACTIONS[rival];
+    html += `<div class="fac-rival-warn" style="color:${rf.col}">⚔ ${rf.nm} ti considera un nemico.</div>`;
+  }
+
+  // schedule sigil paint after DOM update
+  setTimeout(()=>{ const cv=document.querySelector(".fac-badge-sigil"); if(cv) paintSigilCanvas(cv,st.id); },0);
+  return html;
 }
 /* I quattro destini possibili del viandante. */
 const ENDINGS = {
@@ -1619,6 +1663,10 @@ function computeEnding(){
     if(fa.id==="cenere" && mis >= amb-1) return ENDINGS.custode;
     if(fa.id==="senza") return ENDINGS.fiamma; // i Liberi lasciano le Terre a sé stesse
   }
+  // Cammini di fazione esclusivi abbassano la soglia per i finali corrispondenti
+  if(f.nomePath && mis >= amb) return ENDINGS.nome;
+  if(f.cenerePath && mis >= amb+1) return ENDINGS.custode;
+  if(f.cortePath && amb >= mis+2) return ENDINGS.tiranno;
   if(amb >= mis+4) return ENDINGS.tiranno;
   // via del Nome: ricordare la Regina, liberare anime, o vedere se stessi nello Specchio
   const nomePath = f.queenRemembered
@@ -2102,7 +2150,14 @@ function buildBoard(){
     const lbl = document.createElement("div");
     lbl.className = "region-label" + (isActive?" active":"");
     lbl.id = "rlabel-"+row;
-    lbl.innerHTML = `<span>${String(row+1).padStart(2,"0")} · ${REGIONS[row]}</span><span class="bossname">${beaten?"☑":"♛"} ${BOSSES[row].n}</span>`;
+    // faction territory coloring: tint the label if this region belongs to a faction the player knows
+    const facByRow = {0:"nome",1:"senza",2:"cenere",3:"corte"};
+    const rowFac = facByRow[row];
+    const rowFacData = rowFac ? FACTIONS[rowFac] : null;
+    const rowFacRep = (rowFac && player && player.rep) ? (player.rep[rowFac]||0) : 0;
+    const rowFacColor = (rowFacData && rowFacRep >= 2) ? rowFacData.col : null;
+    if(rowFacColor) lbl.style.borderLeftColor = rowFacColor;
+    lbl.innerHTML = `<span>${String(row+1).padStart(2,"0")} · ${REGIONS[row]}${rowFacColor&&rowFacData?` <span style="color:${rowFacColor};font-size:.72em;opacity:.8">${rowFacData.glyph}</span>`:""}</span><span class="bossname">${beaten?"☑":"♛"} ${BOSSES[row].n}</span>`;
     wrap.appendChild(lbl);
     if(isActive){
       // scene description for current tile
@@ -2182,6 +2237,18 @@ function renderStats(){
     const C = CLASSES[player.cls||"vagabondo"];
     const tec = C ? TECNICAS[C.tecnica] : null;
     tecEl.innerHTML = tec ? `<span style="color:${tec.col}">${tec.icon}</span> ${tec.nm}` : "";
+  }
+  // faction badge nella sidebar: visibile quando hai una fedeltà riconoscibile
+  const facEl = $("faction-stat");
+  if(facEl){
+    const st = factionStanding();
+    if(st && st.score >= 3){
+      const f = FACTIONS[st.id];
+      facEl.style.display = "";
+      facEl.innerHTML = `<span style="color:${f.col};font-size:.78rem;font-style:normal">${f.glyph} <strong>${f.short}</strong></span><span style="color:#6b5c3c;font-size:.75rem"> — ${st.score >= 6 ? "Giurato" : st.score >= 4 ? "Schierato" : "In avvicinamento"}</span>`;
+    } else {
+      facEl.style.display = "none";
+    }
   }
   renderProgress();
   saveGame();
@@ -2857,7 +2924,28 @@ function runNPCEvent(tile, roll){
   const region = tile.region;
   npcResume = ()=>setAction("? Incontro", `${flavor("event",region)||"Il sentiero torna deserto."} Tira il dado per proseguire.`, [["Tira il dado",rollMove]], "event");
   renderBoard(); renderStats();
-  // ponderazione: i tre incontri storici sempre disponibili; emissario di fazione e gli altri più rari
+
+  const st = factionStanding();
+  const myRep = st ? (player.rep[st.id]||0) : 0;
+  const rivalFid = st ? {cenere:"nome",nome:"cenere",corte:"senza",senza:"corte"}[st.id] : null;
+  const rivalScore = rivalFid ? (player.rep[rivalFid]||0) : 0;
+  const homeFacByRegion = {0:"nome",1:"senza",2:"cenere",3:"corte"};
+  const regionFaction = homeFacByRegion[region];
+
+  // GUERRA DI FAZIONE: due fazioni si scontrano quando entrambe hanno rilevanza
+  if(st && myRep >= 2 && rivalScore >= 2 && Math.random() < 0.45){
+    npcGuerraFazione(region, tile); return;
+  }
+  // MISSIONE DI FAZIONE: la tua fazione ti cerca con un compito preciso
+  if(st && myRep >= 4 && Math.random() < 0.38){
+    npcFazioneMissione(region, tile); return;
+  }
+  // RIVALE OSTILE: quando sei in territorio nemico con alta fedeltà, ti fermano
+  if(st && myRep >= 5 && regionFaction && regionFaction !== st.id && Math.random() < 0.48){
+    npcRivaleOstile(region, tile); return;
+  }
+
+  // pool classico di NPC
   const basePool = ["mercante","pellegrino","rinnegato","oracolo","ladra","guaritore","emissario"];
   const weights  = [2, 2, 2, 1+(region>=2?1:0), 1, 1+(region===1||region===2?1:0), 2];
   let total = weights.reduce((a,b)=>a+b,0);
@@ -2865,7 +2953,6 @@ function runNPCEvent(tile, roll){
   let which = basePool[0];
   for(let i=0;i<basePool.length;i++){ rng-=weights[i]; if(rng<=0){ which=basePool[i]; break; } }
   if(which==="emissario"){ npcEmissario(region, tile); return; }
-  // gli incontri storici radicano la tua reputazione e svelano la loro fazione
   const fid = NPC_FACTION[which];
   if(fid){ factionRep(fid, 1); codexUnlock(FAC_CODEX0[fid]); }
   if(which==="mercante") npcMercante(region);
@@ -2961,6 +3048,212 @@ function npcEmissario(region, tile){
       }],
     ]
   );
+}
+
+/* ===================== GUERRA DI FAZIONE =====================
+   Due fazioni si scontrano davanti al viandante. Non è una scelta di principio —
+   è una ferita aperta del mondo. Chi aiuti porta conseguenze immediate e durature.
+   Questo evento è il cuore del conflitto inter-fazione reso visibile. */
+function npcGuerraFazione(region, tile){
+  const RIVAL_PAIRS = [["nome","cenere"],["corte","senza"]];
+  const st = factionStanding();
+  let fA, fB;
+  if(st){
+    fA = st.id;
+    fB = {cenere:"nome",nome:"cenere",corte:"senza",senza:"corte"}[fA];
+  } else {
+    [fA, fB] = region < 2 ? RIVAL_PAIRS[1] : RIVAL_PAIRS[0];
+  }
+  const fAdata = FACTIONS[fA], fBdata = FACTIONS[fB];
+  codexUnlock(FAC_CODEX0[fA]); codexUnlock(FAC_CODEX0[fB]);
+  const SCENES = [
+    `Tra le rovine, un membro di ${fAdata.short} brucia documenti. Uno di ${fBdata.short} li strappa dalle fiamme. Si fronteggiano. Ti vedono entrambi.`,
+    `Un'imboscata. I colori di ${fAdata.short} circondano un messaggero di ${fBdata.short}. Si fermano quando arrivi. Le lame restano in alto.`,
+    `Un archivio in fiamme — opera di ${fAdata.short}. Un superstite di ${fBdata.short} ti implora con gli occhi. I Cenerini non sembrano disposti a lasciarlo andare.`,
+    `Due emissari. Uno porta il glifo ${fAdata.glyph}, l'altro ${fBdata.glyph}. Stavano combattendo. Ora ti fissano entrambi, in attesa di capire da che parte stai.`,
+  ];
+  const scene = SCENES[Math.floor(Math.random()*SCENES.length)];
+  showNPC({nm:"⚑ Guerra di Fazione", role:`${fAdata.short} contro ${fBdata.short} — una ferita aperta`,
+    pal:{hood:"#2a1408",skin:"#b08858",eye:"#e04820",accent:"#7a2008",shadow:"#180808"}});
+  sfx("boss");
+  npcNode(`${scene}\n\nNon puoi passare senza scegliere. Il mondo nota.`, [
+    [`→ ${fAdata.short}: «${fAdata.creed}»`, ()=>{
+      factionRep(fA,5); factionRep(fB,-3);
+      const axis = (fA==="cenere"||fA==="corte") ? "ambizione" : "misericordia";
+      karmaTag(axis,2); codexUnlock(FAC_CODEX1[fA]);
+      const boon = factionBoon(fA); saveGame(); renderStats();
+      stampSeal(fA,"GUERRA"); sfx("kill");
+      log(`Combatti per ${fAdata.short}. ${fBdata.short} si ritira, giurando vendetta.`,"gold");
+      npcNode(`${boon}\n\n«${fBdata.short} ricorderà» — hai spostato l'equilibrio di questa guerra. Le Terre l'annotano.`,[["Prosegui",closeNPC]]);
+    }],
+    [`→ ${fBdata.short}: «${fBdata.creed}»`, ()=>{
+      factionRep(fB,5); factionRep(fA,-3);
+      const axis = (fB==="cenere"||fB==="corte") ? "ambizione" : "misericordia";
+      karmaTag(axis,2); codexUnlock(FAC_CODEX1[fB]);
+      const boon = factionBoon(fB); saveGame(); renderStats();
+      stampSeal(fB,"GUERRA"); sfx("kill");
+      log(`Combatti per ${fBdata.short}. ${fAdata.short} si ritira maledendo il tuo nome.`,"gold");
+      npcNode(`${boon}\n\n«${fAdata.short} ricorderà» — il conflitto ha una nuova direzione. Sei tu a darla.`,[["Prosegui",closeNPC]]);
+    }],
+    ["✕ Passa a forza — non è la tua guerra", ()=>{
+      factionRep("senza",2); karmaTag("ambizione",1);
+      const dmg = Math.max(4, Math.round(player.maxhp*0.13));
+      player.hp = Math.max(1, player.hp - dmg);
+      sfx("hurt");
+      log(`Ti apri un varco tra i combattenti. Subisci ${dmg} danni.`,"bad");
+      npcNode(`Entrambe le fazioni ti lasciano passare con disprezzo. Hai perso ${dmg} PV. La neutralità ha il suo prezzo.`,[["Prosegui",closeNPC]]);
+    }],
+  ]);
+}
+
+/* ===================== MISSIONE DI FAZIONE =====================
+   Quando sei fedele a una fazione, la tua fazione ti cerca attivamente
+   con un compito preciso. Non un discorso — un lavoro. Con una ricompensa reale. */
+function npcFazioneMissione(region, tile){
+  const st = factionStanding();
+  const fid = st ? st.id : null;
+  if(!fid){ npcEmissario(region, tile); return; }
+  const f = FACTIONS[fid];
+  const MISSIONS = {
+    cenere:[{
+      msg:`«Abbiamo bisogno di te. Porta il fuoco oltre i confini di questa regione. Brucia ciò che il Custode conserva. Non guardare cosa — fidati dell'Ordine.»`,
+      accept(){
+        karmaTag("ambizione",2); factionRep("cenere",3); codexUnlock("c_dottrina");
+        const r=40+region*20; player.runes+=r; player.atk+=1;
+        log(`Missione Cenere: ${r} rune, +1 ATK.`,"gold"); renderStats(); saveGame();
+      },
+      reward:`«Bene. Ciò che hai bruciato non poteva più soffrire.» +${40+region*20} rune e il fuoco ti ha reso più tagliente.`,
+    }],
+    nome:[{
+      msg:`«Un nome sta per scomparire. Trascrivilo su questa lastra prima che le Terre lo cancellino per sempre. Ogni nome salvato è una catena spezzata.»`,
+      accept(){
+        karmaTag("misericordia",2); factionRep("nome",3); codexUnlock("n_regina");
+        player.maxhp+=8; player.hp=Math.min(player.hp+8,player.maxhp);
+        log("Missione Custodi: +8 PV max.","good"); renderStats(); saveGame();
+      },
+      reward:`«Hai salvato un nome. Il mondo lo ricorderà anche se tu lo dimenticherai.» La tua resistenza si rafforza.`,
+    }],
+    corte:[{
+      msg:`«Il Siniscalco vuole sapere se sei all'altezza. Attraversa questa terra e torna vivo. Gli eredi si riconoscono da come vivono, non da come muoiono.»`,
+      accept(){
+        karmaTag("ambizione",2); factionRep("corte",3); codexUnlock("o_siniscalco");
+        const r=60+region*15; player.runes+=r; player.flags.corteMandato=true;
+        log(`Missione Corte: ${r} rune, mandato del Siniscalco.`,"gold"); renderStats(); saveGame();
+      },
+      reward:`«Il Siniscalco prende nota. Un debito di grandezza ti segue adesso.» Un anticipo generoso e la sua attenzione.`,
+    }],
+    senza:[{
+      msg:`«Un lavoro senza stendardo, senza nome, senza gloria. Ma pagato. Passa da qui e non parlare con nessuno di cosa hai visto.»`,
+      accept(){
+        factionRep("senza",3); codexUnlock("s_ladra");
+        player.maxflasks+=1; player.flasks+=1;
+        log("Missione Senza: +1 fiaschetta max.","gold"); renderStats(); saveGame();
+      },
+      reward:`«Nessuno sa che sei dei nostri. Così ti vogliamo.» Una fiaschetta in più — e la loro omertà.`,
+    }],
+  };
+  const m = (MISSIONS[fid]||MISSIONS.senza)[0];
+  emissaryShow(fid);
+  emissaryNode(
+    `Un membro di ${f.nm} ti riconosce tra i viaggiatori. «So già da che parte stai. Le Terre parlano. Abbiamo un lavoro per te — e un compenso degno del tuo impegno.»\n\n${m.msg}`,
+    [
+      [`⊕ Accetta l'incarico`, ()=>{
+        m.accept();
+        emissaryNode(m.reward,[["Prosegui",emissaryClose]]);
+      }],
+      ["✕ Non questa volta", ()=>{
+        factionRep(fid,-1);
+        emissaryNode(`«Capisco. La prossima volta.» Non sembrano delusi — sembrano già occupati con qualcun altro.`,[["Prosegui",emissaryClose]]);
+      }],
+    ]
+  );
+}
+
+/* ===================== RIVALE OSTILE =====================
+   Quando la tua fedeltà è alta e sei nel territorio della fazione rivale,
+   ti mandano qualcuno. Non a dialogare — a impedirti. */
+function npcRivaleOstile(region, tile){
+  const st = factionStanding();
+  if(!st||st.score<5){ npcEmissario(region,tile); return; }
+  const myFac = st.id;
+  const rivalFid = {cenere:"nome",nome:"cenere",corte:"senza",senza:"corte"}[myFac];
+  const rivalF = FACTIONS[rivalFid];
+  const myF = FACTIONS[myFac];
+  codexUnlock(FAC_CODEX0[rivalFid]);
+  emissaryShow(rivalFid);
+  emissaryNode(
+    `Non viene a fare propaganda. Un agente di ${rivalF.nm} ti blocca la strada — sa chi sei. «Conosciamo chi porta il favore di ${myF.short} in queste terre. Questa regione non è vostra. Non ancora.»`,
+    [
+      [`→ Combatti l'agente`, ()=>{
+        $("ov-emissary").classList.remove("open");
+        npcResume = ()=>setAction("? Incontro","Il sentiero torna deserto. Tira il dado.",[["Tira il dado",rollMove]],"event");
+        const foe={n:`Agente di ${rivalF.short}`,hp:22+region*12,atk:4+region*2,r:[90+region*50,120+region*65],type:"ombra"};
+        factionRep(myFac,3); log(`Combatti l'agente di ${rivalF.short}.`,"bad");
+        setTimeout(()=>startCombat(foe,tile,false,true),400);
+      }],
+      ["◇ Negozia — offri informazioni di poco conto", ()=>{
+        const cost=Math.min(player.runes,Math.round(player.runes*0.18)+25);
+        player.runes-=cost; factionRep(rivalFid,1); factionRep(myFac,-1);
+        sfx("rune");
+        emissaryNode(`Accettano ${cost} rune e informazioni di poca importanza. Ti lasciano passare. La tua fedeltà vacilla di un passo.`,[["Prosegui",emissaryClose]]);
+      }],
+      ["✕ Passa a forza — non cedere un passo", ()=>{
+        const dmg=d6()+4+region*2; const real=Math.min(player.hp-1,dmg);
+        player.hp=Math.max(1,player.hp-real); factionRep(myFac,3); karmaTag("ambizione",1);
+        sfx("hurt");
+        emissaryNode(`Ti apri la strada a forza. Subisci ${real} danni — ma non arretri. Questo, anche ${rivalF.short} lo rispetterà, in silenzio.`,[["Prosegui",emissaryClose]]);
+      }],
+    ]
+  );
+}
+
+/* ===================== CAMMINO DI FAZIONE =====================
+   Dopo aver sconfitto la Sentinella Spezzata, se hai alta fedeltà a una fazione
+   essa ti offre un terzo cammino — esclusivo, diverso dalle vie standard.
+   Ogni fazione trasforma la regione 1 in modo distinto. */
+const FACTION_PATH_NAMES = {
+  cenere:"Via della Pira", nome:"Via degli Archivi", corte:"Via del Patronato", senza:"Via del Contrabbando"
+};
+const FACTION_PATH_DESC = {
+  cenere:"Nessun riparo. Solo fuoco e tempra. L'Ordine ti trasformerà, se sopravvivi.",
+  nome:"La palude conserva i segreti dei Custodi. Meno combattimento, più verità.",
+  corte:"La Corte finanzia il tuo passaggio. Il debito arriverà dopo.",
+  senza:"Nessuno ti vede passare. Meno rischi, meno gloria — più sopravvivenza.",
+};
+function chooseFazionePath(fid){
+  const f = FACTIONS[fid];
+  factionRep(fid,4);
+  const axis = (fid==="cenere"||fid==="corte") ? "ambizione" : "misericordia";
+  karmaTag(axis,2);
+  if(fid==="cenere"){
+    const hardMids = ["enemy","enemy","elite","event","enemy","event","enemy"];
+    hardMids.forEach((t,i)=>{ tiles[9+1+i].type=t; tiles[9+1+i].cleared=false; });
+    player.flags.cenerePath=true;
+    log("Via della Pira: nessun riparo, solo fuoco.","bad");
+    toast("🜂 Via della Pira — l'Ordine ti guida","bad"); sfx("hurt");
+  } else if(fid==="nome"){
+    const nomeMids = ["event","event","enemy","shop","event","treasure","event"];
+    nomeMids.forEach((t,i)=>{ tiles[9+1+i].type=t; tiles[9+1+i].cleared=false; });
+    player.maxhp+=16; player.hp=Math.min(player.hp+16,player.maxhp);
+    codexUnlock("n_pellegrino"); codexUnlock("n_regina");
+    player.flags.nomePath=true;
+    log("Via degli Archivi: la palude conserva i tuoi passi.","good");
+    toast("🜄 Via degli Archivi — i Custodi ti guidano","good"); sfx("grace");
+  } else if(fid==="corte"){
+    const advance = 90+player.level*12;
+    player.runes+=advance; player.flags.cortePath=true; player.flags.corteDebt=true;
+    log(`Via del Patronato: ${advance} rune anticipate dalla Corte.`,"gold");
+    toast("🜃 Via del Patronato — un debito di grandezza","gold"); sfx("buy");
+  } else { // senza
+    tiles.filter(t=>t.region===1&&t.type==="elite").forEach(t=>{t.type="event";t.cleared=false;});
+    player.maxflasks+=2; player.flasks+=2;
+    player.flags.senzaPath=true;
+    log("Via del Contrabbando: passi nell'ombra.","gold");
+    toast("🜁 Via del Contrabbando — i Senza Stendardo ti aprono la via","gold"); sfx("flee");
+  }
+  stampSeal(fid,"CAMMINO");
+  saveGame(); buildBoard(); renderBoard();
+  setAction(`⚑ ${f.nm}`,`Hai scelto il ${FACTION_PATH_NAMES[fid]}. ${FACTION_PATH_DESC[fid]} La Palude del Vespro ti aspetta.`,[["Tira il dado",rollMove]],"boss");
 }
 
 /* ===================== LA CRONACA (CODICE) ===================== */
@@ -3073,6 +3366,12 @@ function graceFlameLoop(ts){
   GF.raf=requestAnimationFrame(graceFlameLoop);
 }
 
+const GRACE_FACTION_FLAVOR = {
+  cenere:"Il fuoco arde bianco qui. «${creed}» L'Ordine riconosce i propri.La fiamma non brucia — purifica.",
+  nome:"La grazia pulsa come un battito. «${creed}» I Custodi hanno trascritto anche questo momento.",
+  corte:"La grazia è sobria, cerimoniale. «${creed}» Il Siniscalco approva la tua sopravvivenza.",
+  senza:"La fiamma non ti chiede nulla. Non ti offre promesse. «${creed}» Esattamente come i Senza Stendardo.",
+};
 function openGrace(tile){
   tile.cleared = true;
   player.checkpoint = tile.idx;
@@ -3084,7 +3383,27 @@ function openGrace(tile){
   renderAll();
   renderGraceMenu();
   const fl = $("grace-flavor");
-  if(fl) fl.textContent = GRACE_FLAVOR[tile.region]||GRACE_FLAVOR[0];
+  const st = factionStanding();
+  if(fl){
+    if(st && st.score >= 4 && GRACE_FACTION_FLAVOR[st.id]){
+      const f = FACTIONS[st.id];
+      fl.textContent = GRACE_FACTION_FLAVOR[st.id].replace("${creed}", f.creed);
+    } else {
+      fl.textContent = GRACE_FLAVOR[tile.region]||GRACE_FLAVOR[0];
+    }
+  }
+  // faction-color the grace header
+  const graceH2 = document.querySelector("#ov-grace h2");
+  if(graceH2){
+    if(st && st.score >= 4){
+      const f = FACTIONS[st.id];
+      graceH2.style.color = f.col;
+      graceH2.innerHTML = `${f.glyph} Sito di Grazia — <span style="font-size:.7em">${f.short}</span>`;
+    } else {
+      graceH2.style.color = "var(--grace)";
+      graceH2.textContent = "❋ Sito di Grazia";
+    }
+  }
   $("ov-grace").classList.add("open");
   graceFlameStart();
 }
@@ -5103,7 +5422,14 @@ function regionTransition(region, cb){
   const ov = $("region-wipe");
   if(!ov || REDUCED){ if(cb) cb(); return; }
   $("region-wipe-num").textContent = String(region+1).padStart(2,"0");
-  $("region-wipe-name").innerHTML = `${REGIONS[region]}<div class="wline"></div>`;
+  const facByRegWipe = {0:"nome",1:"senza",2:"cenere",3:"corte"};
+  const rwFid = facByRegWipe[region];
+  const rwFac = rwFid ? FACTIONS[rwFid] : null;
+  const rwRep = (rwFac && player && player.rep) ? (player.rep[rwFid]||0) : 0;
+  const facLine = (rwFac && rwRep >= 2)
+    ? `<div style="font-family:var(--f-body);font-size:1.1rem;color:${rwFac.col};margin-top:.4em">${rwFac.glyph} Territorio di ${rwFac.nm}</div>`
+    : "";
+  $("region-wipe-name").innerHTML = `${REGIONS[region]}<div class="wline"></div>${facLine}`;
   if(typeof World!=="undefined"){ try{ World.setRegion(region); }catch(e){} }
   ov.classList.remove("run"); void ov.offsetWidth;
   ov.classList.add("run");
@@ -5479,7 +5805,23 @@ function openCombatModal(enemy, tile, isBoss, isElite){
   $("cb-name").textContent = isBoss ? "♛ "+enemy.n : (isElite ? "☠ "+enemy.n : "⚔ Scontro");
   $("cb-sub").textContent = enemy.sub || (isElite ? "Un avversario temibile ti sbarra la strada." : "Le lame si incrociano nella polvere.");
   $("cb-ename").textContent = enemy.n;
-  $("combat-log").innerHTML = `<div>${enemy.n} ti si para davanti.</div>`;
+  // boss recognition: se hai alta reputazione con la fazione di questa regione, il boss ti riconosce
+  let bossIntroLine = `${enemy.n} ti si para davanti.`;
+  if(isBoss && player && player.rep){
+    const FAC_BY_REG = {0:"nome",1:"senza",2:"cenere",3:"corte"};
+    const rfid = FAC_BY_REG[tile ? tile.region : -1];
+    const myRep = rfid ? (player.rep[rfid]||0) : 0;
+    const BOSS_RECOGNITION = {
+      nome:`${enemy.n} si ferma. «Conosco il tuo peso — i Custodi mi hanno parlato di te. Non cambierà il finale.»`,
+      senza:`${enemy.n} ride. «Un amico dei Senza Stendardo. Nessun giuramento ti salverà qui.»`,
+      cenere:`${enemy.n} annuisce lentamente. «Anche tu porti il marchio della Cenere. Peccato. Oggi bruciamo tutti.»`,
+      corte:`${enemy.n} esegue un inchino formale. «La Corte ti ha osservato. Questa è la sua prova finale.»`,
+    };
+    if(myRep >= 4 && rfid && BOSS_RECOGNITION[rfid]){
+      bossIntroLine = BOSS_RECOGNITION[rfid];
+    }
+  }
+  $("combat-log").innerHTML = `<div>${bossIntroLine}</div>`;
   $("cb-flee").style.display = (isBoss||isElite) ? "none" : "";
   combat.guarding = false;
   renderCombat();
@@ -5993,6 +6335,13 @@ function winCombat(){
     resumeAmbient();
     if(wasBoss){
       const epi = BOSS_EPILOGUE[bossRegion];
+      // Cammino della Pira (cenere): superare la Palude senza rifugio forgia l'acciaiolo
+      if(bossRegion===1 && player.flags&&player.flags.cenerePath && !player.flags.ceneraForgiato){
+        player.flags.ceneraForgiato=true; player.atk+=3;
+        renderStats(); saveGame();
+        log("Il fuoco della Pira ti ha temprato: +3 ATK permanente.","gold");
+        toast("🜂 Forgiato dalla Pira +3 ATK","gold"); sfx("level");
+      }
       // after hard path boss 1: award exclusive relic
       if(bossRegion===1 && player.worldPath===1 && !player.items.includes("Sigillo dell'Oblio")){
         player.items.push("Sigillo dell'Oblio");
@@ -6003,12 +6352,19 @@ function winCombat(){
         sfx("level");
       }
       if(bossRegion===0){
-        // path choice: standard road vs cursed road
+        // path choice: standard + cursed + optional faction-exclusive third path
+        const facSt = factionStanding();
+        const canFacPath = facSt && facSt.score >= 4;
+        const fp = canFacPath ? FACTIONS[facSt.id] : null;
+        const facBtn = fp ? [[`⚑ ${FACTION_PATH_NAMES[facSt.id]} (${fp.short})`,()=>chooseFazionePath(facSt.id)]] : [];
+        const facDesc = fp
+          ? `<br><br><strong style="color:${fp.col}">⚑ ${fp.nm} ti offre un terzo cammino: ${FACTION_PATH_NAMES[facSt.id]}.</strong><br><span style="font-size:.9rem;color:#a89c7a">${FACTION_PATH_DESC[facSt.id]}</span>`
+          : "";
         const goPath = ()=>setAction("♛ La Sentinella Cade",
-          `Due strade si aprono davanti a te.<br><br>
+          `Due strade si aprono davanti a te.${facDesc}<br><br>
           <strong>⚗ Via della Palude</strong> — Cammino noto: botteghe, grazia, riposo.<br><br>
           <strong>☠ Via dell'Oblio</strong> — Maledetta, senza riparo. Tre élite ti attendono, ma sopravvivere svela il <em>Sigillo dell'Oblio</em> (+3 ATK).`,
-          [["⚗ Via della Palude", ()=>choosePath(0)], ["☠ Via dell'Oblio", ()=>choosePath(1)]], "boss");
+          [...facBtn, ["⚗ Via della Palude",()=>choosePath(0)], ["☠ Via dell'Oblio",()=>choosePath(1)]], "boss");
         if(epi) showLorePanel(epi, goPath); else goPath();
       } else {
         const goNext = ()=>setAction("♛ Boss sconfitto", `La via verso ${REGIONS[Math.min(3,bossRegion+1)]} è aperta. Tira il dado.`, [["Tira il dado",rollMove]], "boss");
