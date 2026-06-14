@@ -218,9 +218,12 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
   position:absolute;bottom:1px;right:3px;font-size:.8rem;color:var(--gold-bright);
   filter:drop-shadow(0 0 4px rgba(236,200,87,.8));
 }
-.legend{display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin-top:.7rem;font-size:.92rem;color:var(--faded);
-  border:1px solid #221a10;padding:.6rem .8rem;background:rgba(0,0,0,.2)}
-.legend span b{color:var(--parchment);font-weight:400}
+.legend{display:flex;flex-wrap:wrap;gap:.45rem .55rem;margin-top:.6rem;font-size:.84rem;color:var(--faded);
+  border:none;padding:0;background:none}
+.legend span{display:inline-flex;align-items:center;gap:.4em;
+  border:1px solid #2a2114;background:linear-gradient(180deg,#1b150e,#110c07);
+  padding:.32em .62em;box-shadow:inset 0 1px 0 rgba(255,222,150,.05),0 1px 2px rgba(0,0,0,.4)}
+.legend span b{color:var(--parchment);font-weight:400;font-size:1.02rem;line-height:1}
 
 /* ---------- pannello azione ---------- */
 #action-panel{
@@ -362,8 +365,8 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 #cutscene-dots{font-size:1.3rem;color:#5c4c2c;letter-spacing:.4em;animation:dotpulse 1.4s ease-in-out infinite}
 @keyframes dotpulse{0%,100%{opacity:.3}50%{opacity:1}}
 /* ---------- lore panel ---------- */
-#ov-lore{background:rgba(0,0,0,.93);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
-#lore-inner{max-width:520px;width:100%;border:1px solid #3a2e1c;background:rgba(10,8,4,.97);padding:2rem 2.4rem;text-align:center}
+#ov-lore{background:rgba(4,3,2,.72);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:2rem;backdrop-filter:blur(2px)}
+#lore-inner{max-width:520px;width:100%;border:1px solid #3a2e1c;background:rgba(10,8,4,.92);padding:2rem 2.4rem;text-align:center;box-shadow:0 0 0 4px rgba(8,6,4,.7),0 20px 60px rgba(0,0,0,.7)}
 #lore-region{font-family:var(--f-pixel);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:#6b5c3c;margin-bottom:1rem}
 #lore-text{font-family:var(--f-body);font-style:italic;font-size:1.12rem;line-height:1.8;color:#c0b090;min-height:4.5em;margin-bottom:1.2rem;text-shadow:0 0 30px rgba(180,140,60,.1)}
 
@@ -476,15 +479,104 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
   background:repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 3px);
   mix-blend-mode:multiply;
 }
-/* la mappa diventa un nastro di orientamento compatto sotto il mondo */
-#board.has-world{padding:8px 10px;gap:6px}
+/* ---------- LA MAPPA VIVENTE: il nastro del viaggio (pietre miliari) ----------
+   Sotto il mondo cinematico il tabellone smette di essere una griglia di emoji
+   e diventa una mappa diegetica: pietre miliari incise lungo un sentiero. */
+#board.has-world{
+  padding:11px 16px 13px;gap:9px;
+  background:
+    radial-gradient(120% 140% at 50% -20%, rgba(60,50,32,.18), transparent 60%),
+    linear-gradient(180deg,rgba(22,17,11,.55),rgba(8,6,4,.7)),
+    var(--coal);
+}
 #board.has-world .region-row.expanded .scene-name{display:none}
 #board.has-world .tile .tilename{display:none}
-#board.has-world .tiles-row .tile{aspect-ratio:auto;min-height:30px;font-size:.7rem}
-#board.has-world .tile .num{font-size:.36rem}
+#board.has-world .region-row.expanded{
+  border-color:rgba(201,162,39,.16);
+  background:linear-gradient(180deg,rgba(0,0,0,.10),transparent);
+  padding:8px 8px 9px;
+}
+/* il sentiero: una linea incisa che lega le pietre miliari */
+#board.has-world .tiles-row{
+  position:relative;grid-template-columns:repeat(9,minmax(0,1fr));gap:9px;padding-top:6px;
+}
+#board.has-world .tiles-row::before{
+  content:"";position:absolute;left:4%;right:4%;top:50%;height:0;z-index:0;pointer-events:none;
+  border-top:2px dotted rgba(150,134,92,.26);transform:translateY(2px);
+}
+/* la pietra miliare */
+#board.has-world .tiles-row .tile{
+  aspect-ratio:auto;min-height:48px;font-size:.7rem;z-index:1;
+  border-radius:7px 7px 3px 3px;gap:1px;
+  background:linear-gradient(180deg,#2a2114 0%,#1c1610 58%,#130e09 100%);
+  border:1px solid #3a2e1a;border-top-width:2px;
+  box-shadow:inset 0 1px 0 rgba(255,222,150,.10),inset 0 -4px 7px rgba(0,0,0,.5),0 2px 5px rgba(0,0,0,.5);
+  transition:transform .14s,box-shadow .3s,border-color .3s,background .3s;
+}
+#board.has-world .tile .num{font-size:.34rem;top:3px;left:4px;color:#5b4f38;opacity:.65}
+#board.has-world .tile .icon{font-size:1.2rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+/* alone runico colorato per tipo + corona superiore incisa */
+#board.has-world .tile.grace .icon{color:var(--grace);text-shadow:0 0 9px rgba(255,216,122,.6)}
+#board.has-world .tile.grace{border-top-color:#7a6326}
+#board.has-world .tile.enemy .icon{color:#c98b7e}
+#board.has-world .tile.enemy{border-top-color:#5a352e}
+#board.has-world .tile.elite .icon{color:#e0a865;text-shadow:0 0 9px rgba(224,168,101,.4)}
+#board.has-world .tile.elite{border-top-color:#6a4d28}
+#board.has-world .tile.shop .icon{color:#7ec08a}
+#board.has-world .tile.shop{border-top-color:#3d5a40}
+#board.has-world .tile.treasure .icon{color:var(--gold-bright);text-shadow:0 0 8px rgba(236,200,87,.5)}
+#board.has-world .tile.treasure{border-top-color:#6b561f}
+#board.has-world .tile.event .icon{color:#b49adf}
+#board.has-world .tile.event{border-top-color:#4a3a6a}
+#board.has-world .tile.boss .icon{color:#e26a5c;text-shadow:0 0 11px rgba(226,106,92,.7)}
+#board.has-world .tile.boss{
+  background:linear-gradient(180deg,#2c1714,#1d0f0c);border-color:#5a2a24;border-top-color:#8a3a30;
+}
+#board.has-world .tile.empty .icon{color:#4a4030;opacity:.5}
+/* pietra attraversata: spenta, coperta di cenere */
+#board.has-world .tile.cleared{filter:grayscale(.6) brightness(.66);opacity:.58}
+#board.has-world .tile.cleared.current{filter:none;opacity:1}
+/* QUI SEI: pietra accesa, col gagliardetto piantato sopra */
+#board.has-world .tile.current{
+  transform:translateY(-5px);overflow:visible;
+  border-color:var(--gold-bright);border-top-color:var(--gold-bright);
+  background:linear-gradient(180deg,#3a2c12,#241a0a);color:var(--gold-bright);
+  box-shadow:inset 0 1px 0 rgba(255,222,150,.25),0 0 0 1px rgba(236,200,87,.5),0 0 18px rgba(236,200,87,.32),0 5px 9px rgba(0,0,0,.6);
+}
+#board.has-world .tile.current .icon{animation:waystoneGlow 2.6s ease-in-out infinite}
+@keyframes waystoneGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(236,200,87,.5))}50%{filter:drop-shadow(0 0 12px rgba(236,200,87,.95))}}
+#board.has-world .tile .pawn{
+  position:absolute;top:-11px;left:50%;bottom:auto;right:auto;transform:translateX(-50%);
+  font-size:.82rem;color:var(--gold-bright);filter:drop-shadow(0 0 6px rgba(236,200,87,.9));
+  animation:pennantWave 2.2s ease-in-out infinite;
+}
+@keyframes pennantWave{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-2px)}}
+#board.has-world .tile.runes-drop{border-color:var(--gold);box-shadow:inset 0 0 14px rgba(236,200,87,.5),0 2px 5px rgba(0,0,0,.5)}
+/* i capitoli del viaggio: le regioni non attive come sezioni della mappa,
+   sigillate davanti, consumate alle spalle */
+#board.has-world .region-row.collapsed{
+  position:relative;padding:7px 12px;opacity:.66;
+  border:1px solid #241c10;border-left:3px solid #3a2a16;
+  background:linear-gradient(90deg,rgba(24,18,11,.5),rgba(10,8,5,.25));
+  transition:opacity .3s,border-color .3s,background .3s;
+}
+#board.has-world .region-row.collapsed:hover{opacity:.92;border-left-color:#6b561f}
+#board.has-world .region-row.collapsed .region-label{font-size:.5rem}
+#board.has-world .region-row.collapsed .region-label .bossname{
+  border:1px solid #3a221e;padding:.2em .52em;background:rgba(44,18,16,.42);border-radius:2px;
+}
+/* capitolo concluso: sigillo d'oro, atmosfera spenta */
+#board.has-world .region-row.collapsed.beaten{
+  border-left-color:#6b561f;opacity:.5;
+  background:linear-gradient(90deg,rgba(36,28,12,.4),rgba(10,8,5,.2));
+}
+#board.has-world .region-row.collapsed.beaten .region-label .bossname{
+  border-color:#5a4a1e;background:rgba(40,32,12,.4);color:#9a8a52;
+}
 @media(max-width:560px){
   #world-flavor{display:none}
-  #board.has-world .tiles-row .tile{min-height:26px}
+  #board.has-world .tiles-row .tile{min-height:40px}
+  #board.has-world .tile .icon{font-size:1rem}
 }
 
 /* ---------- pannello personaggio ---------- */
@@ -1544,7 +1636,7 @@ function buildBoard(){
     const beaten = tiles[row*9+8].cleared;
     const isActive = row===curRegion;
     const wrap = document.createElement("div");
-    wrap.className = "region-row" + (isActive?" expanded":" collapsed");
+    wrap.className = "region-row" + (isActive?" expanded":" collapsed") + (beaten?" beaten":"");
     wrap.id = "rrow-"+row;
     wrap.dataset.region = row;
     const lbl = document.createElement("div");
@@ -1590,7 +1682,7 @@ function renderBoard(){
     const old = el.querySelector(".pawn");
     if(old) old.remove();
     if(t.idx===player.pos){
-      const s=document.createElement("span"); s.className="pawn"; s.textContent="⬤"; el.appendChild(s);
+      const s=document.createElement("span"); s.className="pawn"; s.textContent="⚑"; el.appendChild(s);
     }
   });
   $("region-name").textContent = REGIONS[tiles[player.pos].region];
