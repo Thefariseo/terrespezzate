@@ -2416,12 +2416,13 @@ const Ambient = {
     const c = AudioFX.ctx, now = c.currentTime;
     // drone: due oscillatori detunati, frequenza per regione
     const baseFreq = [55, 49, 62, 41][region] || 50;
-    const types = ["sine","triangle","sawtooth","sawtooth"];
+    const types = ["sine","triangle","triangle","sine"];
+    const droneGain = [[0.50,0.32],[0.50,0.32],[0.36,0.22],[0.28,0.18]][region]||[0.50,0.32];
     [-5,5].forEach((cents,i)=>{
       const o=c.createOscillator(), g=c.createGain();
       o.type = types[region]||"sine";
       o.frequency.value = baseFreq*Math.pow(2,cents/1200);
-      g.gain.value = i===0?0.5:0.32;
+      g.gain.value = droneGain[i];
       o.connect(g); g.connect(this.bus); o.start(now);
       this.drone.push(o,g);
     });
@@ -2448,14 +2449,15 @@ const Ambient = {
       if(Math.random()<.4){ const f=520+Math.random()*500; AmbientTone(this.bus,f,t,.25,"sine",.06,f*0.4); }
       if(Math.random()<.12) AmbientNoise(t,.3,.008,'wind');
       if(Math.random()<.05) dreadChime(this.bus, 240+Math.random()*60, t, 6+Math.random()*2, 0.030);
-    } else if(r===2){ // Altopiano: crepitio + campana incandescente
-      if(Math.random()<.7) AmbientNoise(t,.05+Math.random()*.06,.02,'crackle');
-      if(Math.random()<.04) AmbientTone(this.bus,70,t,.8,"sawtooth",.04);
-      if(Math.random()<.05) dreadChime(this.bus, 380+Math.random()*120, t, 3+Math.random()*1.5, 0.033);
-    } else if(r===3){ // Cittadella: silenzio + campane alte + pianto più frequente
-      if(Math.random()<.15){ const f=1200+Math.random()*900; AmbientTone(this.bus,f,t,.6,"square",.016,f*0.7); }
-      if(Math.random()<.08) dreadChime(this.bus, 700+Math.random()*400, t, 4+Math.random()*2, 0.026);
-      if(Math.random()<.07) dreadCry(this.bus, t, 1.5+Math.random()*1.0, 0.018);
+    } else if(r===2){ // Altopiano: cenere portata dal vento, rintocchi gravi incandescenti
+      if(Math.random()<.10) AmbientNoise(t,.04+Math.random()*.05,.006,'crackle');
+      if(Math.random()<.09) AmbientNoise(t,.35,.005,'wind');
+      if(Math.random()<.04) AmbientTone(this.bus,110+Math.random()*30,t,1.4,"triangle",.015);
+      if(Math.random()<.04) dreadChime(this.bus, 260+Math.random()*90, t, 3.5+Math.random()*2, 0.022);
+    } else if(r===3){ // Cittadella: silenzio pesante, risonanze profonde, lamento raro
+      if(Math.random()<.07){ const f=150+Math.random()*100; AmbientTone(this.bus,f,t,1.5,"sine",.012); }
+      if(Math.random()<.06) dreadChime(this.bus, 280+Math.random()*180, t, 5+Math.random()*3, 0.018);
+      if(Math.random()<.02) dreadCry(this.bus, t, 1.5+Math.random()*1.0, 0.011);
     }
   },
   setRegion(region){
