@@ -332,8 +332,27 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 #ov-cutscene{background:rgba(0,0,0,.97);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
 #cutscene-inner{display:flex;flex-direction:column;align-items:center;gap:.9rem;max-width:520px;width:100%}
 #cutscene-canvas{
-  width:280px;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;display:block;
-  border:1px solid #1a1410;box-shadow:0 0 40px rgba(0,0,0,.9),0 0 80px rgba(0,0,0,.5);
+  width:min(440px,92vw);height:auto;image-rendering:pixelated;image-rendering:crisp-edges;display:block;
+  border:1px solid #1a1410;box-shadow:0 0 50px rgba(0,0,0,.95),0 0 100px rgba(0,0,0,.6);
+}
+#cutscene-namecard{
+  text-align:center;opacity:0;transform:translateY(10px) scale(.96);
+  filter:blur(4px);transition:none;min-height:1px;
+}
+#cutscene-namecard.show{ animation:nameslam .6s cubic-bezier(.18,.9,.25,1) forwards; }
+@keyframes nameslam{
+  0%{opacity:0;transform:translateY(0) scale(1.4);filter:blur(10px);letter-spacing:.5em}
+  60%{opacity:1;filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0);letter-spacing:.04em}
+}
+#cs-name{
+  font-family:var(--f-pixel);font-size:clamp(.8rem,3.4vw,1.25rem);line-height:1.4;
+  color:var(--cs-col,#ecc857);text-transform:uppercase;
+  text-shadow:3px 3px 0 #000,0 0 30px var(--cs-col,#ecc857);
+}
+#cs-sub{
+  font-family:var(--f-body);font-style:italic;font-size:1rem;color:#b8a87e;margin-top:.3em;
+  text-shadow:0 0 14px rgba(0,0,0,.9);
 }
 #cutscene-text{
   font-family:var(--f-body);font-style:italic;font-size:1.1rem;line-height:1.78;
@@ -908,6 +927,7 @@ kbd{
 <!-- ============ CUTSCENE ============ -->
 <div class="overlay" id="ov-cutscene">
   <div id="cutscene-inner">
+    <div id="cutscene-namecard"><div id="cs-name"></div><div id="cs-sub"></div></div>
     <canvas id="cutscene-canvas" width="320" height="220" aria-hidden="true"></canvas>
     <div id="cutscene-text"></div>
     <div id="cutscene-dots">· · ·</div>
@@ -3108,6 +3128,10 @@ function drawCombatFx(ctx){
   }
   if(E && !E.dead){
     const b=fighterBox(E);
+    if(combat.isBoss){
+      const col=BOSS_PHASE2_COLOR[combat.tile.region]||"#ecc857";
+      strokeAura(ctx,b,hexA2(col,.16+.1*Math.sin(BS.t/420)),7,2);
+    }
     if(combat.guard>0) strokeAura(ctx,b,hexA("#78b4ff",.3+.2*Math.sin(BS.t/180)),5,2);
     if(combat.parryStance) strokeAura(ctx,b,hexA("#ff9628",.35+.25*Math.sin(BS.t/120)),6,3);
     if(combat.aspect!=null) strokeAura(ctx,b,hexA(SOVRANO_ASPECTS[combat.aspect].col,.25+.18*Math.sin(BS.t/200)),4,2);
@@ -3185,6 +3209,20 @@ function draw(dt){
         vx:(Math.random()-.5)*.5,vy:-(0.4+Math.random()*.7),
         c:Math.random()>.5?"#e07020":"#ff3010",life:.35,g:-.015,sz:2});
     });
+    // aura firma del boss: particelle del proprio mondo che salgono dalla sagoma
+    if(typeof combat!=="undefined" && combat && combat.isBoss && BS.enemy && !BS.enemy.dead && Math.random()<.5){
+      const bb=fighterBox(BS.enemy), col=BOSS_PHASE2_COLOR[BS.region]||"#ecc857";
+      BS.parts.push({x:bb.cx+(Math.random()-.5)*bb.w, y:bb.oy+Math.random()*bb.h,
+        vx:(Math.random()-.5)*.4, vy:-(0.2+Math.random()*.5), c:col, life:.6, g:-.005, sz:2});
+    }
+  }
+  // retroilluminazione firma del boss (presenza imponente)
+  if(typeof combat!=="undefined" && combat && combat.isBoss && BS.enemy && !BS.enemy.dead){
+    const bb=fighterBox(BS.enemy), col=BOSS_PHASE2_COLOR[BS.region]||"#ecc857";
+    const a=0.12+0.06*Math.sin(BS.t/360);
+    const gr=ctx.createRadialGradient(bb.cx,bb.cy,0,bb.cx,bb.cy,Math.max(8,bb.w*0.95));
+    gr.addColorStop(0,hexA2(col,a)); gr.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=gr; ctx.fillRect(bb.cx-bb.w,bb.cy-bb.h,bb.w*2,bb.h*2);
   }
   // combattenti
   if(BS.hero && !BS.hero.dead) drawSprite(BS.hero);
@@ -3719,15 +3757,30 @@ function wldLight(ctx, th, W, H, hx, gy){
 }
 
 /* ---- sistema animazione cutscene ---- */
-const CS = {ctx:null,cv:null,raf:0,t:0,lastTs:0,
-  bossIdx:-1,bossX:380,bossTargetX:160,bossEnterT:0,parts:[],motes:[]};
+/* Cinematica di presentazione boss: tempi delle fasi (ms dall'avvio).
+   bars→ letterbox · rise→ silhouette che sorge · eyes→ occhi che si accendono ·
+   name→ slam del nome · reveal→ rivelazione a colori con effetti dedicati. */
+const CS_T = {bars:420, rise:1550, eyes:2050, name:2680, reveal:3320};
+const CS = {ctx:null,cv:null,raf:0,t:0,lastTs:0,elapsed:0,shake:0,
+  bossIdx:-1,bossX:160,parts:[],motes:[],spr:null,pal:null,accent:"#ecc857",
+  _entryFired:false,_eyeFired:false,_nameFired:false};
+function csClamp(v){ return v<0?0:v>1?1:v; }
 function csInit(bossIdx){
   const cv=$("cutscene-canvas");
   if(!cv||!cv.getContext){CS.ctx=null;return;}
   CS.cv=cv; CS.ctx=cv.getContext("2d");
   CS.ctx.imageSmoothingEnabled=false;
-  CS.bossIdx=bossIdx; CS.bossX=380; CS.bossTargetX=160; CS.bossEnterT=0;
+  CS.bossIdx=bossIdx; CS.bossX=160; CS.shake=0;
+  CS.elapsed = REDUCED ? CS_T.reveal+800 : 0;     // in reduced-motion mostra subito il boss
+  CS._entryFired=false; CS._eyeFired=false; CS._nameFired=false;
   CS.parts=[]; CS.motes=[];
+  // boss realmente selezionato (V0/V1), non più sempre la variante base
+  const boss = (typeof BOSSES!=="undefined" && BOSSES[bossIdx]) ? BOSSES[bossIdx] : null;
+  const look = boss ? ENEMY_LOOK[boss.n] : null;
+  const fallbackKey = ["sentinella_boss","madre_boss","cenere_boss","sovrano_boss"][bossIdx];
+  CS.spr = look ? SPRITES[look.sp] : SPRITES[fallbackKey];
+  CS.pal = look ? look.pal : {a:"#888",b:"#666",e:"#fff",w:"#ccc"};
+  CS.accent = (CS_BG[bossIdx]||CS_BG[0]).glow;
   for(let i=0;i<28;i++) CS.motes.push({
     x:Math.random()*320, y:Math.random()*220,
     vx:(Math.random()-.5)*.4, vy:-(0.2+Math.random()*.6),
@@ -3744,80 +3797,124 @@ function csStop(){
 function csLoop(ts){
   if(!CS.ctx){CS.raf=0;return;}
   const dt=Math.min(50,ts-CS.lastTs); CS.lastTs=ts; CS.t=ts;
-  CS.bossEnterT=Math.min(1,CS.bossEnterT+dt/700);
-  CS.bossX=380+(CS.bossTargetX-380)*(1-Math.pow(1-CS.bossEnterT,3));
+  CS.elapsed += dt;
   csDraw(dt);
   CS.raf=requestAnimationFrame(csLoop);
 }
+/* effetti firma per regione: ogni boss "respira" il proprio mondo */
+function csSignatureFX(){
+  if(REDUCED || CS.elapsed < CS_T.eyes) return;
+  const r=CS.bossIdx, cx=160, gy=180;
+  if(r===0){ if(Math.random()<.32) CS.parts.push({x:cx+(Math.random()-.5)*150,y:-4,vx:(Math.random()-.5)*.3,vy:.4+Math.random()*.5,c:Math.random()>.5?"#aac4e8":"#7a8aaa",life:1,sz:1}); }
+  else if(r===1){ if(Math.random()<.42) CS.parts.push({x:cx+(Math.random()-.5)*120,y:gy,vx:(Math.random()-.5)*.2,vy:-(.3+Math.random()*.5),c:Math.random()>.4?"#7fd0a0":"#4a9a5a",life:1,sz:1+Math.floor(Math.random()*2)}); }
+  else if(r===2){ if(Math.random()<.55) CS.parts.push({x:cx+(Math.random()-.5)*150,y:gy,vx:(Math.random()-.5)*.5,vy:-(.6+Math.random()*1.1),c:Math.random()>.4?"#ff7020":"#ffb040",life:1,sz:2}); }
+  else { if(Math.random()<.38) CS.parts.push({x:cx+(Math.random()-.5)*160,y:Math.random()*220,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.7,c:Math.random()>.5?"#b090e0":"#7858b0",life:1,sz:2}); }
+}
 function csDraw(dt){
-  const ctx=CS.ctx, W=320, H=220;
-  const bg=CS_BG[CS.bossIdx]||CS_BG[0];
-  ctx.fillStyle=bg.sky; ctx.fillRect(0,0,W,H);
-  // bagliore radiale dietro il boss
-  const grd=ctx.createRadialGradient(CS.bossX,H*.75,0,CS.bossX,H*.75,130);
-  grd.addColorStop(0,bg.glow+"30"); grd.addColorStop(1,"transparent");
-  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+  const ctx=CS.ctx, W=320, H=220, bg=CS_BG[CS.bossIdx]||CS_BG[0], el=CS.elapsed;
+  const ramp=(a,b)=>csClamp((el-a)/(b-a));
+  ctx.save();
+  if(CS.shake>0 && !REDUCED){ ctx.translate((Math.random()-.5)*CS.shake*0.03,(Math.random()-.5)*CS.shake*0.03); CS.shake=Math.max(0,CS.shake-dt); }
+  // cielo + bagliore di regione che cresce
+  ctx.fillStyle=bg.sky; ctx.fillRect(-8,-8,W+16,H+16);
+  const glowA=0.08+0.30*ramp(CS_T.bars,CS_T.reveal);
+  const grd=ctx.createRadialGradient(W/2,H*.74,0,W/2,H*.74,150);
+  grd.addColorStop(0,hexA2(bg.glow,glowA)); grd.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=grd; ctx.fillRect(-8,-8,W+16,H+16);
   // terreno
-  ctx.fillStyle=bg.ground; ctx.fillRect(0,H-40,W,40);
-  ctx.fillStyle=bg.mote+"22"; ctx.fillRect(0,H-41,W,1);
-  // particelle ambientali
+  ctx.fillStyle=bg.ground; ctx.fillRect(-8,H-40,W+16,48);
+  ctx.fillStyle=hexA2(bg.mote,.13); ctx.fillRect(-8,H-41,W+16,1);
+  // motes ambientali
   if(!REDUCED) CS.motes.forEach(m=>{
     m.y+=m.vy*dt/16; m.x+=m.vx*dt/16;
     if(m.y<-4){m.y=H+4;m.x=Math.random()*W;m.life=1;}
     m.life=Math.max(0,m.life-dt/5000);
-    const a=(0.2+0.3*Math.sin(CS.t/600+m.phase))*Math.min(1,m.life*3+.2);
+    const a=(0.2+0.3*Math.sin(CS.t/600+m.phase))*Math.min(1,m.life*3+.2)*ramp(CS_T.bars,CS_T.reveal);
     ctx.globalAlpha=Math.max(0,a);
     ctx.fillStyle=bg.type==="embers"?"#ff9030":bg.type==="shards"?"#b090e0":bg.type==="bubbles"?"#80c890":bg.mote;
     if(bg.type==="bubbles"){ ctx.beginPath(); ctx.arc(m.x,m.y,m.size+.5,0,7); ctx.fill(); }
     else ctx.fillRect(m.x,m.y,m.size,m.size);
     ctx.globalAlpha=1;
   });
-  // burst di particelle (ingresso boss)
+  csSignatureFX();
   CS.parts=CS.parts.filter(p=>{
-    p.life-=dt/800; if(p.life<=0) return false;
-    p.x+=p.vx*dt/16; p.y+=p.vy*dt/16; p.vy+=0.04*dt/16;
+    p.life-=dt/900; if(p.life<=0) return false;
+    p.x+=p.vx*dt/16; p.y+=p.vy*dt/16; p.vy+=0.03*dt/16;
     ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.c;
     ctx.fillRect(p.x,p.y,p.sz,p.sz); ctx.globalAlpha=1; return true;
   });
-  // spawn burst all'arrivo del boss
-  if(CS.bossEnterT>=1 && !CS._entryFired){
-    CS._entryFired=true;
-    for(let i=0;i<20;i++){
-      const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*2.5;
-      CS.parts.push({x:CS.bossX,y:H-60,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,
-        c:bg.glow,life:1,sz:2+Math.floor(Math.random()*2)});
-    }
-  }
   csDrawBoss(ctx, W, H);
+  // sting "occhi"
+  if(el>=CS_T.eyes && !CS._eyeFired){ CS._eyeFired=true; sfx("charge"); CS.shake=Math.max(CS.shake,160); }
+  // burst di rivelazione
+  if(el>=CS_T.reveal && !CS._entryFired){
+    CS._entryFired=true; CS.shake=Math.max(CS.shake,300);
+    for(let i=0;i<26;i++){ const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*2.8;
+      CS.parts.push({x:160,y:H-70,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.6,c:i%3?bg.glow:"#fff",life:1,sz:2+Math.floor(Math.random()*2)}); }
+  }
+  ctx.restore();
+  // letterbox cinematografico (fuori dallo shake)
+  const barIn=ramp(0,CS_T.bars), bh=Math.round((26 - 12*ramp(CS_T.name,CS_T.reveal))*barIn);
+  if(bh>0){ ctx.fillStyle="#000"; ctx.fillRect(0,0,W,bh); ctx.fillRect(0,H-bh,W,bh); }
+  // flash bianco sullo slam del nome
+  const nf=ramp(CS_T.name,CS_T.name+200)*(1-ramp(CS_T.name+200,CS_T.name+650));
+  if(nf>0){ ctx.fillStyle=hexA2("#ffffff",0.28*nf); ctx.fillRect(0,0,W,H); }
 }
 function csDrawBoss(ctx, W, H){
-  const names=["Sentinella Spezzata","Madre della Palude","Cavaliere della Cenere","Sovrano Senza Nome"];
-  const keys=["sentinella_boss","madre_boss","cenere_boss","sovrano_boss"];
-  const bossKey=keys[CS.bossIdx];
-  const spr=SPRITES[bossKey];
-  if(!spr) return;
-  const look=ENEMY_LOOK[names[CS.bossIdx]];
-  const pal=look?look.pal:{a:"#888",b:"#666",e:"#fff",w:"#ccc"};
-  const scale=9;
+  const spr=CS.spr; if(!spr) return;
+  const pal=CS.pal, acc=CS.accent, el=CS.elapsed;
   const sw=spr[0].length, sh=spr.length;
-  const PW=sw*scale, PH=sh*scale;
-  const bobY=Math.sin(CS.t/480)*3;
-  const ox=Math.round(CS.bossX-PW/2);
-  const oy=Math.round((H-40)-PH+bobY);
-  // aura pulsante
-  if(!REDUCED){
-    const bg=CS_BG[CS.bossIdx]||CS_BG[0];
-    const a=0.15+0.1*Math.sin(CS.t/320);
-    const hex=Math.round(a*255).toString(16).padStart(2,"0");
-    ctx.strokeStyle=bg.glow+hex; ctx.lineWidth=6;
-    ctx.strokeRect(ox-6,oy-6,PW+12,PH+12);
+  const rise=csClamp((el-CS_T.bars)/(CS_T.rise-CS_T.bars));
+  const eased=1-Math.pow(1-rise,3);
+  const colorF=csClamp((el-CS_T.eyes)/(CS_T.reveal-CS_T.eyes));
+  const eyesOn=el>=CS_T.eyes;
+  const push=0.7*csClamp((el-CS_T.rise)/(CS_T.reveal-CS_T.rise));
+  const scale=9+push;
+  const sw2=sw*scale, sh2=sh*scale;
+  const bobY=el>=CS_T.reveal?Math.sin(CS.t/480)*3:0;
+  const hidden=(1-eased)*70;
+  const ox=Math.round(CS.bossX-sw2/2);
+  const oy=Math.round((H-40)-sh2+bobY+hidden);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(-8,-8,W+16,H-40+8); ctx.clip();  // sorge da dietro la linea del terreno
+  // aura pulsante alla rivelazione
+  if(!REDUCED && eyesOn){
+    const a=(0.12+0.13*Math.sin(CS.t/300))*colorF;
+    ctx.strokeStyle=hexA2(acc,a); ctx.lineWidth=6;
+    ctx.strokeRect(ox-6,oy-6,sw2+12,sh2+12);
   }
-  for(let r=0;r<sh;r++) for(let c=0;c<sw;c++){
-    const ch=spr[r][c];
-    if(ch===".") continue;
-    ctx.fillStyle=pal[ch]||"#f0f";
-    ctx.fillRect(ox+c*scale,oy+r*scale,scale,scale);
+  // ombra portata (volume)
+  ctx.globalAlpha=0.42; ctx.fillStyle="#05050a";
+  for(let r=0;r<sh;r++)for(let c=0;c<sw;c++){ if(spr[r][c]===".")continue; ctx.fillRect(ox+c*scale+3,oy+r*scale+5,scale,scale); }
+  ctx.globalAlpha=1;
+  // silhouette base
+  ctx.fillStyle="#08080e";
+  for(let r=0;r<sh;r++)for(let c=0;c<sw;c++){ if(spr[r][c]===".")continue; ctx.fillRect(ox+c*scale,oy+r*scale,scale,scale); }
+  // strato a colori (dissolve in entrata)
+  if(colorF>0){
+    ctx.globalAlpha=colorF;
+    for(let r=0;r<sh;r++)for(let c=0;c<sw;c++){ const ch=spr[r][c]; if(ch===".")continue;
+      ctx.fillStyle=pal[ch]||"#888"; ctx.fillRect(ox+c*scale,oy+r*scale,scale,scale); }
+    ctx.globalAlpha=1;
+    // luce di taglio sui bordi (silhouette forte + volume)
+    if(colorF>0.5){
+      ctx.fillStyle=hexA2(acc,0.55*colorF);
+      for(let r=0;r<sh;r++)for(let c=0;c<sw;c++){ if(spr[r][c]===".")continue;
+        if(c===0||spr[r][c-1]===".") ctx.fillRect(ox+c*scale,oy+r*scale,2,scale);
+        if(r===0||spr[r-1][c]===".") ctx.fillRect(ox+c*scale,oy+r*scale,scale,2);
+      }
+    }
   }
+  // occhi che si accendono + bloom
+  if(eyesOn){
+    const pulse=0.6+0.4*Math.sin(CS.t/160);
+    for(let r=0;r<sh;r++)for(let c=0;c<sw;c++){ if(spr[r][c]!=="e")continue;
+      const ex=ox+c*scale, ey=oy+r*scale;
+      ctx.fillStyle=hexA2(acc,0.5*pulse); ctx.fillRect(ex-scale,ey-scale,scale*3,scale*3);
+      ctx.fillStyle="#fff"; ctx.fillRect(ex,ey,scale,scale);
+    }
+  }
+  ctx.restore();
 }
 let _cutsceneResolve = null;
 function showBossCutscene(bossIdx, onComplete){
@@ -3871,9 +3968,18 @@ function showBossCutscene(bossIdx, onComplete){
   }
   if(fightBtn) fightBtn.style.display = "none";
   if(dotsEl)   dotsEl.style.display = "";
-  nextPanel();
-  const onSkip = ()=>{ clearTimeout(typeTimer); cleanup(); done(); };
-  const onFight = ()=>{ clearTimeout(typeTimer); cleanup(); done(); };
+  // regia: lo slam del nome arriva a metà cinematica, la narrativa dopo la rivelazione
+  const nc = $("cutscene-namecard");
+  const boss = (typeof BOSSES!=="undefined" && BOSSES[bossIdx]) ? BOSSES[bossIdx] : null;
+  if(nc) nc.classList.remove("show");
+  const cineTimers = [];
+  cineTimers.push(setTimeout(()=>{
+    if(nc && boss){ $("cs-name").textContent=boss.n; $("cs-sub").textContent=boss.sub||""; nc.style.setProperty("--cs-col", bc.color); void nc.offsetWidth; nc.classList.add("show"); }
+    sfx("boss");
+  }, REDUCED?0:CS_T.name));
+  cineTimers.push(setTimeout(nextPanel, REDUCED?0:CS_T.reveal+260));
+  const onSkip = ()=>{ clearTimeout(typeTimer); cineTimers.forEach(clearTimeout); cleanup(); done(); };
+  const onFight = ()=>{ clearTimeout(typeTimer); cineTimers.forEach(clearTimeout); cleanup(); done(); };
   const onKey = (e)=>{
     if(e.key==="Escape"){ onSkip(); }
     else if(e.key==="Enter"||e.key===" "){
