@@ -127,6 +127,72 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 @keyframes victin{0%{opacity:0;transform:scale(.92);text-shadow:0 0 0 rgba(236,200,87,0)}100%{opacity:1;transform:scale(1);text-shadow:0 0 50px rgba(236,200,87,.5)}}
 .bar>i{transition:width .45s cubic-bezier(.2,.8,.3,1)}
 
+/* ===================================================================
+   IDENTITÀ DELLE FAZIONI — timbri, dossier, propaganda (stile Papers, Please)
+   =================================================================== */
+/* il sigillo di ceralacca che cala come un decreto */
+.wax-seal{
+  position:fixed;left:50%;top:42%;z-index:9990;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:.4rem;
+  transform:translate(-50%,-50%);
+  animation:sealSlam .42s cubic-bezier(.2,1.5,.35,1) forwards, sealFade .5s ease-in 1.1s forwards;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.6));
+}
+.wax-seal.reduced{animation:sealFade .5s ease-in .4s forwards}
+.wax-seal canvas{image-rendering:pixelated}
+.wax-seal-label{
+  font-family:var(--f-pixel);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--seal-col);text-shadow:0 1px 0 #000,0 0 12px var(--seal-col);
+  background:rgba(8,8,8,.7);padding:.3em .7em;border:1px solid var(--seal-col);
+}
+@keyframes sealSlam{0%{transform:translate(-50%,-50%) scale(2.6) rotate(-16deg);opacity:0}
+  55%{transform:translate(-50%,-50%) scale(.86) rotate(3deg);opacity:1}
+  75%{transform:translate(-50%,-50%) scale(1.05) rotate(-1deg)}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);opacity:1}}
+@keyframes sealFade{to{opacity:0;transform:translate(-50%,-58%) scale(1)}}
+/* striscia/chip di fazione */
+.fac-chip{display:inline-flex;align-items:center;gap:.4em;padding:.16em .55em;
+  border:1px solid var(--fc,#888);color:var(--fc,#888);background:rgba(0,0,0,.25);
+  font-family:var(--f-pixel);font-size:.5rem;letter-spacing:.06em;text-transform:uppercase;vertical-align:middle}
+.fac-chip canvas{width:16px;height:16px;image-rendering:pixelated}
+/* intestazione propaganda da manifesto */
+.propaganda{
+  border:1px solid var(--fc,#888);border-left:5px solid var(--fc,#888);
+  background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.15));
+  padding:.7em .9em;margin:.5em 0;position:relative;
+}
+.propaganda .creed{font-family:var(--f-pixel);font-size:.62rem;line-height:1.7;color:var(--fc);
+  letter-spacing:.04em;text-transform:uppercase;text-shadow:0 0 10px rgba(0,0,0,.8)}
+.propaganda .voice{font-family:var(--f-body);font-style:italic;color:#cfc7ad;margin-top:.4em;font-size:1.05rem}
+/* la barra delle fedeltà mostrata alla grazia / nel dossier */
+.rep-bars{display:flex;flex-direction:column;gap:.32em;margin:.4em 0}
+.rep-row{display:flex;align-items:center;gap:.5em;font-family:var(--f-body);font-size:1rem}
+.rep-row .nm{flex:0 0 7.5em;color:var(--fc)}
+.rep-row .track{flex:1;height:9px;background:rgba(0,0,0,.45);border:1px solid var(--edge);position:relative}
+.rep-row .track > i{position:absolute;inset:0 auto 0 0;background:var(--fc);box-shadow:0 0 8px var(--fc)}
+.rep-row .sc{flex:0 0 2em;text-align:right;color:var(--faded);font-size:.85rem}
+
+/* ---------- LA CRONACA / CODICE (archivio persistente) ---------- */
+#ov-codex{background:rgba(5,5,4,.96);z-index:130}
+#ov-codex .modal{width:min(760px,100%);max-height:90vh;display:flex;flex-direction:column}
+.codex-tabs{display:flex;flex-wrap:wrap;gap:.35rem;margin:.5em 0 .8em}
+.codex-tabs button{font-size:.5rem;padding:.5em .7em;display:inline-flex;align-items:center;gap:.4em}
+.codex-tabs button.active{border-color:var(--tabc,var(--gold));color:#fff;background:linear-gradient(180deg,rgba(40,32,18,.9),rgba(20,16,8,.9))}
+.codex-tabs button canvas{width:18px;height:18px;image-rendering:pixelated}
+.codex-body{overflow-y:auto;padding-right:.4em;flex:1}
+.codex-faction-head{border-bottom:1px solid var(--edge);margin:.2em 0 .7em;padding-bottom:.5em}
+.codex-entry{border:1px solid var(--edge);border-left:4px solid var(--fc,var(--edge));
+  background:rgba(0,0,0,.22);padding:.6em .8em;margin-bottom:.55em}
+.codex-entry h4{font-family:var(--f-pixel);font-size:.58rem;color:var(--fc,var(--gold-bright));
+  letter-spacing:.04em;margin-bottom:.45em;line-height:1.5}
+.codex-entry p{font-family:var(--f-body);font-size:1.08rem;line-height:1.55;color:#cdc4a6}
+.codex-entry.locked{opacity:.5}
+.codex-entry.locked h4{color:var(--faded)}
+.codex-entry.locked p{font-style:italic;color:#6f6a58}
+.codex-progress{font-family:var(--f-body);color:var(--faded);font-size:.95rem;text-align:right;margin-top:.3em}
+.codex-fresh{display:inline-block;font-family:var(--f-pixel);font-size:.42rem;color:#0a0a0a;
+  background:var(--gold-bright);padding:.2em .4em;margin-left:.5em;letter-spacing:.05em;vertical-align:middle}
+
 /* ---------- schermata titolo ---------- */
 #title-screen{
   min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -866,6 +932,7 @@ kbd{
   <div class="title-actions">
     <button id="btn-continue" class="primary" style="display:none">▶ Riprendi il viaggio</button>
     <button id="btn-start" class="primary">✦ Inizia il viaggio</button>
+    <button id="btn-codex-title">📜 La Cronaca</button>
   </div>
   <p id="title-stats" style="font-size:.92rem;color:#6b5c3c;min-height:1.2em"></p>
   <p style="font-size:.86rem;color:#5b4f38;position:relative;z-index:2">Tastiera: Spazio per agire · A/P/F/S/T in combattimento · ? per le regole</p>
@@ -878,6 +945,7 @@ kbd{
     <div id="progress" aria-label="Avanzamento boss"></div>
     <div class="tb-right">
       <span id="region-name"></span>
+      <button class="iconbtn" id="btn-codex" title="La Cronaca delle Terre" aria-label="Cronaca">📜</button>
       <button class="iconbtn" id="btn-sound" title="Audio attivo/disattivo" aria-label="Audio">♪</button>
       <button class="iconbtn" id="btn-settings" title="Impostazioni audio" aria-label="Impostazioni">⚙</button>
       <button class="iconbtn" id="btn-help" title="Regole e comandi" aria-label="Aiuto">?</button>
@@ -1100,6 +1168,37 @@ kbd{
     </div>
     <div id="npc-text"></div>
     <div id="npc-choices"></div>
+  </div>
+</div>
+
+<!-- ============ LA CRONACA / CODICE DELLE FAZIONI ============ -->
+<div class="overlay" id="ov-codex">
+  <div class="modal">
+    <h2>📜 La Cronaca delle Terre</h2>
+    <p class="sub">Ciò che il viandante ha strappato all'oblio, run dopo run. Le fazioni si contendono il ricordo del mondo.</p>
+    <div class="codex-tabs" id="codex-tabs"></div>
+    <div class="codex-body" id="codex-body"></div>
+    <div class="codex-progress" id="codex-progress"></div>
+    <div class="btnrow"><button id="codex-close">Chiudi</button></div>
+  </div>
+</div>
+
+<!-- ============ EMISSARIO DI FAZIONE ============ -->
+<div class="overlay" id="ov-emissary">
+  <div class="modal" style="width:min(560px,100%)">
+    <div class="npc-head">
+      <canvas id="emissary-sigil" width="56" height="56" aria-hidden="true" style="border:1px solid var(--edge);background:#0a0810"></canvas>
+      <div class="npc-who">
+        <h2 id="emissary-faction" style="text-align:left;margin-bottom:.2em"></h2>
+        <div class="npc-role" id="emissary-role"></div>
+      </div>
+    </div>
+    <div class="propaganda" id="emissary-propaganda">
+      <div class="creed" id="emissary-creed"></div>
+      <div class="voice" id="emissary-voice"></div>
+    </div>
+    <div id="emissary-text" style="font-family:var(--f-body);font-size:1.1rem;line-height:1.55;color:#cdc4a6;margin:.6em 0 1em"></div>
+    <div id="emissary-choices" style="display:flex;flex-direction:column;gap:.5rem"></div>
   </div>
 </div>
 
@@ -1479,6 +1578,23 @@ function karmaLeaning(){
   if(mis > amb)    return {t:"Cammini come chi vuole risparmiare.", c:"#9ab0a0"};
   return {t:"Le Terre non hanno ancora deciso chi sei.", c:"#a89a80"};
 }
+/* barra delle fedeltà di fazione, mostrata alla grazia: rende visibile come
+   le scelte stanno schierando il viandante nel conflitto del mondo */
+function renderRepBars(){
+  if(!player || !player.rep) return "";
+  const max = Math.max(4, ...FACTION_ORDER.map(id=>player.rep[id]||0));
+  const any = FACTION_ORDER.some(id=>(player.rep[id]||0)!==0);
+  if(!any) return "";
+  const st = factionStanding();
+  const head = st ? `Fedeltà dominante: <strong style="color:${FACTIONS[st.id].col}">${FACTIONS[st.id].nm}</strong>` : "Nessuna bandiera, per ora.";
+  const rows = FACTION_ORDER.map(id=>{
+    const f = FACTIONS[id]; const v = player.rep[id]||0;
+    const pct = Math.max(0, Math.min(100, (v/max)*100));
+    return `<div class="rep-row" style="--fc:${f.col}"><span class="nm">${f.short}</span>`+
+      `<span class="track"><i style="width:${pct}%"></i></span><span class="sc">${v}</span></div>`;
+  }).join("");
+  return `<div class="grace-tecnica-hint" style="color:#b0a886;border-left-color:#7a6f4d">⚑ ${head}</div><div class="rep-bars">${rows}</div>`;
+}
 /* I quattro destini possibili del viandante. */
 const ENDINGS = {
   tiranno: { id:"tiranno", medal:"tiranno", col:"#b25cf0", title:"Il Nuovo Innominato",
@@ -1494,6 +1610,15 @@ function computeEnding(){
   if(!player) return ENDINGS.fiamma;
   const k = player.karma||{}; const mis = k.misericordia||0, amb = k.ambizione||0;
   const f = player.flags||{};
+  // Allegiance di fazione: una fedeltà forte e dominante piega il destino verso il proprio ideale.
+  // (in assenza di reputazione — come nei test puri di karma — questo blocco non interviene)
+  const fa = factionStanding();
+  if(fa && fa.score>=6 && fa.lead>=3){
+    if(fa.id==="corte"  && amb >= mis-1) return ENDINGS.tiranno;
+    if(fa.id==="nome"   && mis >= amb-1) return ENDINGS.nome;
+    if(fa.id==="cenere" && mis >= amb-1) return ENDINGS.custode;
+    if(fa.id==="senza") return ENDINGS.fiamma; // i Liberi lasciano le Terre a sé stesse
+  }
   if(amb >= mis+4) return ENDINGS.tiranno;
   // via del Nome: ricordare la Regina, liberare anime, o vedere se stessi nello Specchio
   const nomePath = f.queenRemembered
@@ -1502,6 +1627,246 @@ function computeEnding(){
   if(nomePath && mis >= amb) return ENDINGS.nome;
   if(mis >= amb+4) return ENDINGS.custode;
   return ENDINGS.fiamma;
+}
+
+/* =====================================================================
+   LE QUATTRO FAZIONI DELLE TERRE SPEZZATE
+   Il mondo non aspetta il viandante: quattro ideologie si contendono
+   ciò che resta del regno. Ogni scelta sposta la tua reputazione, e la
+   tua fedeltà dominante riscrive il mondo — chi incontri, quali notizie
+   raccogli, quali porte si aprono e quale destino ti spetta.
+   Tema centrale: il NOME contro l'OBLIO. Il Sovrano ha strappato i nomi
+   dal mondo; ogni fazione ha una risposta diversa a quella ferita.
+   ===================================================================== */
+const FACTIONS = {
+  cenere: {
+    id:"cenere", nm:"L'Ordine della Cenere", short:"Cenere", glyph:"🜂",
+    col:"#d2691e", col2:"#8a2e26", ink:"#3a1c10",
+    creed:"Ciò che brucia non può più soffrire.",
+    ideal:"L'oblio è misericordia. Un nome è un amo conficcato nella carne: solo il fuoco lo libera. L'Ordine non odia le Terre — le ama troppo per lasciarle ricordare.",
+    figure:"l'Arcicenere Vael, che si gettò viva nel primo rogo perché nessuno dopo di lei dovesse temere le fiamme",
+    region:2,
+  },
+  nome: {
+    id:"nome", nm:"I Custodi del Nome", short:"Custodi", glyph:"🜄",
+    col:"#5fae9a", col2:"#2f6f6a", ink:"#0e2a28",
+    creed:"Un nome ricordato è una catena spezzata.",
+    ideal:"Il Sovrano vinse cancellando. I Custodi rispondono ricordando: trascrivono ogni caduto, sussurrano ogni nome rubato, perché un mondo che ricorda non può essere governato dall'oblio.",
+    figure:"il Primo Archivista, che si cavò gli occhi per non vedere altro che le pagine, e da allora non ha mai dimenticato un volto",
+    region:0,
+  },
+  corte: {
+    id:"corte", nm:"La Corte Cancellata", short:"Corte", glyph:"🜃",
+    col:"#9a6fd0", col2:"#4a2f7a", ink:"#1a0e2a",
+    creed:"Il trono ricorda chi lo merita.",
+    ideal:"I nomi non vanno restituiti a tutti — vanno meritati. La Corte sopravvive nell'ombra del Sovrano e attende un erede degno di rivendicare ciò che lui spezzò. Forse sei tu. Forse no.",
+    figure:"il Siniscalco Senza Volto, che serve un trono vuoto da mille anni e giura di riconoscere il vero re dal modo in cui versa il sangue",
+    region:3,
+  },
+  senza: {
+    id:"senza", nm:"I Senza Stendardo", short:"Liberi", glyph:"🜁",
+    col:"#9aa0a6", col2:"#5a5e60", ink:"#1a1c1e",
+    creed:"Nessun re vale il tuo sangue.",
+    ideal:"Disertori, ladri, mercenari. Non credono in nomi né in oblio: credono nel prossimo pasto e nella prossima alba. In un mondo di fanatici, l'unica eresia rimasta è non voler nulla.",
+    figure:"nessuno. È questo il punto. I Senza Stendardo non hanno un capo: chi pretende di comandarli viene abbandonato alla prima notte di pioggia",
+    region:1,
+  },
+};
+const FACTION_ORDER = ["cenere","nome","corte","senza"];
+/* propaganda: ciò che gli emissari gridano per le strade spezzate */
+const FACTION_PROPAGANDA = {
+  cenere:[
+    "«Hai pianto un morto, oggi? L'Ordine ti insegna a non averne più bisogno.»",
+    "«Le grazie ardono. Anche tu puoi ardere. Non è una minaccia: è un invito.»",
+    "«Il Sovrano ha cancellato i nomi per crudeltà. Noi li bruciamo per amore.»",
+  ],
+  nome:[
+    "«Ripeti con me il nome della Regina. Non lo conosci? Ecco la ferita che curiamo.»",
+    "«Ogni pietra che calpesti aveva un nome inciso. Noi lo stiamo riscrivendo.»",
+    "«L'oblio non è la morte. È peggio: è non essere mai esistiti. Resisti con noi.»",
+  ],
+  corte:[
+    "«Il trono è vuoto, non abbandonato. C'è differenza, e la Corte la conosce.»",
+    "«Non tutti meritano un nome. Pochi meritano una corona. Quanti ne meriti tu?»",
+    "«Servi un re che non esiste? Anche noi. La differenza è che il nostro tornerà.»",
+  ],
+  senza:[
+    "«Stendardi, giuramenti, ideali. Tutta roba che non si mangia, amico.»",
+    "«Quei fanatici moriranno per un nome. Noi vivremo senza. Indovina chi vince.»",
+    "«Vuoi un consiglio gratis? Non fidarti di chi ti offre consigli gratis.»",
+  ],
+};
+/* I FRAMMENTI DELLA CRONACA — lore persistente, scoperto run dopo run.
+   Ogni frammento appartiene a una fazione (o al mondo) e si sblocca compiendo
+   gesti precisi: incontrare un emissario, abbattere un boss, fare una scelta. */
+const CODEX = [
+  // --- IL MONDO ---
+  {id:"w_spezzate", fac:null, tier:0, title:"Perché «Spezzate»",
+    body:"Non furono spezzate da una guerra. Furono spezzate da una sottrazione. Il Sovrano Senza Nome scoprì che togliere il nome a una cosa la toglie dal mondo: prima le persone, poi i luoghi, infine i confini stessi. Ciò che resta sono frammenti che non sanno più come ricongiungersi."},
+  {id:"w_sovrano", fac:null, tier:1, title:"Il Sovrano Senza Nome",
+    body:"Si dice che il suo nome fosse così temuto che lo cancellò lui stesso, per primo, credendo di diventare invincibile. Aveva ragione e torto insieme: nessuno può ucciderlo pronunciando ciò che non esiste. Ma nessuno, nemmeno lui, ricorda più perché regna."},
+  {id:"w_grazia", fac:null, tier:1, title:"I Fuochi di Grazia",
+    body:"Le grazie non furono accese da un dio. Furono accese da chi si rifiutò di dimenticare. Ogni fiamma è un nome che qualcuno ha protetto con il corpo. Per questo curano: ti ricordano chi sei prima che le Terre lo cancellino."},
+  // --- CENERE ---
+  {id:"c_origine", fac:"cenere", tier:0, title:"Il Primo Rogo",
+    body:"L'Arcicenere Vael guidava i lebbrosi dell'Altopiano. Quando il fuoco del Sovrano arrivò, non fuggì: vi camminò dentro cantando, e cantando smise di soffrire. Chi la vide giurò che sorrideva. Da quel sorriso nacque l'Ordine."},
+  {id:"c_dottrina", fac:"cenere", tier:1, title:"La Dottrina della Cenere",
+    body:"«Tre cose vanno bruciate: il nome, perché lega; il ricordo, perché pesa; la speranza, perché inganna. Chi rinuncia a tutte e tre non è morto. È libero.» — dai Versetti di Brace"},
+  {id:"c_boia", fac:"cenere", tier:2, title:"Il Boia era dei nostri",
+    body:"Prima di diventare il Boia di Cenere, fu il più devoto dei Cenerini. Giustiziò il proprio esercito perché nessuno fuggisse la liberazione del rogo. L'Ordine lo venera. I Custodi lo citano come prova che la misericordia, portata all'estremo, diventa il suo opposto."},
+  // --- CUSTODI DEL NOME ---
+  {id:"n_origine", fac:"nome", tier:0, title:"La Biblioteca Sommersa",
+    body:"Quando il Sovrano ordinò di bruciare ogni archivio, i Custodi affondarono i loro libri nella Palude del Vespro. L'acqua che ricorda li conserva ancora. Per questo la palude sussurra: sta leggendo, a voce alta, tutto ciò che il mondo voleva dimenticare."},
+  {id:"n_regina", fac:"nome", tier:1, title:"Il Nome della Regina",
+    body:"I Custodi hanno passato secoli a ricostruire una sola parola: il nome che il Sovrano divorò per primo, quello della Regina che regnava prima di lui. Ne possiedono sette lettere su nove. Le ultime due, dicono, sono incise nel cuore di chi la sconfiggerà ricordandola."},
+  {id:"n_pellegrino", fac:"nome", tier:2, title:"Perché il Pellegrino è cieco",
+    body:"I Custodi più devoti si accecano. Non per penitenza, ma per metodo: chi non vede i volti non li confonde, e chi non li confonde non li dimentica. Il Pellegrino Cieco conosce il tuo nome dal peso dei tuoi passi. Lo sta già trascrivendo."},
+  // --- CORTE CANCELLATA ---
+  {id:"o_origine", fac:"corte", tier:0, title:"Il Trono che Attende",
+    body:"Quando il Sovrano salì al potere, non sterminò la vecchia corte: la cancellò a metà. I cortigiani esistono ancora, ma nessuno ricorda i loro titoli, le loro terre, i loro volti. Vagano per la Cittadella servendo un protocollo per un re che non c'è, in attesa di uno che ci sia."},
+  {id:"o_siniscalco", fac:"corte", tier:1, title:"Il Siniscalco Senza Volto",
+    body:"Versa il vino per un trono vuoto ogni sera, da mille anni. Dice che riconoscerà il vero erede da come impugna la lama sul nemico inerme: «Un re non esita né infierisce. Fa solo ciò che serve.» Ti sta osservando da più lontano di quanto credi."},
+  {id:"o_prezzo", fac:"corte", tier:2, title:"Il Prezzo della Corona",
+    body:"La Corte non offre potere gratis. Ogni dono lascia un debito inciso nel nome di chi lo accetta — e quando il debito è grande abbastanza, il nome smette di essere tuo e diventa loro. Così la Corte sopravvive: non con eserciti, ma con eredi che credevano di comandarla."},
+  // --- SENZA STENDARDO ---
+  {id:"s_origine", fac:"senza", tier:0, title:"I Primi Disertori",
+    body:"Furono i soldati che, all'ultima battaglia, deposero le armi insieme — non per vigliaccheria, ma per accordo. «Se nessuno combatte, nessuno muore» fu la loro unica dottrina. Vennero cancellati come traditori. Sopravvivono perché un nome cancellato è anche un nome che nessuno può richiamare al fronte."},
+  {id:"s_ladra", fac:"senza", tier:1, title:"L'economia delle ossa",
+    body:"La Ladra di Ossa vende ai vivi ciò che ruba ai morti: non oggetti, informazioni. In un mondo dove ricordare è proibito e dimenticare è obbligatorio, ciò che qualcuno ancora sa vale più di qualsiasi runa. I Senza Stendardo non hanno ideali, ma hanno il miglior mercato delle Terre."},
+  {id:"s_rinnegato", fac:"senza", tier:2, title:"Il giuramento del Rinnegato",
+    body:"«Ho giurato a un re che non esiste più» dice il Cavaliere Rinnegato a chiunque incontri. È una provocazione e una confessione: l'unico giuramento che non può essere tradito è quello fatto al nulla. I Senza Stendardo lo ripetono come una preghiera atea."},
+];
+function codexById(id){ return CODEX.find(c=>c.id===id); }
+/* reputazione di fazione: muove il mondo. Vive nel player (per-run) e si
+   sedimenta negli stats (storia del viandante tra una run e l'altra). */
+function factionRep(id, n){
+  if(!player || !FACTIONS[id]) return;
+  player.rep = player.rep || {cenere:0, nome:0, corte:0, senza:0};
+  player.rep[id] = (player.rep[id]||0) + (n||1);
+  // una scelta di fazione lascia anche un segno persistente nella cronaca del mondo
+  const st = getStats(); st.repTotal = st.repTotal||{};
+  st.repTotal[id] = (st.repTotal[id]||0) + (n||1); saveStats(st);
+}
+/* la fazione dominante e di quanto è in vantaggio sulla seconda */
+function factionStanding(){
+  if(!player || !player.rep) return null;
+  const arr = FACTION_ORDER.map(id=>({id, score:player.rep[id]||0})).sort((a,b)=>b.score-a.score);
+  if(arr[0].score<=0) return null;
+  return {id:arr[0].id, score:arr[0].score, lead:arr[0].score-(arr[1]?arr[1].score:0), all:arr};
+}
+function factionName(id){ return FACTIONS[id] ? FACTIONS[id].nm : ""; }
+/* sblocco persistente di un frammento di Cronaca */
+function codexUnlock(id){
+  if(!codexById(id)) return false;
+  const st = getStats(); st.codex = st.codex||{};
+  if(st.codex[id]) return false;
+  st.codex[id] = true; saveStats(st);
+  if(player){ player._newCodex = (player._newCodex||0)+1; }
+  return true;
+}
+function codexHas(id){ const st=getStats(); return !!(st.codex && st.codex[id]); }
+function codexCount(){ const st=getStats(); return st.codex ? Object.keys(st.codex).length : 0; }
+
+/* ---------- IDENTITÀ VISIVA DELLE FAZIONI: sigilli procedurali ----------
+   Ogni fazione ha un emblema costruito sullo stesso scheletro — un anello
+   spezzato (le Terre Spezzate) — con un simbolo proprio al centro. Stile
+   xilografico/timbro: tratti netti, nessun gradiente, una sola tinta. */
+function drawFactionSigil(ctx, id, cx, cy, R, color){
+  const f = FACTIONS[id]; if(!f || !ctx) return;
+  const col = color || f.col;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = col; ctx.fillStyle = col;
+  ctx.lineWidth = Math.max(1, R*0.10);
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  // anello spezzato: motivo comune a tutte le fazioni
+  ctx.globalAlpha = 0.92;
+  ctx.beginPath();
+  ctx.arc(0, 0, R, -Math.PI*0.42, Math.PI*1.34);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  const r = R*0.60;
+  if(id==="cenere"){
+    // corona spezzata + fiamma
+    ctx.beginPath();
+    ctx.moveTo(-r, r*0.55); ctx.lineTo(-r*0.6, -r*0.05); ctx.lineTo(-r*0.25, r*0.35); ctx.lineTo(0, -r*0.2);
+    ctx.moveTo(r*0.28, r*0.35); ctx.lineTo(r*0.6, -r*0.05); ctx.lineTo(r, r*0.55);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -r*1.05);
+    ctx.quadraticCurveTo(r*0.55, -r*0.25, 0, r*0.15);
+    ctx.quadraticCurveTo(-r*0.55, -r*0.25, 0, -r*1.05);
+    ctx.fill();
+  } else if(id==="nome"){
+    // occhio che ricorda, attraversato dalla linea del nome
+    ctx.beginPath();
+    ctx.moveTo(-r, 0); ctx.quadraticCurveTo(0, -r*0.82, r, 0); ctx.quadraticCurveTo(0, r*0.82, -r, 0);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, r*0.30, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.moveTo(0, -r*1.1); ctx.lineTo(0, r*1.1); ctx.stroke();
+    ctx.globalAlpha = 1;
+  } else if(id==="corte"){
+    // corona dal cuore cavo
+    ctx.beginPath();
+    ctx.moveTo(-r, r*0.5); ctx.lineTo(-r, -r*0.35); ctx.lineTo(-r*0.45, r*0.08);
+    ctx.lineTo(0, -r*0.62); ctx.lineTo(r*0.45, r*0.08); ctx.lineTo(r, -r*0.35); ctx.lineTo(r, r*0.5);
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, -r*0.02, r*0.17, 0, 6.2832); ctx.stroke();
+  } else if(id==="senza"){
+    // asta di stendardo spezzata + bandiera lacera
+    ctx.beginPath();
+    ctx.moveTo(-r*0.05, -r*1.0); ctx.lineTo(r*0.08, -r*0.1);
+    ctx.moveTo(r*0.22, r*0.12); ctx.lineTo(r*0.0, r*1.0);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(r*0.05, -r*0.9); ctx.lineTo(r*0.85, -r*0.68); ctx.lineTo(r*0.52, -r*0.42);
+    ctx.lineTo(r*0.8, -r*0.16); ctx.lineTo(r*0.05, -r*0.34); ctx.closePath();
+    ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+/* disegna un sigillo dentro un <canvas> dato (per liste, dossier, ecc.) */
+function paintSigilCanvas(cv, id, color){
+  if(!cv || !cv.getContext) return;
+  const ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  drawFactionSigil(ctx, id, cv.width/2, cv.height/2, Math.min(cv.width,cv.height)*0.36, color);
+}
+/* ---------- IL TIMBRO DI CERALACCA: il gesto-firma del gioco ----------
+   Quando una scelta sposta la storia, il mondo la ratifica come un decreto:
+   un sigillo di ceralacca cala sullo schermo con il colore della fazione. */
+function stampSeal(id, label){
+  const f = FACTIONS[id]; if(!f) return;
+  sfx("step");
+  if(typeof document==="undefined") return;
+  const wrap = document.createElement("div");
+  wrap.className = "wax-seal" + (REDUCED ? " reduced" : "");
+  wrap.style.setProperty("--seal-col", f.col);
+  wrap.style.setProperty("--seal-ink", f.ink);
+  const cv = document.createElement("canvas");
+  cv.width = 140; cv.height = 140;
+  wrap.appendChild(cv);
+  const lab = document.createElement("div");
+  lab.className = "wax-seal-label";
+  lab.textContent = label || f.short.toUpperCase();
+  wrap.appendChild(lab);
+  document.body.appendChild(wrap);
+  const ctx = cv.getContext && cv.getContext("2d");
+  if(ctx){
+    ctx.imageSmoothingEnabled = false;
+    // disco di ceralacca: bordo scuro, corpo nel colore, lume in alto
+    ctx.fillStyle = f.col2; ctx.beginPath(); ctx.arc(70,72,58,0,6.2832); ctx.fill();
+    ctx.fillStyle = f.col;  ctx.beginPath(); ctx.arc(70,68,54,0,6.2832); ctx.fill();
+    ctx.strokeStyle = f.ink; ctx.lineWidth = 3; ctx.globalAlpha=.5;
+    ctx.beginPath(); ctx.arc(70,68,48,0,6.2832); ctx.stroke(); ctx.globalAlpha=1;
+    // bordo dentellato (cera schiacciata)
+    ctx.fillStyle = f.col;
+    for(let a=0;a<24;a++){ const ang=a/24*6.2832; ctx.beginPath(); ctx.arc(70+Math.cos(ang)*54, 68+Math.sin(ang)*54, 5, 0, 6.2832); ctx.fill(); }
+    drawFactionSigil(ctx, id, 70, 66, 30, f.ink);
+  }
+  setTimeout(()=>wrap.remove(), REDUCED?900:1700);
 }
 
 /* ===================== STATO ===================== */
@@ -1540,6 +1905,7 @@ function newGame(cls){
     passives:[], synergies:[], ng:false, ngScale:1, secretSeen:false,
     bossPick:[0,0,0,0], worldPath:null,
     karma:{misericordia:0, ambizione:0}, flags:{}, endingId:null,
+    rep:{cenere:0, nome:0, corte:0, senza:0}, allegiance:null,
   };
   player.bossPick = pickBosses(); // sorteggia i guardiani di questa run
   // Ciclo del Ritorno (NG+): nemici più forti, boss con affissi, boss segreto
@@ -1556,6 +1922,7 @@ function newGame(cls){
   $("char-name").textContent = C.name;
   logClear();
   log(`${C.nm}: il viaggio ha inizio nel Sepolcreto dei Primi.`,"gold");
+  codexUnlock("w_spezzate"); // la prima verità: perché le Terre sono Spezzate
   renderAll();
   drawPortrait();
   saveGame();
@@ -2481,24 +2848,175 @@ function npcGuaritore(region){
     }],
   ]);
 }
+/* ogni personaggio appartiene a una corrente del mondo: incontrarlo sposta la
+   reputazione e svela un frammento di Cronaca della sua fazione. */
+const NPC_FACTION = {mercante:"senza", pellegrino:"nome", rinnegato:"senza", oracolo:"cenere", ladra:"senza", guaritore:"nome"};
+const FAC_CODEX0 = {cenere:"c_origine", nome:"n_origine", corte:"o_origine", senza:"s_origine"};
+const FAC_CODEX1 = {cenere:"c_dottrina", nome:"n_regina", corte:"o_siniscalco", senza:"s_ladra"};
 function runNPCEvent(tile, roll){
   const region = tile.region;
   npcResume = ()=>setAction("? Incontro", `${flavor("event",region)||"Il sentiero torna deserto."} Tira il dado per proseguire.`, [["Tira il dado",rollMove]], "event");
   renderBoard(); renderStats();
-  // ponderazione: mercante/pellegrino/rinnegato sempre disponibili; oracolo/ladra/guaritore con probabilità più bassa
-  const basePool = ["mercante","pellegrino","rinnegato","oracolo","ladra","guaritore"];
-  // peso regionale: oracolo più comune verso la fine, guaritore più utile a metà
-  const weights = [2, 2, 2, 1+(region>=2?1:0), 1, 1+(region===1||region===2?1:0)];
+  // ponderazione: i tre incontri storici sempre disponibili; emissario di fazione e gli altri più rari
+  const basePool = ["mercante","pellegrino","rinnegato","oracolo","ladra","guaritore","emissario"];
+  const weights  = [2, 2, 2, 1+(region>=2?1:0), 1, 1+(region===1||region===2?1:0), 2];
   let total = weights.reduce((a,b)=>a+b,0);
   let rng = Math.random()*total;
   let which = basePool[0];
   for(let i=0;i<basePool.length;i++){ rng-=weights[i]; if(rng<=0){ which=basePool[i]; break; } }
+  if(which==="emissario"){ npcEmissario(region, tile); return; }
+  // gli incontri storici radicano la tua reputazione e svelano la loro fazione
+  const fid = NPC_FACTION[which];
+  if(fid){ factionRep(fid, 1); codexUnlock(FAC_CODEX0[fid]); }
   if(which==="mercante") npcMercante(region);
   else if(which==="pellegrino") npcPellegrino(region);
   else if(which==="rinnegato") npcRinnegato(region, tile);
   else if(which==="oracolo") npcOracolo(region);
   else if(which==="ladra") npcLadra(region);
   else npcGuaritore(region);
+}
+
+/* ===================== EMISSARIO DI FAZIONE =====================
+   Il cuore del nuovo sistema di scelte: una fazione ti ferma sulla via e
+   ti chiede di schierarti. Le tue risposte spostano concretamente la
+   reputazione, sbloccano la Cronaca e — alla lunga — riscrivono il finale. */
+function emissaryShow(fid){
+  const f = FACTIONS[fid];
+  paintSigilCanvas($("emissary-sigil"), fid);
+  $("emissary-faction").textContent = f.nm;
+  $("emissary-faction").style.color = f.col;
+  $("emissary-role").textContent = "Emissario · «" + f.creed + "»";
+  $("emissary-propaganda").style.setProperty("--fc", f.col);
+  $("emissary-creed").textContent = f.creed;
+  $("emissary-voice").textContent = FACTION_PROPAGANDA[fid][rnd(0,FACTION_PROPAGANDA[fid].length-1)];
+  $("ov-emissary").classList.add("open");
+  sfx("step");
+}
+function emissaryNode(text, choices){
+  $("emissary-text").textContent = text;
+  const box = $("emissary-choices");
+  box.innerHTML = "";
+  choices.forEach(([label, fn])=>{
+    const b=document.createElement("button");
+    b.textContent = label; b.style.textAlign="left"; b.style.textTransform="none";
+    b.style.fontFamily="var(--f-body)"; b.style.fontSize="1.02rem"; b.style.letterSpacing="0";
+    b.style.lineHeight="1.3"; b.style.padding=".6em .9em";
+    b.addEventListener("click", fn);
+    box.appendChild(b);
+  });
+}
+function emissaryClose(){
+  $("ov-emissary").classList.remove("open");
+  renderStats();
+  const r = npcResume; npcResume = null;
+  if(r) r();
+}
+/* boon concreto per chi giura fedeltà — ogni fazione premia a modo suo */
+function factionBoon(fid){
+  if(fid==="cenere"){ player.atk += 1; return "Le braci ti segnano la fronte: <strong>+1 attacco</strong>. Bruci ciò che colpisci."; }
+  if(fid==="nome"){ player.runeBonus = (player.runeBonus||0) + 0.12; return "Trascrivi il tuo nome nel registro dei Custodi: <strong>+12% rune</strong> da ogni caduto. Sarai ricordato."; }
+  if(fid==="corte"){ const r=40+player.level*15; player.runes += r; player.flags.corteDebt=true; return `La Corte ti anticipa <strong>${r} rune</strong> di mecenatismo. (Un debito inciso nel tuo nome, dicono.)`; }
+  if(fid==="senza"){ player.maxflasks += 1; player.flasks += 1; return "Un sorso dalla loro borraccia e un consiglio: <strong>+1 fiaschetta massima</strong>. Niente giuramenti, solo acqua."; }
+  return "";
+}
+function npcEmissario(region, tile){
+  // la fazione che ti ferma dipende dalla regione (il suo focolaio), con una variante
+  const homeByRegion = {0:"nome", 1:"senza", 2:"cenere", 3:"corte"};
+  let fid = homeByRegion[region] || "senza";
+  if(Math.random() < 0.30){ // a volte un emissario fuori dal proprio territorio
+    const others = FACTION_ORDER.filter(x=>x!==fid);
+    fid = others[rnd(0,others.length-1)];
+  }
+  const f = FACTIONS[fid];
+  codexUnlock(FAC_CODEX0[fid]);
+  emissaryShow(fid);
+  emissaryNode(
+    `Una figura che porta il sigillo ${f.glyph} ti taglia la strada. «So chi sei: uno che ancora cammina. È più di quanto possano dire in molti. ${f.ideal}» Tende una mano. «Le Terre si stanno scegliendo un futuro. Da che parte stai?»`,
+    [
+      [`⊕ Giura fedeltà a ${f.short} (+reputazione, dono)`, ()=>{
+        factionRep(fid, 4);
+        // schierarsi con una fazione raffredda i rapporti con la sua rivale
+        const rival = {cenere:"nome", nome:"cenere", corte:"senza", senza:"corte"}[fid];
+        if(rival) factionRep(rival, -2);
+        if(fid==="cenere"||fid==="corte") karmaTag("ambizione",1); else karmaTag("misericordia",1);
+        const boon = factionBoon(fid);
+        codexUnlock(FAC_CODEX1[fid]);
+        log(`Giuri fedeltà a ${f.nm}.`, "gold");
+        stampSeal(fid, "GIURATO");
+        renderStats(); saveGame();
+        emissaryNode(`«Allora il tuo nome è dei nostri.» ${boon}`, [["Prosegui", emissaryClose]]);
+      }],
+      [`◇ Ascolta e basta (svela un segreto del mondo)`, ()=>{
+        factionRep(fid, 1);
+        codexUnlock(FAC_CODEX1[fid]);
+        const frag = codexById(FAC_CODEX1[fid]);
+        emissaryNode(`L'emissario abbassa la voce. «Un dono, perché tu rifletta.» ${frag?frag.body:""}`, [["Prosegui", emissaryClose]]);
+      }],
+      [`✕ Rifiuta ogni bandiera`, ()=>{
+        factionRep("senza", 2); // rifiutare le cause è, di per sé, la via dei Senza Stendardo
+        karmaTag("ambizione",0);
+        codexUnlock("s_origine");
+        log(`Rifiuti l'emissario di ${f.short}.`, "");
+        emissaryNode(`«Come vuoi. Ma le Terre non lasciano spazio a chi non sceglie — lo riempiono per te.» Si dissolve. Hai scelto di non scegliere: e anche questa è una scelta.`, [["Prosegui", emissaryClose]]);
+      }],
+    ]
+  );
+}
+
+/* ===================== LA CRONACA (CODICE) ===================== */
+let codexTab = "all";
+function openCodex(){
+  codexTab = "all";
+  renderCodex();
+  $("ov-codex").classList.add("open");
+  if(player) player._newCodex = 0;
+}
+function closeCodex(){ $("ov-codex").classList.remove("open"); }
+function renderCodex(){
+  // tab: tutto + una per fazione + mondo
+  const tabs = $("codex-tabs"); tabs.innerHTML = "";
+  const defs = [{id:"all",nm:"Tutto",col:"#c2b486"}, {id:"world",nm:"Il Mondo",col:"#9a8f63"}]
+    .concat(FACTION_ORDER.map(id=>({id, nm:FACTIONS[id].short, col:FACTIONS[id].col, fac:true})));
+  defs.forEach(d=>{
+    const b=document.createElement("button");
+    b.className = "fac" + (codexTab===d.id?" active":"");
+    b.style.setProperty("--tabc", d.col);
+    if(d.fac){ const cv=document.createElement("canvas"); cv.width=18; cv.height=18; b.appendChild(cv); setTimeout(()=>paintSigilCanvas(cv, d.id),0); }
+    const sp=document.createElement("span"); sp.textContent=d.nm; b.appendChild(sp);
+    b.addEventListener("click", ()=>{ codexTab=d.id; renderCodex(); });
+    tabs.appendChild(b);
+  });
+  // corpo
+  const body = $("codex-body"); body.innerHTML = "";
+  const groups = codexTab==="all"
+    ? [null].concat(FACTION_ORDER)
+    : codexTab==="world" ? [null]
+    : [codexTab];
+  groups.forEach(g=>{
+    const entries = CODEX.filter(c=> (g===null ? c.fac===null : c.fac===g));
+    if(!entries.length) return;
+    const head = document.createElement("div");
+    head.className = "codex-faction-head";
+    if(g===null){
+      head.innerHTML = `<h3 style="color:#9a8f63">✦ Il Mondo Spezzato</h3>`;
+    } else {
+      const f = FACTIONS[g];
+      head.innerHTML = `<h3 style="color:${f.col}">${f.nm}</h3><div style="font-family:var(--f-body);font-style:italic;color:#b8b095;font-size:1rem">${f.ideal}</div>`;
+    }
+    body.appendChild(head);
+    entries.forEach(c=>{
+      const have = codexHas(c.id);
+      const div = document.createElement("div");
+      div.className = "codex-entry" + (have?"":" locked");
+      if(c.fac) div.style.setProperty("--fc", FACTIONS[c.fac].col);
+      div.innerHTML = have
+        ? `<h4>${c.title}</h4><p>${c.body}</p>`
+        : `<h4>??? <span style="font-weight:normal;font-size:.8em">— frammento sigillato</span></h4><p>Un ricordo che le Terre non ti hanno ancora concesso. Esplora, combatti, scegli: la Cronaca si scrive con i tuoi passi.</p>`;
+      body.appendChild(div);
+    });
+  });
+  const total = CODEX.length, found = codexCount();
+  $("codex-progress").textContent = `Frammenti recuperati: ${found} / ${total}`;
 }
 
 /* ===================== GRAZIA ===================== */
@@ -2590,6 +3108,7 @@ function renderGraceMenu(){
     </div>
     ${tec?`<div class="grace-tecnica-hint" style="color:${tec.col}">${tec.icon} Tecnica: <strong>${tec.nm}</strong></div>`:""}
     ${(()=>{ const l=karmaLeaning(); return l?`<div class="grace-tecnica-hint" style="color:${l.c};border-left-color:${l.c}">☍ Il filo del destino: <em>${l.t}</em></div>`:""; })()}
+    ${renderRepBars()}
     <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">♥</span><div><span class="nm">Vigore</span><div class="d">+10 vitalità massima (e cura completa)</div></div></div>
       <button id="lv-vig" ${can?"":"disabled"}>⟐ ${cost}</button></div>
     <div class="shop-item"><div style="display:flex;gap:.5rem;align-items:baseline"><span style="font-size:1.1rem">⚔</span><div><span class="nm">Forza</span><div class="d">+1 attacco permanente</div></div></div>
@@ -5434,6 +5953,15 @@ function winCombat(){
   if(combat.isBoss && combat.mech==="penitenza" && (combat.furia||0)<4) karmaTag("misericordia",1);
   // Specchio: sconfiggerlo — i suoi echi rivelano qualcosa su chi sei
   if(combat.isBoss && combat.mech==="specchio") karmaFlag("specchioVisto");
+  // ogni boss caduto strappa all'oblio un frammento della Cronaca della sua terra
+  if(combat.isBoss){
+    const FAC_BY_REGION = {0:"nome", 1:"senza", 2:"cenere", 3:"corte"};
+    const FAC_CODEX2 = {cenere:"c_boia", nome:"n_pellegrino", corte:"o_prezzo", senza:"s_rinnegato"};
+    const rfid = FAC_BY_REGION[combat.tile.region];
+    if(rfid){ codexUnlock(FAC_CODEX2[rfid]); codexUnlock(FAC_CODEX0[rfid]); }
+    codexUnlock("w_grazia");
+    if(combat.tile.region===3 || combat.isSecret) codexUnlock("w_sovrano");
+  }
   const e = combat.e;
   let reward = rnd(e.r[0], e.r[1] || e.r[0]);
   if(player.runeBonus) reward = Math.round(reward*(1+player.runeBonus)); // Sigillo del Pellegrino
@@ -5675,9 +6203,24 @@ function victory(secret){
   const owned = getMedals();
   const found = endMedals.filter(id=>owned.includes(id)).length;
   const replayHint = secret ? "" : `<br><span style="font-size:.8rem;color:${accent};opacity:.85">✦ Finali scoperti: ${found}/4 — altre scelte portano ad altri destini.</span>`;
+  // coda di fazione: come la tua fedeltà ha colorato la fine
+  const st0 = factionStanding();
+  let facCoda = "";
+  if(!secret && st0 && st0.score>=3){
+    const f = FACTIONS[st0.id];
+    const codas = {
+      cenere:"L'Ordine della Cenere rivendica la tua vittoria: dicono che hai bruciato ciò che andava bruciato.",
+      nome:"I Custodi del Nome incidono la tua impresa nei loro registri. Sarai ricordato — è la loro più alta benedizione.",
+      corte:"La Corte Cancellata si inchina nell'ombra. Hanno trovato il loro erede. Resta da vedere chi comanda chi.",
+      senza:"I Senza Stendardo alzano una borraccia alla tua salute e a nessuna bandiera. È il massimo che concedano.",
+    };
+    facCoda = `<br><span style="font-size:.92rem;color:${f.col}">⚑ ${codas[st0.id]||""}</span>`;
+    if(st0.lead>=3) setTimeout(()=>stampSeal(st0.id, "DESTINO"), 700);
+  }
   $("victory-sub").innerHTML = (secret
       ? `Hai messo a tacere l'Eco del Primo. Nelle Terre Spezzate non resta più nessun nome da spezzare, tranne il tuo.`
       : ending.text)
+    + facCoda
     + replayHint
     + `<br><span style="font-size:.85rem;color:#6b5c3c">${tag}Classe: ${CLASSES[player.cls||chosenClass].nm} · Miglior viaggio: ${best}</span>`;
   const medals = getMedals();
@@ -5738,6 +6281,9 @@ $("btn-sound").addEventListener("click", ()=>{
 });
 $("btn-help").addEventListener("click", ()=>$("ov-help").classList.add("open"));
 $("help-close").addEventListener("click", ()=>$("ov-help").classList.remove("open"));
+$("btn-codex").addEventListener("click", openCodex);
+$("btn-codex-title").addEventListener("click", openCodex);
+$("codex-close").addEventListener("click", closeCodex);
 
 /* ===================== VISIBILITÀ SCHEDA ===================== */
 if(document.addEventListener){
@@ -6083,6 +6629,15 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
     endings(){ return ENDINGS; },
     computeEnding(){ return computeEnding(); },
     karmaTag(k,n){ return karmaTag(k,n); },
+    factions(){ return FACTIONS; },
+    codex(){ return CODEX; },
+    factionRep(id,n){ return factionRep(id,n); },
+    factionStanding(){ return factionStanding(); },
+    codexUnlock(id){ return codexUnlock(id); },
+    codexHas(id){ return codexHas(id); },
+    codexCount(){ return codexCount(); },
+    drawFactionSigil(ctx,id,cx,cy,R,c){ return drawFactionSigil(ctx,id,cx,cy,R,c); },
+    openCodex(){ return openCodex(); },
     /* avvia uno scontro col boss che possiede la meccanica richiesta, saltando cutscene/audio */
     debugBossFight(mech){
       const all = BOSSES_V0.concat(BOSSES_V1).concat(BOSSES_V2);
