@@ -1178,6 +1178,12 @@ const BOSSES_V1 = [
   {n:"Boia di Cenere",sub:"L'ultimo a deporre la lama",hp:80,atk:8,r:[540,540],type:"fiamma",mech:"condanna"},
   {n:"Regina Cancellata",sub:"Il nome che il Sovrano divorò",hp:116,atk:10,r:[1120,1120],type:"ombra",mech:"oblio"},
 ];
+const BOSSES_V2 = [
+  {n:"L'Archivista",sub:"Ogni passo è già scritto nel suo codice",hp:52,atk:5,r:[195,195],type:"pietra",mech:"archivio"},
+  {n:"Il Cacciatore Maledetto",sub:"La palude ricorda ogni tua mossa",hp:68,atk:7,r:[340,340],type:"natura",mech:"trappola"},
+  {n:"La Penitente di Cenere",sub:"Il dolore è la sua armatura",hp:86,atk:9,r:[555,555],type:"fiamma",mech:"penitenza"},
+  {n:"Lo Specchio del Vuoto",sub:"Diventa ciò che gli metti davanti",hp:124,atk:11,r:[1140,1140],type:"ombra",mech:"specchio"},
+];
 let BOSSES = [];
 
 // tipi casella per regione (9 caselle): grazia, nemico, evento, nemico, tesoro, mercante, élite, evento, boss
@@ -1297,6 +1303,32 @@ const BOSS_CUT_V1 = [
     "Ti guarda come si guarda l'ultima persona che pronuncerà il tuo nome. Poi solleva la lama. Falla degna di essere ricordata.",
   ]},
 ];
+const BOSS_CUT_V2 = [
+  { color:"#9a9fa8", panels:[
+    "Nel cuore del Sepolcreto, dove le tombe sono più antiche e i nomi più cancellati, un silenzio diverso ti accoglie. Non è il silenzio della morte. È il silenzio della concentrazione.",
+    "L'Archivista non si muove. Sfoglia un codice scritto su ossa umane. Ha trascritto ogni scontro avvenuto in queste terre — ogni attacco, ogni parata, ogni respiro di chi ha attraversato queste soglie.",
+    "Alza finalmente gli occhi. Vuoti come pagine bianche. «Ho già letto questa storia,» dice. «So come finisce.»",
+    "Hai una possibilità sola: diventare imprevedibile in un mondo che si è già lasciato leggere. Non ripetere niente. Non essere mai ciò che si aspetta.",
+  ]},
+  { color:"#4a9a5a", panels:[
+    "La palude non emette suoni. Eppure capisci di essere già stato trovato. Qualcosa ti segue da quando hai messo piede nell'acqua scura.",
+    "Il Cacciatore Maledetto emerge dall'ombra senza fretta. Non ha bisogno di correre. Ha già preparato tutto — ogni trappola, ogni sentiero falso, ogni pietra che tradirebbe il tuo peso.",
+    "Fu un cacciatore eccellente, un tempo. Poi cacciò qualcosa che non avrebbe dovuto trovare, e la palude prese il suo debito in carne e memoria.",
+    "I suoi occhi gialli ti seguono con la calma di chi sa già dove sarai. Scegli ogni passo con cura. Il suolo qui ha memoria.",
+  ]},
+  { color:"#c86030", panels:[
+    "Non è la gloria che brucia sull'Altopiano. È la penitenza. Una figura si flagella tra le ceneri, contando ad alta voce — un numero che non finisce mai.",
+    "La Penitente di Cenere non si batte per vincere. Si batte per meritare il dolore. Ogni colpo che riceve è un versamento su un debito che non nomina mai.",
+    "Non era una guerriera. Era una sacerdotessa. Il giorno in cui fallì il rito che avrebbe dovuto spegnere il fuoco, si mise in mezzo alle fiamme. È ancora lì.",
+    "Alzati gli occhi, la riconosci come qualcosa di più antico di ogni nemico che hai incontrato: una coscienza che non si permette di morire. Puoi fermarla. Ma non può essere facile come colpire.",
+  ]},
+  { color:"#8040c0", panels:[
+    "Oltre l'ultima sala della Cittadella c'è una superficie che non dovrebbe esistere: uno specchio che non riflette la luce, ma i gesti. I tuoi gesti.",
+    "Lo Specchio del Vuoto è tutto ciò che rimane di un antico incantesimo pensato per rivelare i nemici del Sovrano. Lo specchio rivelò il Sovrano stesso. Il Sovrano lo spezzò in mille pezzi. I pezzi si ricomposero.",
+    "Mentre ti avvicini, vedi la tua silhouette che si muove — ma con mezzo secondo di ritardo. Si ricorda. Si prepara.",
+    "Non è uno specchio che riflette chi sei. È uno specchio che diventa chi sei. Devi essere qualcosa che non si può copiare. Comincia adesso.",
+  ]},
+];
 let BOSS_CUTSCENES = [];
 const CS_BG = [
   {sky:"#060810",ground:"#080c14",mote:"#7a8aaa",glow:"#9a9fa8",type:"motes"},
@@ -1322,18 +1354,25 @@ const BOSS_EPI_V1 = [
   {title:"Il Boia depone la lama",text:"L'ascia cade nella cenere e si spegne. Il patibolo crolla in polvere. L'ultimo nome sulla sua lista, capisci troppo tardi, era il suo. Adesso anche quello è cancellato."},
   {title:"La Regina è ricordata",text:"Mentre si dissolve, le sue labbra formano una domanda muta — il suo nome. Non lo conosci, non puoi pronunciarlo. Ma annuisci, e per lei è abbastanza: svanisce sorridendo, ricordata da uno sconosciuto."},
 ];
+const BOSS_EPI_V2 = [
+  {title:"Il codice si chiude",text:"Le ossa del codice volano come foglie. Il libro non ha più un lettore: ciò che resta non è silenzio ma libertà. Per la prima volta in mille anni, il Sepolcreto non sa cosa accadrà dopo."},
+  {title:"Le trappole si disattivano",text:"Il Cacciatore cade nell'ultima trappola che ha teso — quella della propria attenzione. Mentre i ceppi si chiudono attorno a lui, vedi nel suo sguardo non odio ma sollievo. Finalmente qualcosa che non aveva previsto."},
+  {title:"La penitenza ha fine",text:"Il numero che contava ad alta voce — lo senti per l'ultima volta, poi tace. Le sue ceneri si disperdono in un vento che non soffiava più. Il fuoco sull'Altopiano si abbassa di un grado. Forse basta."},
+  {title:"Lo specchio si incrina",text:"Mentre si dissolve, lo vedi tremare — la prima cosa genuina che fa. Per un istante riflette qualcosa di vero: non te, non il Sovrano, ma la forma vuota di ciò che avrebbe potuto essere. Poi si spezza, definitivamente, in mille niente."},
+];
 let BOSS_EPILOGUE = [];
-/* Sceglie un guardiano per regione (0 = originale, 1 = variante). Restituisce e
-   memorizza la selezione, così il salvataggio ricarica la stessa run. */
+/* Sceglie un guardiano per regione (0 = orig, 1 = variante, 2 = terza). Restituisce e
+   memorizza la selezione, così il salvataggio ricarica la stessa run.
+   Con 3 varianti per 4 regioni si ottengono 81 combinazioni di boss possibili. */
 function pickBosses(picks){
-  const P = (picks && picks.length===4) ? picks.map(x=>x===1?1:0)
-                                        : [0,0,0,0].map(()=>Math.random()<0.5?1:0);
+  const P = (picks && picks.length===4) ? picks.map(x=>x===2?2:x===1?1:0)
+                                        : [0,0,0,0].map(()=>Math.floor(Math.random()*3));
   BOSSES = []; BOSS_CUTSCENES = []; BOSS_EPILOGUE = [];
   for(let r=0;r<4;r++){
     const v = P[r];
-    BOSSES[r]         = (v ? BOSSES_V1   : BOSSES_V0  )[r];
-    BOSS_CUTSCENES[r] = (v ? BOSS_CUT_V1 : BOSS_CUT_V0)[r];
-    BOSS_EPILOGUE[r]  = (v ? BOSS_EPI_V1 : BOSS_EPI_V0)[r];
+    BOSSES[r]         = (v===2 ? BOSSES_V2   : v===1 ? BOSSES_V1   : BOSSES_V0  )[r];
+    BOSS_CUTSCENES[r] = (v===2 ? BOSS_CUT_V2 : v===1 ? BOSS_CUT_V1 : BOSS_CUT_V0)[r];
+    BOSS_EPILOGUE[r]  = (v===2 ? BOSS_EPI_V2 : v===1 ? BOSS_EPI_V1 : BOSS_EPI_V0)[r];
   }
   return P;
 }
@@ -1456,7 +1495,10 @@ function computeEnding(){
   const k = player.karma||{}; const mis = k.misericordia||0, amb = k.ambizione||0;
   const f = player.flags||{};
   if(amb >= mis+4) return ENDINGS.tiranno;
-  const nomePath = f.queenRemembered || (f.freedSoul && Math.abs(mis-amb)<=1 && mis>0);
+  // via del Nome: ricordare la Regina, liberare anime, o vedere se stessi nello Specchio
+  const nomePath = f.queenRemembered
+    || (f.freedSoul && Math.abs(mis-amb)<=1 && mis>0)
+    || (f.specchioVisto && mis > amb);
   if(nomePath && mis >= amb) return ENDINGS.nome;
   if(mis >= amb+4) return ENDINGS.custode;
   return ENDINGS.fiamma;
@@ -2188,12 +2230,18 @@ function runEvent(tile, roll){
 
 /* ===================== NPC CON DIALOGO RAMIFICATO ===================== */
 const NPCS = {
-  mercante:{ nm:"Mercante Randagio", role:"Un vagabondo con troppe tasche",
+  mercante:  { nm:"Mercante Randagio",   role:"Un vagabondo con troppe tasche",
     pal:{hood:"#4a3a1e",skin:"#caa27a",eye:"#1a1208",accent:"#c9a227",shadow:"#2a1c0a"} },
-  pellegrino:{ nm:"Pellegrino Cieco", role:"Cammina dove gli altri non osano",
+  pellegrino:{ nm:"Pellegrino Cieco",    role:"Cammina dove gli altri non osano",
     pal:{hood:"#3a4452",skin:"#b8a48a",eye:"#8aa0c0",accent:"#7a8aaa",shadow:"#1a2028"} },
-  rinnegato:{ nm:"Cavaliere Rinnegato", role:"Ha gettato via il suo stendardo",
+  rinnegato: { nm:"Cavaliere Rinnegato", role:"Ha gettato via il suo stendardo",
     pal:{hood:"#5a2c22",skin:"#caa27a",eye:"#ff7a40",accent:"#9c3a32",shadow:"#2a120a"} },
+  oracolo:   { nm:"Oracolo del Fumo",    role:"Vede quel che non si può guardare",
+    pal:{hood:"#1a1a2e",skin:"#8a7a6a",eye:"#c0a0ff",accent:"#5040a0",shadow:"#0a0a18"} },
+  ladra:     { nm:"La Ladra di Ossa",    role:"Ruba ai morti — e ai vivi",
+    pal:{hood:"#1e2a1a",skin:"#b0a080",eye:"#80ff80",accent:"#3a5030",shadow:"#0a140a"} },
+  guaritore: { nm:"Guaritore Errante",   role:"Cuce le ferite, scuce i legami",
+    pal:{hood:"#3a3020",skin:"#d4b896",eye:"#a0d0a0",accent:"#8aaa60",shadow:"#1a1810"} },
 };
 function npcMet(key){ const st=getStats(); return (st.npc&&st.npc[key])||0; }
 function npcMeet(key){ const st=getStats(); st.npc=st.npc||{}; st.npc[key]=(st.npc[key]||0)+1; saveStats(st); }
@@ -2236,15 +2284,6 @@ function closeNPC(){
   renderStats();
   const r = npcResume; npcResume = null;
   if(r) r();
-}
-function runNPCEvent(tile, roll){
-  const region = tile.region;
-  npcResume = ()=>setAction("? Incontro", `${flavor("event",region)||"Il sentiero torna deserto."} Tira il dado per proseguire.`, [["Tira il dado",rollMove]], "event");
-  const which = ["mercante","pellegrino","rinnegato"][rnd(0,2)];
-  renderBoard(); renderStats();
-  if(which==="mercante") npcMercante(region);
-  else if(which==="pellegrino") npcPellegrino(region);
-  else npcRinnegato(region, tile);
 }
 function npcMercante(region){
   const npc = NPCS.mercante; const met = npcMet("mercante"); npcMeet("mercante");
@@ -2324,6 +2363,142 @@ function npcRinnegato(region, tile){
     }],
     ["«Non oggi.»", ()=>{ npcNode("«Codardo, o saggio. Lo scoprirai.» Torna alla sua pietra.",[["Prosegui",closeNPC]]); }],
   ]);
+}
+function npcOracolo(region){
+  const npc = NPCS.oracolo; npcMeet("oracolo");
+  showNPC(npc);
+  const bossName = BOSSES[region] ? BOSSES[region].n : "qualcosa di antico";
+  const bossHint = BOSSES[region] ? (() => {
+    const m = BOSSES[region].mech;
+    if(m==="scudo"||m==="archivio") return "La sua forza è nella ripetizione. Spezza il ritmo.";
+    if(m==="figlio"||m==="trappola") return "Si nasconde dietro ciò che crea. Colpisci il vero bersaglio.";
+    if(m==="posa"||m==="penitenza") return "Il dolore è la sua arma. Non dargliene troppo di una volta.";
+    if(m==="aspetti"||m==="specchio") return "Muta come l'acqua che si agita. Impara a leggere il cambiamento.";
+    if(m==="coro") return "Tante voci, un'unica paura. La parata è la tua voce.";
+    if(m==="risacca") return "Respira come le maree. Colpisci quando riemerge.";
+    if(m==="condanna") return "Conta i suoi passi. Quando smette di contare, para.";
+    if(m==="oblio") return "Ti sottrarrà ciò che sei. Colpiscila per riprendertelo.";
+    return "Le terre non rivelano tutto.";
+  })() : "Le terre tacciono su questo.";
+  npcNode(`Una figura avvolta nel fumo solleva la testa. Dove dovrebbero esserci gli occhi, bruciano due braci viola. «Vedo cosa ti aspetta. Vuoi sapere?»`, [
+    ["«Mostrami.»", ()=>{
+      karmaTag("misericordia",1);
+      player.npcOracoloBlessing = (player.npcOracoloBlessing||0) + 1;
+      npcNode(`«${bossName} ti attende. Ricorda: ${bossHint}» Allunga una mano di fumo e lascia una luce viola sulle tue dita. Per qualche turno domani vedrai più chiaramente.`,
+        [["«Grazie.»", ()=>{ cbLog&&cbLog(`Oracolo: puoi assorbire il primo colpo del boss con danno dimezzato.`); closeNPC(); }]]);
+    }],
+    ["«Dimmi invece cosa ho lasciato indietro.»", ()=>{
+      karmaTag("misericordia",2);
+      const recapCount = Object.keys(player.flags||{}).length;
+      const recap = recapCount > 0
+        ? `Hai fatto scelte che restano nelle pietre: ${Object.keys(player.flags).join(", ")}.`
+        : "Le tue scelte non hanno ancora lasciato tracce visibili.";
+      npcNode(`«${recap}» L'oracolo non commenta. Si chiude nel fumo.`, [["Prosegui",closeNPC]]);
+    }],
+    ["«Non ho bisogno di sapere.»", ()=>{
+      karmaTag("ambizione",1);
+      npcNode("«Allora ti aspetto dall'altra parte.» Il fumo si chiude attorno a lei senza fretta.", [["Prosegui",closeNPC]]);
+    }],
+  ]);
+}
+function npcLadra(region){
+  const npc = NPCS.ladra; npcMeet("ladra");
+  showNPC(npc);
+  const stolen = Math.min(player.runes, Math.round(player.runes * 0.18) + 8);
+  npcNode(`Una figura magra sorregge un fascio di ossa lucide. «Già che ci sei, lasciami un po' di quel rumore che hai in tasca. Sento le rune tintinnare da cento passi.»`, [
+    ["«Non se ne parla.»", ()=>{
+      karmaTag("ambizione",1);
+      npcNode(`Stira le labbra. «Brutto, ma rispettabile.» Scompare tra le ombre senza altri commenti.`, [["Prosegui",closeNPC]]);
+    }],
+    ["«Prova a prenderle.»", ()=>{
+      karmaTag("ambizione",2);
+      const foe = {n:"Ladra di Ossa", hp:16+region*8, atk:3+region, r:[60+region*40, 80+region*50]};
+      $("ov-npc").classList.remove("open"); npcResume = null;
+      log("Combatti la Ladra di Ossa.","bad");
+      setTimeout(()=>startCombat(foe, {region, idx:region*9+4, cleared:false}, false, true), 400);
+    }],
+    ["«Prendile e spiega cosa sai.»", ()=>{
+      if(player.runes < stolen){
+        npcNode("«Non hai abbastanza. Torna quando sei più ricco.»",[["Prosegui",closeNPC]]); return;
+      }
+      player.runes -= stolen;
+      karmaTag("misericordia",1);
+      const hint = ["Ha sentito dire che un prigioniero nel Sepolcreto porta ancora la chiave di una tomba che non esiste sulle mappe.",
+        "Sussurra di un'uscita dalla palude che nessuno cerca perché nessuno sopravvive abbastanza a lungo.",
+        "Racconta di una spada sepolta nell'Altopiano da un cavaliere che si rifiutò di combattere l'ultimo giorno.",
+        "Mormora del nome della Regina — il nome che il Sovrano credeva di aver cancellato per sempre."][region];
+      npcNode(`Intasca le rune con cura. «Sento cose, capisce. Gente che parla con i morti.» ${hint} Ti guarda storto. «Però non dirle che l'ho detto io.»`, [
+        ["Ringrazia", ()=>{ karmaFlag("ladraInfo_"+region); log("La Ladra ti ha lasciato un'informazione preziosa.","gold"); closeNPC(); }]
+      ]);
+    }],
+  ]);
+}
+function npcGuaritore(region){
+  const npc = NPCS.guaritore; npcMeet("guaritore");
+  showNPC(npc);
+  const missingHp = player.maxhp - player.hp;
+  npcNode(`Un vecchio con mani enormi conta erbe su una pietra piatta. Ti guarda da sotto le sopracciglia. «Ho visto di meglio, ma anche di peggio. Cosa ti serve?»`, [
+    ["«Curarmi, se puoi.»", ()=>{
+      if(missingHp <= 0){
+        npcNode("«Sei integro come posso fare io. Risparmia il fiato.»",[["Prosegui",closeNPC]]); return;
+      }
+      const cost = Math.round(missingHp * 0.8);
+      npcNode(`«Costa ${cost} rune. Per quella roba che hai nelle vene, è un affare.»`,[
+        ["Paga e guarisci", ()=>{
+          if(player.runes < cost){ npcNode("«Torna con i soldi.»",[["Prosegui",closeNPC]]); return; }
+          player.runes -= cost; player.hp = player.maxhp;
+          karmaTag("misericordia",1);
+          log(`Guaritore: restaurato a ${player.maxhp} PV per ${cost} rune.`,"good");
+          npcNode("«Fatto. Cerca di restare intero più a lungo, stavolta.»",[["Ringrazia",closeNPC]]);
+        }],
+        ["Lascia perdere", closeNPC],
+      ]);
+    }],
+    ["«Aumenta la mia resistenza.»", ()=>{
+      const cost = 90 + region*25;
+      npcNode(`«Posso rinforzare i tessuti, ma non è indolore. Perdi una fiaschetta, guadagni 15 vitalità massima. Costa ${cost} rune.»`,[
+        ["Accetta", ()=>{
+          if(player.runes < cost || player.maxflasks<=1){ npcNode("«Non puoi permettertelo.»",[["Prosegui",closeNPC]]); return; }
+          player.runes -= cost; player.maxflasks--; player.flasks=Math.min(player.flasks,player.maxflasks);
+          player.maxhp += 15; player.hp = Math.min(player.hp+15, player.maxhp);
+          karmaTag("ambizione",1);
+          log(`Guaritore: +15 PV max, -1 fiaschetta.`,"gold");
+          renderStats(); saveGame();
+          npcNode("Fa male. Poi passa. Poi fa meno male. «Fatto.»",[["Ringrazia",closeNPC]]);
+        }],
+        ["Rifiuta", closeNPC],
+      ]);
+    }],
+    ["«Hai niente da dire su questi posti?»", ()=>{
+      karmaTag("misericordia",1);
+      const lore = [
+        "«Il Sepolcreto? I guardiani non sono morti per proteggerlo. Sono morti per qualcos'altro, e il Sepolcreto è ciò che rimane.»",
+        "«La palude ricorda tutto, ma dimentica l'ordine. Ciò che trovi qui è vero — solo non sai quando è successo.»",
+        "«Il fuoco dell'Altopiano non brucia ciò che è puro. Non ho mai incontrato qualcosa di puro qui, però.»",
+        "«La Cittadella fu costruita da chi non voleva essere trovato. Adesso non vuole essere abbandonata. Stai attento.»",
+      ][region];
+      npcNode(lore,[["Grazie",closeNPC]]);
+    }],
+  ]);
+}
+function runNPCEvent(tile, roll){
+  const region = tile.region;
+  npcResume = ()=>setAction("? Incontro", `${flavor("event",region)||"Il sentiero torna deserto."} Tira il dado per proseguire.`, [["Tira il dado",rollMove]], "event");
+  renderBoard(); renderStats();
+  // ponderazione: mercante/pellegrino/rinnegato sempre disponibili; oracolo/ladra/guaritore con probabilità più bassa
+  const basePool = ["mercante","pellegrino","rinnegato","oracolo","ladra","guaritore"];
+  // peso regionale: oracolo più comune verso la fine, guaritore più utile a metà
+  const weights = [2, 2, 2, 1+(region>=2?1:0), 1, 1+(region===1||region===2?1:0)];
+  let total = weights.reduce((a,b)=>a+b,0);
+  let rng = Math.random()*total;
+  let which = basePool[0];
+  for(let i=0;i<basePool.length;i++){ rng-=weights[i]; if(rng<=0){ which=basePool[i]; break; } }
+  if(which==="mercante") npcMercante(region);
+  else if(which==="pellegrino") npcPellegrino(region);
+  else if(which==="rinnegato") npcRinnegato(region, tile);
+  else if(which==="oracolo") npcOracolo(region);
+  else if(which==="ladra") npcLadra(region);
+  else npcGuaritore(region);
 }
 
 /* ===================== GRAZIA ===================== */
@@ -4484,6 +4659,10 @@ function initBossMech(mech){
   else if(mech==="risacca"){ combat.sommerso = false; }
   else if(mech==="condanna"){ combat.condanna = 4; combat.executing = false; }
   else if(mech==="oblio"){ combat.cancellato = null; combat.cancelTurns = 0; }
+  else if(mech==="archivio"){ combat.archivioLast = null; combat.archivioAlert = false; }
+  else if(mech==="trappola"){ combat.trappola = false; }
+  else if(mech==="penitenza"){ combat.furia = 0; }
+  else if(mech==="specchio"){ combat.specchioEcho = null; combat.specchioParryNegated = false; }
 }
 function bossMechBanner(){
   if(!combat || !combat.isBoss) return "";
@@ -4497,12 +4676,34 @@ function bossMechBanner(){
   if(m==="risacca") return combat.sommerso ? `🌊 Inabissato — colpi attutiti` : `🌊 Riemerso — vulnerabile!`;
   if(m==="condanna") return combat.condanna<=0 ? `⏳ ESECUZIONE imminente — para!` : `⏳ Condanna ${combat.condanna}`;
   if(m==="oblio" && combat.cancellato) return `✖ ${CANCEL_LABELS[combat.cancellato]||combat.cancellato} cancellato (${combat.cancelTurns})`;
+  if(m==="archivio" && combat.archivioLast) return `📖 Archivio: l'ultima mossa registrata è «${combat.archivioLast}»`;
+  if(m==="trappola" && combat.trappola) return `🪤 Trappola attiva — para per disarmarla!`;
+  if(m==="penitenza") return `🔥 Furia ${combat.furia}/4 — non colpire troppo forte!`;
+  if(m==="specchio" && combat.specchioEcho) return `🪞 Lo Specchio riflette: «${combat.specchioEcho}»`;
   if(combat.affix){ const af=NG_AFFIXES.find(x=>x.id===combat.affix); if(af) return `☠ ${af.nm}`; }
   return "";
 }
 /* applica danno al nemico rispettando guardia / scudo / figlio / aspetto */
 function applyEnemyDamage(dmg, source, color){
   const e = combat.e;
+  // Archivista: aveva previsto la tua mossa ripetuta — il colpo viene prevenuto e riflesso
+  if(combat.mech==="archivio" && combat.archivioAlert && source!=="parry"){
+    combat.archivioAlert = false;
+    const counter = Math.max(1, Math.round(combat.e.atk * 0.9));
+    const real = playerHurt(counter);
+    cbLog(`<span class="hit">📖 L'Archivista aveva già trascritto questa mossa: ti anticipa per ${real}!</span>`);
+    floatDmg("cb-pside", "-"+real, "#a0b8ff");
+    floatDmg("cb-eside", "LETTO", "#a0b8ff");
+    if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-34, "#8090d0", 14, 1.6); }
+    dmg = Math.max(1, Math.round(dmg*0.4));
+  }
+  // Specchio: aveva riflesso la tua parata — l'attacco viene deviato
+  if(combat.mech==="specchio" && combat.specchioParryNegated && (source==="attack"||source==="parry")){
+    combat.specchioParryNegated = false;
+    cbLog(`<span class="warn">🪞 Lo Specchio ha memorizzato la tua difesa: il colpo viene deviato dal tuo stesso riflesso.</span>`);
+    dmg = Math.max(1, Math.round(dmg*0.35));
+    floatDmg("cb-eside", "RIFLESSO", "#c0c0ff");
+  }
   // Guardia del nemico comune: attutisce i colpi fisici (non la Tecnica)
   if(combat.guarding && (source==="attack" || source==="parry")){
     dmg = Math.max(1, Math.round(dmg*0.5));
@@ -4557,6 +4758,13 @@ function applyEnemyDamage(dmg, source, color){
     cbLog(`<span class="heal">La tua Tecnica spezza l'esecuzione! Il Boia indietreggia, la Condanna si azzera.</span>`);
     if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-34, "#ffe040", 18, 2.2); }
   }
+  // Penitente: ogni colpo significativo incrementa la sua furia
+  if(combat.mech==="penitenza" && dmg>0 && !combat.add){
+    if(dmg >= combat.e.atk){
+      combat.furia = (combat.furia||0) + 1;
+      if(combat.furia < 4) cbLog(`<span class="warn">🔥 La Penitente assorbe il dolore — Furia ${combat.furia}/4.</span>`);
+    }
+  }
   e.hp -= dmg;
   floatDmg("cb-eside", "-"+dmg, color||"#ecc857");
   // Regina Cancellata: ogni colpo a segno accelera il ritorno dell'azione cancellata
@@ -4577,6 +4785,25 @@ function bossPreTurn(){
       const a = SOVRANO_ASPECTS[combat.aspect];
       cbLog(`<span class="warn">✦ ${combat.e.n} muta: Aspetto del ${a.nm}.</span>`);
       if(BS.ctx){ spawnBurst(BS.enemy.baseX, BS.enemy.baseY-40, a.col, 20, 2.2); BS.enemy.flash=160; }
+    }
+  }
+  // Specchio: riflette l'eco dell'azione precedente del giocatore
+  if(m==="specchio" && combat.specchioEcho){
+    const echo = combat.specchioEcho;
+    combat.specchioEcho = null;
+    if(echo==="attack"){
+      const mirror = Math.max(1, Math.round(combat.e.atk * 1.35));
+      const real = playerHurt(mirror);
+      cbLog(`<span class="hit">🪞 Lo Specchio riflette il tuo attacco: contrattacco amplificato per ${real}!</span>`);
+      floatDmg("cb-pside", "-"+real, "#c0c0ff");
+      if(BS.ctx){ spawnBurst(BS.hero.baseX, BS.hero.baseY-28, "#c0c0ff", 14, 1.8); BS.shake=Math.max(BS.shake,260); }
+    } else if(echo==="parry"){
+      combat.specchioParryNegated = true;
+      cbLog(`<span class="warn">🪞 Lo Specchio riflette la tua difesa — il tuo prossimo colpo viene in parte deviato dal riflesso.</span>`);
+    } else if(echo==="tecnica"){
+      combat.charging = true; combat.intent = "heavy";
+      cbLog(`<span class="warn">🪞 Lo Specchio trasforma la tua Tecnica in un colpo devastante — para!</span>`);
+      sfx("charge");
     }
   }
 }
@@ -4660,6 +4887,31 @@ function bossPostTurn(){
       renderArdore();
     }
   }
+  if(m==="archivio"){
+    // L'Archivista registra silenziosamente — il banner aggiornato basta come feedback
+  }
+  if(m==="trappola"){
+    // ogni 4 turni il Cacciatore piazza una trappola nascosta
+    if(combat.turn % 4 === 3 && !combat.trappola){
+      combat.trappola = true;
+      cbLog(`<span class="warn">🪤 Il Cacciatore posa una trappola — attaccare la scatenerà! Para per disarmarla.</span>`);
+      if(BS.ctx){ spawnBurst(BS.enemy.baseX-60, BS.enemy.baseY-10, "#5a9a50", 12, 1.4); }
+    }
+  }
+  if(m==="penitenza"){
+    // a Furia 4 la Penitente esplode in un attacco di rabbia istantaneo
+    if(combat.furia >= 4){
+      combat.furia = 0;
+      const burst = Math.max(2, Math.round(combat.e.atk * 1.75));
+      const real = playerHurt(burst);
+      cbLog(`<span class="hit">🔥 La Penitente sfoga tutta la sua furia: ESPLOSIONE di ${real} danni! Risparmia i tuoi colpi.</span>`);
+      floatDmg("cb-pside", "-"+real, "#ff8040");
+      if(BS.ctx){ spawnBurst(BS.hero.baseX, BS.hero.baseY-28, "#ff8040", 20, 2.2); BS.shake=Math.max(BS.shake,320); BS.enemy.flash=180; }
+    }
+  }
+  if(m==="specchio"){
+    // nessuna logica aggiuntiva: l'eco viene gestita in bossPreTurn al turno seguente
+  }
 }
 
 /* ===================== COMBATTIMENTO ===================== */
@@ -4683,6 +4935,10 @@ function startCombat(enemy, tile, isBoss, isElite){
     aspect:null, guard:0, add:null, parryStance:false, affix:null,
     mech: isBoss ? (enemy.mech||null) : null,
     voci:0, sommerso:false, condanna:0, cancellato:null, cancelTurns:0,
+    archivioLast:null, archivioAlert:false,
+    trappola:false,
+    furia:0,
+    specchioEcho:null, specchioParryNegated:false,
   };
   player.ardore = 0;
   // affisso casuale per i boss in NG+
@@ -4777,7 +5033,13 @@ function gainArdore(n){
 }
 /* danno subito dal giocatore, modulato dalle reliquie (Sigillo del Furore) */
 function playerHurt(dmg){
-  const real = Math.round(dmg*(player.damageTaken||1));
+  let real = Math.round(dmg*(player.damageTaken||1));
+  // Benedizione dell'Oracolo: dimezza il primo colpo boss della run
+  if(player.npcOracoloBlessing && player.npcOracoloBlessing>0 && combat && combat.isBoss){
+    real = Math.max(1, Math.round(real*0.5));
+    player.npcOracoloBlessing--;
+    cbLog(`<span class="heal">✦ La benedizione dell'Oracolo attenua il colpo!</span>`);
+  }
   player.hp -= real;
   return real;
 }
@@ -4806,6 +5068,10 @@ function actTecnica(){
   }
   player.ardore = 0;
   combat.turn++;
+  // Specchio: registra l'eco della tecnica
+  if(combat.mech==="specchio") combat.specchioEcho = "tecnica";
+  // Archivista: la tecnica azzera la memoria (troppo imprevedibile per trascriverla)
+  if(combat.mech==="archivio"){ combat.archivioLast = "tecnica"; combat.archivioAlert = false; }
   const C = CLASSES[player.cls||"vagabondo"];
   const key = C.tecnica;
   const tec = TECNICAS[key];
@@ -5011,10 +5277,26 @@ function actAttack(){
     floatDmg("cb-pside", "-"+counter, "#e07a6e");
     fx($("ov-combat").querySelector(".modal"), "shake", 450);
     fx($("ov-combat").querySelector(".modal"), "flash-blood", 500);
-    gainArdore(8);
-    checkCombatEnd();
-    return;
+    gainArdore(8); checkCombatEnd(); return;
   }
+  // Archivista: ha memorizzato che hai attaccato l'ultima volta — prepara la risposta
+  if(combat.mech==="archivio" && combat.archivioLast==="attack"){
+    combat.archivioAlert = true;
+  }
+  // Cacciatore Maledetto: la trappola si innesca sull'attacco
+  if(combat.mech==="trappola" && combat.trappola){
+    combat.trappola = false;
+    const trapDmg = Math.max(1, Math.round(combat.e.atk * 0.85));
+    const real = playerHurt(trapDmg);
+    cbLog(`<span class="hit">🪤 TRAPPOLA! Il Cacciatore aveva teso la corda — ${real} danni mentre avanzi!</span>`);
+    floatDmg("cb-pside", "-"+real, "#8fd49a");
+    fx($("ov-combat").querySelector(".modal"), "flash-blood", 400);
+    if(BS.ctx){ spawnBurst(BS.hero.baseX, BS.hero.baseY-20, "#5a9a50", 12, 1.6); }
+  }
+  // Specchio: registra l'eco per il prossimo turno
+  if(combat.mech==="specchio") combat.specchioEcho = "attack";
+  // Archivista: aggiorna storico
+  if(combat.mech==="archivio") combat.archivioLast = "attack";
   bsHeroAttack();
   let dmg = d6() + player.atk + vendettaBonus();
   let crit = false;
@@ -5047,6 +5329,20 @@ function actParry(){
   bossPreTurn();
   // parare annulla la posa del Cavaliere
   if(combat.parryStance) combat.parryStance = false;
+  // Archivista: aveva memorizzato che hai parato l'ultima volta
+  if(combat.mech==="archivio" && combat.archivioLast==="parry"){
+    combat.archivioAlert = true;
+  }
+  // Cacciatore: parare disarma la trappola
+  if(combat.mech==="trappola" && combat.trappola){
+    combat.trappola = false;
+    cbLog(`<span class="heal">🪤 Hai rilevato la trappola del Cacciatore e la disarmi!</span>`);
+    if(BS.ctx){ spawnBurst(BS.enemy.baseX-60, BS.enemy.baseY-10, "#fff7a0", 10, 1.2); }
+  }
+  // Specchio: registra l'eco della parata
+  if(combat.mech==="specchio") combat.specchioEcho = "parry";
+  // Archivista: aggiorna storico
+  if(combat.mech==="archivio") combat.archivioLast = "parry";
   const roll = d6();
   const need = hasPassive("muro") ? 2 : 3;
   if(roll>=need){
@@ -5130,6 +5426,14 @@ function winCombat(){
   player.ardore = 0;
   // Regina Cancellata: ricordarne la caduta apre la via del Nome Restituito
   if(combat.isBoss && combat.mech==="oblio") karmaFlag("queenRemembered");
+  // Archivista: sconfiggerla senza ripetere mai la stessa azione dimostra disciplina
+  if(combat.isBoss && combat.mech==="archivio" && !combat.archivioAlert) karmaTag("misericordia",1);
+  // Cacciatore: sopravvivere senza cadere in nessuna trappola — fortuna o saggezza
+  if(combat.isBoss && combat.mech==="trappola") karmaTag("ambizione",1);
+  // Penitente: sconfiggerla senza scatenare la sua furia completa mostra controllo
+  if(combat.isBoss && combat.mech==="penitenza" && (combat.furia||0)<4) karmaTag("misericordia",1);
+  // Specchio: sconfiggerlo — i suoi echi rivelano qualcosa su chi sei
+  if(combat.isBoss && combat.mech==="specchio") karmaFlag("specchioVisto");
   const e = combat.e;
   let reward = rnd(e.r[0], e.r[1] || e.r[0]);
   if(player.runeBonus) reward = Math.round(reward*(1+player.runeBonus)); // Sigillo del Pellegrino
@@ -5781,7 +6085,7 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
     karmaTag(k,n){ return karmaTag(k,n); },
     /* avvia uno scontro col boss che possiede la meccanica richiesta, saltando cutscene/audio */
     debugBossFight(mech){
-      const all = BOSSES_V0.concat(BOSSES_V1);
+      const all = BOSSES_V0.concat(BOSSES_V1).concat(BOSSES_V2);
       let idx = all.findIndex(b=>b.mech===mech);
       const e = (idx>=0 ? all[idx] : BOSS5);
       const region = (idx>=0 ? idx%4 : 3);
@@ -5791,6 +6095,9 @@ if(typeof window!=="undefined" && window.__TS_DEBUG){
         turn:0, charging:false, staggered:false, shielded:false,
         aspect:null, guard:0, add:null, parryStance:false, affix:null,
         mech:e.mech, voci:0, sommerso:false, condanna:0, cancellato:null, cancelTurns:0,
+        archivioLast:null, archivioAlert:false,
+        trappola:false, furia:0,
+        specchioEcho:null, specchioParryNegated:false,
       };
       if(player) player.ardore = 100;
       initBossMech(combat.mech, region);
